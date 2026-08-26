@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Farm Dashboard - All in One</title>
+    <title>Smart Farm Dashboard - Ultimate Edition</title>
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Paho MQTT Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+    <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
@@ -24,11 +27,27 @@
         body { background-color: #f1f5f9; color: var(--text-main); padding: 20px; }
         .container { max-width: 1100px; margin: 0 auto; }
 
+        /* Header */
         header { text-align: center; margin-bottom: 20px; }
         header h1 { color: var(--primary); font-size: 24px; }
         .status-bar { font-size: 13px; color: var(--text-sub); margin-top: 5px; }
         #connection-status { font-weight: bold; color: var(--danger); }
         .last-update-bar { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+
+        /* Nút Cấu hình Key */
+        .config-btn {
+            background-color: #475569;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+        }
+        .config-btn:hover { background-color: #334155; }
 
         /* Panel Auto/Manual */
         .mode-panel {
@@ -42,7 +61,7 @@
         .mode-btns button.active-auto { background-color: var(--success); color: white; }
         .mode-btns button.active-manual { background-color: var(--warning); color: white; }
 
-        /* Grid */
+        /* Grid System */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 20px; }
         .card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; position: relative; }
         .card h3 { font-size: 13px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 12px; }
@@ -94,6 +113,10 @@
         <h1>🌱 SMART FARM DASHBOARD</h1>
         <div class="status-bar">Trạng thái MQTT: <span id="connection-status">Đang kết nối...</span></div>
         <div class="last-update-bar">Cập nhật lần cuối: <span id="last-update-time">--:--:--</span></div>
+        
+        <button class="config-btn" onclick="configureKeys()">
+            <i class="fa-solid fa-key"></i> Cấu hình Adafruit Key
+        </button>
     </header>
 
     <!-- THANH ĐIỀU KHIỂN CHẾ ĐỘ -->
@@ -187,10 +210,32 @@
 </div>
 
 <script>
-    // ==================== CẤU HÌNH ADAFRUIT IO ====================
-    const AIO_USERNAME = "TEN_TAI_KHOAN_ADAFRUIT"; // Thay bằng Username của bạn
-    const AIO_KEY = "aio_FYQL31r7HT58hUb409WTMDiijFns";  // Thay bằng Key của bạn
-    // ==============================================================
+    // ==================== QUẢN LÝ KEY QUA LOCALSTORAGE ====================
+    let AIO_USERNAME = localStorage.getItem("AIO_USERNAME") || "";
+    let AIO_KEY = localStorage.getItem("AIO_KEY") || "";
+
+    // Nếu chưa từng nhập Key, hiển thị yêu cầu nhập lần đầu
+    if (!AIO_USERNAME || !AIO_KEY) {
+        setTimeout(() => configureKeys(), 500);
+    }
+
+    function configureKeys() {
+        const newUsername = prompt("Nhập Adafruit IO Username:", AIO_USERNAME);
+        if (newUsername === null) return;
+
+        const newKey = prompt("Nhập Adafruit IO Key:", AIO_KEY);
+        if (newKey === null) return;
+
+        if (newUsername.trim() !== "" && newKey.trim() !== "") {
+            localStorage.setItem("AIO_USERNAME", newUsername.trim());
+            localStorage.setItem("AIO_KEY", newKey.trim());
+            alert("Đã lưu cài đặt thành công! Trang web sẽ tải lại.");
+            location.reload();
+        } else {
+            alert("Lỗi: Username và Key không được để trống!");
+        }
+    }
+    // ======================================================================
 
     const clientId = "web_client_" + Math.random().toString(16).substring(2, 8);
     const client = new Paho.MQTT.Client("io.adafruit.com", 8443, clientId);
@@ -353,12 +398,14 @@
     };
 
     function connectMQTT() {
-        if (!AIO_USERNAME || AIO_USERNAME === "TEN_TAI_KHOAN_ADAFRUIT") {
-            document.getElementById("connection-status").innerText = "Lỗi: Chưa nhập AIO_USERNAME trong script!";
+        if (!AIO_USERNAME || !AIO_KEY) {
+            document.getElementById("connection-status").innerText = "Chờ cấu hình Key...";
             return;
         }
         client.connect({
-            useSSL: true, userName: AIO_USERNAME, password: AIO_KEY,
+            useSSL: true, 
+            userName: AIO_USERNAME, 
+            password: AIO_KEY,
             onSuccess: () => {
                 document.getElementById("connection-status").innerText = "Trực tuyến";
                 document.getElementById("connection-status").style.color = "var(--success)";
@@ -411,7 +458,7 @@
         btn.className = "switch-btn " + (state === "ON" ? "btn-on" : "btn-off");
     }
 
-    // Chạy kết nối ban đầu
+    // Kết nối MQTT ban đầu
     connectMQTT();
 </script>
 </body>
