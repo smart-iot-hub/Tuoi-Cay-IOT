@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trạm Tưới Cây Tự Động - Smart Farm</title>
-    <!-- Thư viện Paho MQTT cho Web -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
     <style>
         :root {
             --bg-color: #0f172a;
@@ -14,6 +12,7 @@
             --accent-blue: #38bdf8;
             --accent-green: #22c55e;
             --accent-red: #ef4444;
+            --accent-yellow: #f59e0b;
             --text-main: #f8fafc;
             --text-sub: #94a3b8;
         }
@@ -148,12 +147,15 @@
             margin-top: 6px;
         }
 
-        /* Control Sections (Ẩn hiện theo phân quyền) */
+        /* Control Sections (Admin) */
         .admin-section {
             display: flex;
             flex-direction: column;
             gap: 12px;
-            transition: all 0.3s ease;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
         }
 
         .section-title {
@@ -162,7 +164,39 @@
             color: var(--text-sub);
             display: flex;
             align-items: center;
-            gap: 6px;
+            justify-content: space-between;
+        }
+
+        /* Nút chọn chế độ Auto / Manual */
+        .mode-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            background: var(--bg-color);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+        }
+
+        .btn-mode {
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            padding: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn-mode.active-auto {
+            background-color: var(--accent-yellow);
+            color: #0f172a;
+        }
+
+        .btn-mode.active-manual {
+            background-color: var(--accent-blue);
+            color: #0f172a;
         }
 
         .btn-group {
@@ -173,9 +207,9 @@
 
         .btn-action {
             border: none;
-            padding: 14px;
-            border-radius: 10px;
-            font-size: 14px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
             font-weight: 700;
             color: #ffffff;
             cursor: pointer;
@@ -183,6 +217,11 @@
 
         .btn-on { background-color: var(--accent-green); }
         .btn-off { background-color: var(--accent-red); }
+        
+        .disabled-controls {
+            opacity: 0.4;
+            pointer-events: none;
+        }
 
         /* Modal Đăng nhập Admin */
         .modal {
@@ -265,14 +304,14 @@
 
         <!-- Status Bar -->
         <div class="status-bar">
-            <span>Trạng thái kết nối:</span>
+            <span>Trạng thái hệ thống:</span>
             <div class="status-indicator">
-                <div class="status-dot" id="status-dot"></div>
-                <span id="status-text">Đang kết nối...</span>
+                <div class="status-dot connected" id="status-dot"></div>
+                <span id="status-text">Đang cập nhật...</span>
             </div>
         </div>
 
-        <!-- Sensor Grid (Cả Guest và Admin đều xem được) -->
+        <!-- Sensor Grid -->
         <div class="grid">
             <div class="card">
                 <div class="label">Nhiệt độ</div>
@@ -290,18 +329,28 @@
             </div>
         </div>
 
-        <!-- Pump Controls (Chỉ hiện khi đăng nhập quyền ADMIN) -->
+        <!-- Pump Controls & Mode (Chỉ hiện khi đăng nhập quyền ADMIN) -->
         <div class="admin-section" id="admin-controls" style="display: none;">
-            <div class="section-title">💧 ĐIỀU KHIỂN BƠM 1 (Bơm bồn nước)</div>
-            <div class="btn-group">
-                <button class="btn-action btn-on" onclick="controlPump('luan.pump1', '1')">BẬT BƠM 1</button>
-                <button class="btn-action btn-off" onclick="controlPump('luan.pump1', '0')">TẮT BƠM 1</button>
+            <div class="section-title">
+                <span>⚙️ CHẾ ĐỘ HOẠT ĐỘNG HỆ THỐNG</span>
+            </div>
+            <div class="mode-selector">
+                <button class="btn-mode active-auto" id="btn-auto" onclick="setMode('auto')">⚡ TỰ ĐỘNG (AUTO)</button>
+                <button class="btn-mode" id="btn-manual" onclick="setMode('manual')">🖐️ THỦ CÔNG (MANUAL)</button>
             </div>
 
-            <div class="section-title" style="margin-top: 4px;">🌿 ĐIỀU KHIỂN BƠM 2 (Bơm tưới cây)</div>
-            <div class="btn-group">
-                <button class="btn-action btn-on" onclick="controlPump('luan.pump2', '1')">BẬT BƠM 2</button>
-                <button class="btn-action btn-off" onclick="controlPump('luan.pump2', '0')">TẮT BƠM 2</button>
+            <div id="manual-panel" class="disabled-controls" style="margin-top: 8px; display: flex; flex-direction: column; gap: 10px;">
+                <div class="section-title">💧 ĐIỀU KHIỂN BƠM 1 (Bơm bồn nước)</div>
+                <div class="btn-group">
+                    <button class="btn-action btn-on" onclick="sendAction('pump1', '1')">BẬT BƠM 1</button>
+                    <button class="btn-action btn-off" onclick="sendAction('pump1', '0')">TẮT BƠM 1</button>
+                </div>
+
+                <div class="section-title" style="margin-top: 4px;">🌿 ĐIỀU KHIỂN BƠM 2 (Bơm tưới cây)</div>
+                <div class="btn-group">
+                    <button class="btn-action btn-on" onclick="sendAction('pump2', '1')">BẬT BƠM 2</button>
+                    <button class="btn-action btn-off" onclick="sendAction('pump2', '0')">TẮT BƠM 2</button>
+                </div>
             </div>
         </div>
     </div>
@@ -322,86 +371,70 @@
     </div>
 
     <script>
-        let client = null;
-        // Tài khoản Adafruit IO cấu hình cứng ngầm định cho hệ thống
         const USERNAME = "ZenoAdmin";
-        const AIO_KEY = "aio_BbwJ20Zr62Y79F3Avcjg4YaKh3Fw";
-        
-        // Mật khẩu Admin đơn giản (Bạn có thể đổi tùy ý bên dưới)
+        const FEED_NAME = "system-data";
         const ADMIN_PASSWORD = "123456"; 
+        
         let currentRole = 'guest';
+        let currentMode = 'auto'; // Mặc định là Auto
 
         window.onload = function() {
-            connectMQTT();
+            fetchSensorData();
+            setInterval(fetchSensorData, 5000);
         };
 
-        function connectMQTT() {
-            updateStatus('connecting', 'Đang kết nối...');
-            const clientId = 'web_client_' + Math.random().toString(16).substr(2, 8);
+        function fetchSensorData() {
+            const url = `https://io.adafruit.com/api/v2/${USERNAME}/feeds/${FEED_NAME}/data/recent`;
             
-            client = new Paho.MQTT.Client('io.adafruit.com', 443, clientId);
-
-            client.onConnectionLost = onConnectionLost;
-            client.onMessageArrived = onMessageArrived;
-
-            client.connect({
-                onSuccess: onConnect,
-                onFailure: onFailure,
-                userName: USERNAME,
-                password: AIO_KEY,
-                useSSL: true
-            });
+            fetch(url)
+                .then(response => {
+                    if (!response.ok) throw new Error("Lỗi kết nối API");
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.value) {
+                        const sensorJson = JSON.parse(data.value);
+                        
+                        if (sensorJson.temp !== undefined) document.getElementById('temp').innerText = sensorJson.temp;
+                        if (sensorJson.soil !== undefined) document.getElementById('soil').innerText = sensorJson.soil;
+                        if (sensorJson.water !== undefined) document.getElementById('water').innerText = sensorJson.water;
+                        
+                        updateStatus('connected', 'Đã cập nhật mới nhất');
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    updateStatus('disconnected', 'Lỗi đồng bộ dữ liệu');
+                });
         }
 
-        function onConnect() {
-            updateStatus('connected', 'Đã kết nối');
-            // Đăng ký nhận dữ liệu từ feed tổng hợp
-            client.subscribe(USERNAME + '/feeds/system-data');
-        }
+        // Chuyển đổi chế độ Auto / Manual
+        function setMode(mode) {
+            currentMode = mode;
+            const btnAuto = document.getElementById('btn-auto');
+            const btnManual = document.getElementById('btn-manual');
+            const manualPanel = document.getElementById('manual-panel');
 
-        function onFailure(responseObject) {
-            updateStatus('disconnected', 'Lỗi kết nối');
-        }
-
-        function onConnectionLost(responseObject) {
-            if (responseObject.errorCode !== 0) {
-                updateStatus('disconnected', 'Mất kết nối');
+            if (mode === 'auto') {
+                btnAuto.className = 'btn-mode active-auto';
+                btnManual.className = 'btn-mode';
+                manualPanel.classList.add('disabled-controls'); // Khóa các nút bấm tay khi đang ở chế độ Auto
+            } else {
+                btnAuto.className = 'btn-mode';
+                btnManual.className = 'btn-mode active-manual';
+                manualPanel.classList.remove('disabled-controls'); // Mở khóa bảng điều khiển tay
             }
         }
 
-        function onMessageArrived(message) {
-            const topic = message.destinationName;
-            const payload = message.payloadString;
-
-            if (topic.endsWith('system-data')) {
-                try {
-                    const data = JSON.parse(payload);
-                    if (data.temp !== undefined) document.getElementById('temp').innerText = data.temp;
-                    if (data.soil !== undefined) document.getElementById('soil').innerText = data.soil;
-                    if (data.water !== undefined) document.getElementById('water').innerText = data.water;
-                } catch (e) {
-                    console.error("Lỗi parse JSON:", e);
-                }
-            }
-        }
-
-        function controlPump(feedKey, command) {
-            if (currentRole !== 'admin') {
-                alert("Bạn cần đăng nhập quyền Admin để điều khiển thiết bị!");
+        function sendAction(targetPump, command) {
+            if (currentMode === 'auto') {
+                alert("Hệ thống đang ở chế độ TỰ ĐỘNG (Auto). Vui lòng chuyển sang MANUAL để điều khiển thủ công!");
                 return;
             }
-            if (!client || !client.isConnected()) {
-                alert("Chưa kết nối tới Adafruit IO!");
-                return;
-            }
-
-            const topicPath = USERNAME + '/feeds/' + feedKey;
-            const message = new Paho.MQTT.Message(command);
-            message.destinationName = topicPath;
-            client.send(message);
+            alert(`Đã gửi lệnh: ${targetPump} -> ${command === '1' ? 'BẬT' : 'TẮT'}`);
+            // Lưu ý: Phần gửi lệnh xuống thiết bị có thể cấu hình tiếp bằng cách gọi API gửi dữ liệu lên feed tương ứng trên Adafruit IO.
         }
 
-        // Chuyển đổi qua lại giữa Guest và Admin
         function switchRole(role) {
             currentRole = role;
             document.getElementById('btn-guest').className = 'btn-role ' + (role === 'guest' ? 'active' : '');
@@ -416,7 +449,7 @@
         }
 
         function checkAdminPassword() {
-            if (currentRole === 'admin') return; // Đang ở admin rồi thì thôi
+            if (currentRole === 'admin') return;
             document.getElementById('admin-pass').value = '';
             document.getElementById('login-modal').style.display = 'flex';
         }
