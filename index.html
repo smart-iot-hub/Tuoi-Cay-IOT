@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Farm Dashboard - Visual Edition</title>
+    <title>Smart Farm Dashboard - All in One</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
         :root {
@@ -24,9 +25,10 @@
         .container { max-width: 1100px; margin: 0 auto; }
 
         header { text-align: center; margin-bottom: 20px; }
-        header h1 { color: var(--primary); font-size: 22px; }
+        header h1 { color: var(--primary); font-size: 24px; }
         .status-bar { font-size: 13px; color: var(--text-sub); margin-top: 5px; }
         #connection-status { font-weight: bold; color: var(--danger); }
+        .last-update-bar { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
 
         /* Panel Auto/Manual */
         .mode-panel {
@@ -45,7 +47,7 @@
         .card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; position: relative; }
         .card h3 { font-size: 13px; color: var(--text-sub); text-transform: uppercase; margin-bottom: 12px; }
 
-        /* 1. Vòng tròn thông số (Nhiệt độ & Độ ẩm không khí) */
+        /* Vòng tròn thông số */
         .circular-progress {
             width: 100px; height: 100px; border-radius: 50%; background: conic-gradient(var(--accent) 0deg, #e2e8f0 0deg);
             display: flex; align-items: center; justify-content: center; margin: 0 auto; position: relative;
@@ -55,37 +57,34 @@
         }
         .circular-value { position: relative; font-size: 18px; font-weight: bold; color: var(--primary); }
 
-        /* 2. Cảm biến Ánh sáng (Hiệu ứng Lux phát sáng) */
-        .lux-box {
-            padding: 15px; border-radius: 8px; background: #f8fafc; border: 1px dashed #cbd5e1; transition: 0.3s;
-        }
+        /* Ánh sáng */
+        .lux-box { padding: 15px; border-radius: 8px; background: #f8fafc; border: 1px dashed #cbd5e1; transition: 0.3s; }
         .lux-value { font-size: 24px; font-weight: bold; color: #eab308; }
         .lux-desc { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
 
-        /* 3. Mức nước bồn trực quan */
+        /* Mức nước bồn */
         .water-tank { width: 100%; background: #e2e8f0; border-radius: 6px; height: 22px; position: relative; overflow: hidden; border: 1px solid #cbd5e1; }
         .water-fill { height: 100%; background: linear-gradient(90deg, #0284c7, #38bdf8); width: 0%; transition: width 0.4s; }
         .water-text { position: absolute; width: 100%; height: 100%; top: 0; left: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color: white; text-shadow: 1px 1px 1px rgba(0,0,0,0.5); }
 
-        /* 4. Cảm biến Mưa (Hiệu ứng động) */
-        .rain-widget {
-            padding: 15px; border-radius: 8px; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; gap: 8px;
-        }
+        /* Cảm biến Mưa */
+        .rain-widget { padding: 15px; border-radius: 8px; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; gap: 8px; }
         .rain-icon { font-size: 28px; color: #64748b; transition: 0.3s; }
         .rain-status { font-size: 15px; font-weight: bold; }
 
-        /* 5. Độ ẩm đất & Gợi ý thông minh */
+        /* Độ ẩm đất & Gợi ý */
         .soil-box { font-size: 26px; font-weight: bold; color: #16a34a; margin-bottom: 8px; }
-        .soil-suggestion {
-            background: #f0fdf4; border-left: 4px solid var(--success); padding: 8px 12px; font-size: 12px; text-align: left; border-radius: 0 6px 6px 0; color: #166534; margin-top: 10px;
-        }
+        .soil-suggestion { background: #f0fdf4; border-left: 4px solid var(--success); padding: 8px 12px; font-size: 12px; text-align: left; border-radius: 0 6px 6px 0; color: #166534; margin-top: 10px; }
 
         /* Nút điều khiển Bơm */
         .control-card { border-top: 4px solid var(--accent); }
-        .switch-btn { margin-top: 12px; padding: 10px; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; width: 100%; color: white; }
+        .switch-btn { margin-top: 12px; padding: 10px; font-size: 14px; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; width: 100%; color: white; transition: 0.2s; }
         .btn-off { background-color: #94a3b8; }
         .btn-on { background-color: var(--success); }
         .switch-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Card Biểu đồ */
+        .chart-card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -93,7 +92,8 @@
 <div class="container">
     <header>
         <h1>🌱 SMART FARM DASHBOARD</h1>
-        <div class="status-bar">Trạng thái kết nối MQTT: <span id="connection-status">Đang kết nối...</span></div>
+        <div class="status-bar">Trạng thái MQTT: <span id="connection-status">Đang kết nối...</span></div>
+        <div class="last-update-bar">Cập nhật lần cuối: <span id="last-update-time">--:--:--</span></div>
     </header>
 
     <!-- THANH ĐIỀU KHIỂN CHẾ ĐỘ -->
@@ -107,7 +107,7 @@
 
     <!-- KHU VỰC HIỂN THỊ CẢM BIẾN (WIDGETS) -->
     <div class="grid">
-        <!-- 1. Nhiệt độ không khí (Vòng tròn) -->
+        <!-- 1. Nhiệt độ -->
         <div class="card">
             <h3>Nhiệt độ không khí</h3>
             <div class="circular-progress" id="temp-circle">
@@ -115,15 +115,15 @@
             </div>
         </div>
 
-        <!-- 2. Độ ẩm không khí (Vòng tròn) -->
+        <!-- 2. Độ ẩm không khí -->
         <div class="card">
             <h3>Độ ẩm không khí</h3>
-            <div class="circular-progress" id="hum-circle" style="--accent-color: #3b82f6;">
+            <div class="circular-progress" id="hum-circle">
                 <div class="circular-value"><span id="val-hum">--</span>%</div>
             </div>
         </div>
 
-        <!-- 3. Ánh sáng TEMT6000 (Lux box) -->
+        <!-- 3. Ánh sáng TEMT6000 -->
         <div class="card">
             <h3>Cường độ ánh sáng</h3>
             <div class="lux-box" id="lux-box-bg">
@@ -176,12 +176,22 @@
             <button id="pump2-btn" class="switch-btn btn-off" onclick="togglePump('pump2')" disabled>ĐANG TẮT</button>
         </div>
     </div>
+
+    <!-- BIỂU ĐỒ THEO DÕI REALTIME -->
+    <div class="chart-card">
+        <h3 style="font-size: 14px; color: var(--text-sub); margin-bottom: 15px; text-transform: uppercase;">
+            <i class="fa-solid fa-chart-line"></i> Biểu đồ diễn biến Nhiệt độ & Độ ẩm đất
+        </h3>
+        <canvas id="realtimeChart" height="100"></canvas>
+    </div>
 </div>
 
-<!-- NHÚM FILE CONFIG RIÊNG BIỆT (GIÚP BẢO MẬT AIO_KEY KHÔNG BỊ LỘ LÊN GITHUB) -->
-<script src="config.js"></script>
-
 <script>
+    // ==================== CẤU HÌNH ADAFRUIT IO ====================
+    const AIO_USERNAME = "TEN_TAI_KHOAN_ADAFRUIT"; // Thay bằng Username của bạn
+    const AIO_KEY = "aio_mMgD47PXFp6KiKUAWPqgzmzl5ehX";  // Thay bằng Key của bạn
+    // ==============================================================
+
     const clientId = "web_client_" + Math.random().toString(16).substring(2, 8);
     const client = new Paho.MQTT.Client("io.adafruit.com", 8443, clientId);
 
@@ -189,7 +199,50 @@
     let pump1State = "OFF";
     let pump2State = "OFF";
 
-    client.onConnectionLost = (res) => { document.getElementById("connection-status").innerText = "Mất kết nối!"; };
+    // Cấu hình Chart.js
+    const ctx = document.getElementById('realtimeChart').getContext('2d');
+    const sensorChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                { label: 'Nhiệt độ (°C)', borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', data: [], fill: true, tension: 0.3 },
+                { label: 'Độ ẩm đất (%)', borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.1)', data: [], fill: true, tension: 0.3 }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: { display: true, title: { display: true, text: 'Thời gian' } },
+                y: { min: 0, max: 100 }
+            }
+        }
+    });
+
+    function updateChart(temp, soil) {
+        const now = new Date().toLocaleTimeString('vi-VN');
+        if (sensorChart.data.labels.length > 12) {
+            sensorChart.data.labels.shift();
+            sensorChart.data.datasets[0].data.shift();
+            sensorChart.data.datasets[1].data.shift();
+        }
+        sensorChart.data.labels.push(now);
+        if (temp !== undefined) sensorChart.data.datasets[0].data.push(temp);
+        if (soil !== undefined) sensorChart.data.datasets[1].data.push(soil);
+        sensorChart.update();
+    }
+
+    function updateTimestamp() {
+        document.getElementById("last-update-time").innerText = new Date().toLocaleTimeString('vi-VN');
+    }
+
+    // MQTT Handlers
+    client.onConnectionLost = (res) => { 
+        document.getElementById("connection-status").innerText = "Mất kết nối! Thử lại sau 5s...";
+        document.getElementById("connection-status").style.color = "var(--danger)";
+        setTimeout(connectMQTT, 5000);
+    };
+
     client.onMessageArrived = (msg) => {
         const topic = msg.destinationName;
         const payload = msg.payloadString;
@@ -197,22 +250,23 @@
         if (topic.endsWith("/feeds/system-data")) {
             try {
                 const data = JSON.parse(payload);
-                
-                // 1. Nhiệt độ (Quy đổi vòng tròn max 50°C)
+                updateTimestamp();
+
+                // 1. Nhiệt độ
                 if (data.temp !== undefined) {
                     document.getElementById("val-temp").innerText = data.temp;
-                    let tempDeg = (data.temp / 50) * 360;
+                    let tempDeg = Math.min((data.temp / 50) * 360, 360);
                     document.getElementById("temp-circle").style.background = `conic-gradient(#ef4444 ${tempDeg}deg, #e2e8f0 0deg)`;
                 }
 
-                // 2. Độ ẩm không khí (Quy đổi vòng tròn max 100%)
+                // 2. Độ ẩm không khí
                 if (data.hum !== undefined) {
                     document.getElementById("val-hum").innerText = data.hum;
-                    let humDeg = (data.hum / 100) * 360;
+                    let humDeg = Math.min((data.hum / 100) * 360, 360);
                     document.getElementById("hum-circle").style.background = `conic-gradient(#3b82f6 ${humDeg}deg, #e2e8f0 0deg)`;
                 }
 
-                // 3. Ánh sáng Lux (Thay đổi màu nền box theo độ sáng)
+                // 3. Ánh sáng
                 if (data.light !== undefined) {
                     let lux = data.light;
                     document.getElementById("val-light").innerText = lux;
@@ -227,7 +281,7 @@
                     }
                 }
 
-                // 4. Độ ẩm đất và Gợi ý thông minh tự động
+                // 4. Độ ẩm đất
                 if (data.soil !== undefined) {
                     let soil = data.soil;
                     document.getElementById("val-soil").innerText = soil;
@@ -235,17 +289,17 @@
                     let sugBox = document.getElementById("soil-suggestion-text");
                     
                     if (soil < 30) {
-                        sugText = "⚠️ Đất khô hạn! Cây cần được tưới nước ngay lập tức.";
+                        sugText = "⚠️ Đất khô hạn! Cây cần được tưới nước ngay.";
                         sugBox.style.borderLeftColor = "var(--danger)";
                         sugBox.style.background = "#fef2f2";
                         sugBox.style.color = "#991b1b";
-                    } else if (soil >= 30 && soil <= 70) {
-                        sugText = "✅ Độ ẩm đất lý tưởng cho sự phát triển của cây.";
+                    } else if (soil <= 70) {
+                        sugText = "✅ Độ ẩm đất lý tưởng cho cây phát triển.";
                         sugBox.style.borderLeftColor = "var(--success)";
                         sugBox.style.background = "#f0fdf4";
                         sugBox.style.color = "#166534";
                     } else {
-                        sugText = "💧 Đất đang quá ẩm. Tránh tưới thêm để không úng rễ.";
+                        sugText = "💧 Đất đang quá ẩm. Tránh tưới thêm.";
                         sugBox.style.borderLeftColor = "var(--accent)";
                         sugBox.style.background = "#f0f9ff";
                         sugBox.style.color = "#0369a1";
@@ -253,7 +307,12 @@
                     sugBox.innerHTML = `<i class="fa-solid fa-lightbulb"></i> ${sugText}`;
                 }
 
-                // 5. Mức nước bồn
+                // Cập nhật Biểu đồ
+                if (data.temp !== undefined || data.soil !== undefined) {
+                    updateChart(data.temp, data.soil);
+                }
+
+                // 5. Mức nước
                 if (data.water !== undefined) {
                     document.getElementById("water-text").innerText = data.water + "%";
                     document.getElementById("water-fill").style.width = data.water + "%";
@@ -262,7 +321,7 @@
                     document.getElementById("val-water-raw").innerText = data.waterRaw;
                 }
 
-                // 6. Cảm biến Mưa
+                // 6. Mưa
                 if (data.rain !== undefined) {
                     let isRaining = (data.rain == 0 || data.rain === "0");
                     let rainBg = document.getElementById("rain-bg");
@@ -271,7 +330,7 @@
 
                     if (isRaining) {
                         rainBg.style.background = "#e0f2fe";
-                        rainIcon.className = "fa-solid fa-cloud-rain rain-icon";
+                        rainIcon.className = "fa-solid fa-cloud-showers-heavy rain-icon";
                         rainIcon.style.color = "#0284c7";
                         rainText.innerText = "🌧️ Trời đang mưa";
                         rainText.style.color = "#0369a1";
@@ -285,7 +344,7 @@
                 }
 
                 if (data.mode) updateModeUI(data.mode);
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Lỗi parse JSON:", e); }
         }
 
         if (topic.endsWith("/feeds/luan.mode")) updateModeUI(payload.trim());
@@ -293,18 +352,26 @@
         if (topic.endsWith("/feeds/luan.pump2")) { pump2State = (payload === "ON" || payload === "1") ? "ON" : "OFF"; updatePumpUI("pump2", pump2State); }
     };
 
-    client.connect({
-        useSSL: true, userName: AIO_USERNAME, password: AIO_KEY,
-        onSuccess: () => {
-            document.getElementById("connection-status").innerText = "Đã kết nối trực tuyến!";
-            document.getElementById("connection-status").style.color = "var(--success)";
-            client.subscribe(AIO_USERNAME + "/feeds/system-data");
-            client.subscribe(AIO_USERNAME + "/feeds/luan.mode");
-            client.subscribe(AIO_USERNAME + "/feeds/luan.pump1");
-            client.subscribe(AIO_USERNAME + "/feeds/luan.pump2");
-        },
-        onFailure: (err) => { document.getElementById("connection-status").innerText = "Lỗi kết nối: " + err.errorMessage; }
-    });
+    function connectMQTT() {
+        if (!AIO_USERNAME || AIO_USERNAME === "TEN_TAI_KHOAN_ADAFRUIT") {
+            document.getElementById("connection-status").innerText = "Lỗi: Chưa nhập AIO_USERNAME trong script!";
+            return;
+        }
+        client.connect({
+            useSSL: true, userName: AIO_USERNAME, password: AIO_KEY,
+            onSuccess: () => {
+                document.getElementById("connection-status").innerText = "Trực tuyến";
+                document.getElementById("connection-status").style.color = "var(--success)";
+                client.subscribe(AIO_USERNAME + "/feeds/system-data");
+                client.subscribe(AIO_USERNAME + "/feeds/luan.mode");
+                client.subscribe(AIO_USERNAME + "/feeds/luan.pump1");
+                client.subscribe(AIO_USERNAME + "/feeds/luan.pump2");
+            },
+            onFailure: (err) => { 
+                document.getElementById("connection-status").innerText = "Lỗi kết nối: " + err.errorMessage; 
+            }
+        });
+    }
 
     function setMode(mode) {
         let msg = new Paho.MQTT.Message(mode);
@@ -343,6 +410,9 @@
         btn.innerText = (state === "ON") ? "ĐANG BẬT" : "ĐANG TẮT";
         btn.className = "switch-btn " + (state === "ON" ? "btn-on" : "btn-off");
     }
+
+    // Chạy kết nối ban đầu
+    connectMQTT();
 </script>
 </body>
 </html>
