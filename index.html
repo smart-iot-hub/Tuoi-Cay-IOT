@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trạm Tưới Cây Tự Động</title>
+    <title>Trạm Tưới Cây Tự Động - Smart Farm</title>
     <!-- Thư viện Paho MQTT cho Web -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
     <style>
@@ -51,21 +51,32 @@
         }
 
         .header h1 {
-            font-size: 20px;
+            font-size: 18px;
             color: var(--accent-blue);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
-        .btn-config {
+        .role-badge {
+            display: flex;
+            gap: 6px;
+        }
+
+        .btn-role {
             background-color: #334155;
             color: var(--text-main);
             border: none;
-            padding: 8px 14px;
-            border-radius: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .btn-role.active {
+            background-color: var(--accent-blue);
+            color: #0f172a;
         }
 
         /* Status Bar */
@@ -137,12 +148,18 @@
             margin-top: 6px;
         }
 
-        /* Control Sections */
+        /* Control Sections (Ẩn hiện theo phân quyền) */
+        .admin-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: all 0.3s ease;
+        }
+
         .section-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: var(--text-sub);
-            margin-top: 8px;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -158,7 +175,7 @@
             border: none;
             padding: 14px;
             border-radius: 10px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             color: #ffffff;
             cursor: pointer;
@@ -167,7 +184,7 @@
         .btn-on { background-color: var(--accent-green); }
         .btn-off { background-color: var(--accent-red); }
 
-        /* Modal Cấu hình */
+        /* Modal Đăng nhập Admin */
         .modal {
             display: none;
             position: fixed;
@@ -184,7 +201,7 @@
             padding: 24px;
             border-radius: 12px;
             width: 90%;
-            max-width: 400px;
+            max-width: 360px;
             display: flex;
             flex-direction: column;
             gap: 14px;
@@ -216,7 +233,7 @@
 
         .btn-save {
             background-color: var(--accent-blue);
-            color: #000;
+            color: #0f172a;
             border: none;
             padding: 8px 16px;
             border-radius: 6px;
@@ -239,20 +256,23 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>🌱 TRẠM TƯỚI CÂY TỰ ĐỘNG</h1>
-            <button class="btn-config" onclick="openConfigModal()">⚙️ Cấu hình</button>
+            <h1>🌱 TRẠM TƯỚI CÂY</h1>
+            <div class="role-badge">
+                <button class="btn-role active" id="btn-guest" onclick="switchRole('guest')">Guest</button>
+                <button class="btn-role" id="btn-admin" onclick="checkAdminPassword()">Admin</button>
+            </div>
         </div>
 
         <!-- Status Bar -->
         <div class="status-bar">
-            <span>Máy chủ Adafruit IO:</span>
+            <span>Trạng thái kết nối:</span>
             <div class="status-indicator">
                 <div class="status-dot" id="status-dot"></div>
                 <span id="status-text">Đang kết nối...</span>
             </div>
         </div>
 
-        <!-- Sensor Grid -->
+        <!-- Sensor Grid (Cả Guest và Admin đều xem được) -->
         <div class="grid">
             <div class="card">
                 <div class="label">Nhiệt độ</div>
@@ -270,55 +290,52 @@
             </div>
         </div>
 
-        <!-- Pump Controls -->
-        <div class="section-title">💧 BƠM 1 (Bơm bồn nước)</div>
-        <div class="btn-group">
-            <button class="btn-action btn-on" onclick="controlPump('luan.pump1', '1')">BẬT BƠM 1</button>
-            <button class="btn-action btn-off" onclick="controlPump('luan.pump1', '0')">TẮT BƠM 1</button>
-        </div>
+        <!-- Pump Controls (Chỉ hiện khi đăng nhập quyền ADMIN) -->
+        <div class="admin-section" id="admin-controls" style="display: none;">
+            <div class="section-title">💧 ĐIỀU KHIỂN BƠM 1 (Bơm bồn nước)</div>
+            <div class="btn-group">
+                <button class="btn-action btn-on" onclick="controlPump('luan.pump1', '1')">BẬT BƠM 1</button>
+                <button class="btn-action btn-off" onclick="controlPump('luan.pump1', '0')">TẮT BƠM 1</button>
+            </div>
 
-        <div class="section-title">🌿 BƠM 2 (Bơm tưới cây)</div>
-        <div class="btn-group">
-            <button class="btn-action btn-on" onclick="controlPump('luan.pump2', '1')">BẬT BƠM 2</button>
-            <button class="btn-action btn-off" onclick="controlPump('luan.pump2', '0')">TẮT BƠM 2</button>
+            <div class="section-title" style="margin-top: 4px;">🌿 ĐIỀU KHIỂN BƠM 2 (Bơm tưới cây)</div>
+            <div class="btn-group">
+                <button class="btn-action btn-on" onclick="controlPump('luan.pump2', '1')">BẬT BƠM 2</button>
+                <button class="btn-action btn-off" onclick="controlPump('luan.pump2', '0')">TẮT BƠM 2</button>
+            </div>
         </div>
     </div>
 
-    <!-- Modal Cấu hình -->
-    <div class="modal" id="config-modal">
+    <!-- Modal Nhập Mật khẩu Admin -->
+    <div class="modal" id="login-modal">
         <div class="modal-content">
-            <h3 style="color: var(--accent-blue);">Cấu hình Adafruit IO</h3>
+            <h3 style="color: var(--accent-blue);">🔐 Đăng nhập Quản trị viên</h3>
             <div class="form-group">
-                <label for="input-user">Adafruit IO Username:</label>
-                <input type="text" id="input-user" placeholder="Nhập Username...">
-            </div>
-            <div class="form-group">
-                <label for="input-key">Adafruit IO Key (AIO Key):</label>
-                <input type="password" id="input-key" placeholder="Nhập chuỗi aio_...">
+                <label for="admin-pass">Mật khẩu Admin:</label>
+                <input type="password" id="admin-pass" placeholder="Nhập mật khẩu (mặc định: 123456)">
             </div>
             <div class="modal-buttons">
-                <button class="btn-close" onclick="closeConfigModal()">Hủy</button>
-                <button class="btn-save" onclick="saveConfig()">Lưu & Kết nối</button>
+                <button class="btn-close" onclick="closeLoginModal()">Hủy</button>
+                <button class="btn-save" onclick="verifyAdmin()">Xác nhận</button>
             </div>
         </div>
     </div>
 
     <script>
         let client = null;
-        let USERNAME = localStorage.getItem('aio_username') || 'ZenoAdmin';
-        let AIO_KEY = localStorage.getItem('aio_key') || 'aio_BbwJ20Zr62Y79F3Avcjg4YaKh3Fw';
+        // Tài khoản Adafruit IO cấu hình cứng ngầm định cho hệ thống
+        const USERNAME = "ZenoAdmin";
+        const AIO_KEY = "aio_BbwJ20Zr62Y79F3Avcjg4YaKh3Fw";
+        
+        // Mật khẩu Admin đơn giản (Bạn có thể đổi tùy ý bên dưới)
+        const ADMIN_PASSWORD = "123456"; 
+        let currentRole = 'guest';
 
         window.onload = function() {
-            if (!USERNAME || !AIO_KEY) {
-                openConfigModal();
-            } else {
-                connectMQTT();
-            }
+            connectMQTT();
         };
 
         function connectMQTT() {
-            if (!USERNAME || !AIO_KEY) return;
-
             updateStatus('connecting', 'Đang kết nối...');
             const clientId = 'web_client_' + Math.random().toString(16).substr(2, 8);
             
@@ -336,110 +353,94 @@
             });
         }
 
-        // 1. Hàm chạy ngay khi kết nối MQTT thành công
         function onConnect() {
-            console.log("🟢 MQTT Connected!");
             updateStatus('connected', 'Đã kết nối');
-            
-            // Subscribe vào feed chứa gói JSON tổng hợp
+            // Đăng ký nhận dữ liệu từ feed tổng hợp
             client.subscribe(USERNAME + '/feeds/system-data');
-
-            console.log("📡 Đã Subscribe thành công feed system-data!");
         }
 
         function onFailure(responseObject) {
-            console.error("🔴 Kết nối thất bại:", responseObject.errorMessage);
             updateStatus('disconnected', 'Lỗi kết nối');
         }
 
         function onConnectionLost(responseObject) {
             if (responseObject.errorCode !== 0) {
-                console.warn("⚠️ Mất kết nối MQTT:", responseObject.errorMessage);
                 updateStatus('disconnected', 'Mất kết nối');
             }
         }
 
-        // 2. Hàm tự động kích hoạt khi có gói JSON gửi về từ ESP32
         function onMessageArrived(message) {
             const topic = message.destinationName;
             const payload = message.payloadString;
 
-            console.log("📩 Nhận dữ liệu JSON:", topic, "=>", payload);
-
             if (topic.endsWith('system-data')) {
                 try {
-                    // Giải mã chuỗi JSON thành các biến riêng biệt
                     const data = JSON.parse(payload);
-
-                    // Cập nhật lên giao diện HTML tương ứng
-                    if (data.temp !== undefined) {
-                        document.getElementById('temp').innerText = data.temp;
-                    }
-                    if (data.soil !== undefined) {
-                        document.getElementById('soil').innerText = data.soil;
-                    }
-                    if (data.water !== undefined) {
-                        document.getElementById('water').innerText = data.water;
-                    }
+                    if (data.temp !== undefined) document.getElementById('temp').innerText = data.temp;
+                    if (data.soil !== undefined) document.getElementById('soil').innerText = data.soil;
+                    if (data.water !== undefined) document.getElementById('water').innerText = data.water;
                 } catch (e) {
-                    console.error("🔴 Lỗi giải mã JSON:", e);
+                    console.error("Lỗi parse JSON:", e);
                 }
             }
         }
 
         function controlPump(feedKey, command) {
+            if (currentRole !== 'admin') {
+                alert("Bạn cần đăng nhập quyền Admin để điều khiển thiết bị!");
+                return;
+            }
             if (!client || !client.isConnected()) {
-                alert("Chưa kết nối tới Adafruit IO! Vui lòng kiểm tra lại cấu hình.");
+                alert("Chưa kết nối tới Adafruit IO!");
                 return;
             }
 
             const topicPath = USERNAME + '/feeds/' + feedKey;
             const message = new Paho.MQTT.Message(command);
             message.destinationName = topicPath;
-            
             client.send(message);
-            console.log("📤 Đã gửi lệnh điều khiển:", topicPath, "=>", command);
+        }
+
+        // Chuyển đổi qua lại giữa Guest và Admin
+        function switchRole(role) {
+            currentRole = role;
+            document.getElementById('btn-guest').className = 'btn-role ' + (role === 'guest' ? 'active' : '');
+            document.getElementById('btn-admin').className = 'btn-role ' + (role === 'admin' ? 'active' : '');
+            
+            const adminSection = document.getElementById('admin-controls');
+            if (role === 'admin') {
+                adminSection.style.display = 'flex';
+            } else {
+                adminSection.style.display = 'none';
+            }
+        }
+
+        function checkAdminPassword() {
+            if (currentRole === 'admin') return; // Đang ở admin rồi thì thôi
+            document.getElementById('admin-pass').value = '';
+            document.getElementById('login-modal').style.display = 'flex';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('login-modal').style.display = 'none';
+        }
+
+        function verifyAdmin() {
+            const inputPass = document.getElementById('admin-pass').value;
+            if (inputPass === ADMIN_PASSWORD) {
+                closeLoginModal();
+                switchRole('admin');
+                alert("🔓 Đăng nhập quyền Admin thành công!");
+            } else {
+                alert("❌ Mật khẩu không chính xác!");
+            }
         }
 
         function updateStatus(state, text) {
             const dot = document.getElementById('status-dot');
             const statusText = document.getElementById('status-text');
-            
             dot.className = 'status-dot ' + (state === 'connected' ? 'connected' : 'disconnected');
             statusText.innerText = text;
-        }
-
-        function openConfigModal() {
-            document.getElementById('input-user').value = USERNAME;
-            document.getElementById('input-key').value = AIO_KEY;
-            document.getElementById('config-modal').style.display = 'flex';
-        }
-
-        function closeConfigModal() {
-            document.getElementById('config-modal').style.display = 'none';
-        }
-
-        function saveConfig() {
-            const user = document.getElementById('input-user').value.trim();
-            const key = document.getElementById('input-key').value.trim();
-
-            if (!user || !key) {
-                alert("Vui lòng nhập đầy đủ Username và AIO Key!");
-                return;
-            }
-
-            localStorage.setItem('aio_username', user);
-            localStorage.setItem('aio_key', key);
-            
-            USERNAME = user;
-            AIO_KEY = key;
-
-            closeConfigModal();
-
-            if (client && client.isConnected()) {
-                client.disconnect();
-            }
-            connectMQTT();
         }
     </script>
 </body>
