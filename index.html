@@ -305,8 +305,8 @@
 
     <script>
         let client = null;
-        let USERNAME = localStorage.getItem('aio_username') || '';
-        let AIO_KEY = localStorage.getItem('aio_key') || '';
+        let USERNAME = localStorage.getItem('aio_username') || 'ZenoAdmin';
+        let AIO_KEY = localStorage.getItem('aio_key') || 'aio_BbwJ20Zr62Y79F3Avcjg4YaKh3Fw';
 
         window.onload = function() {
             if (!USERNAME || !AIO_KEY) {
@@ -341,12 +341,10 @@
             console.log("🟢 MQTT Connected!");
             updateStatus('connected', 'Đã kết nối');
             
-            // Đăng ký nhận dữ liệu từ các Feed
-            client.subscribe(USERNAME + '/feeds/luan.temperature');
-            client.subscribe(USERNAME + '/feeds/luan.soil');
-            client.subscribe(USERNAME + '/feeds/luan.water');
+            // Subscribe vào feed chứa gói JSON tổng hợp
+            client.subscribe(USERNAME + '/feeds/system-data');
 
-            console.log("📡 Đã Subscribe thành công các Feed!");
+            console.log("📡 Đã Subscribe thành công feed system-data!");
         }
 
         function onFailure(responseObject) {
@@ -361,20 +359,31 @@
             }
         }
 
-        // 2. Hàm tự động kích hoạt mỗi khi có gói tin mới gửi về
+        // 2. Hàm tự động kích hoạt khi có gói JSON gửi về từ ESP32
         function onMessageArrived(message) {
             const topic = message.destinationName;
             const payload = message.payloadString;
 
-            // Log ra Console để kiểm tra gói tin nhận được
-            console.log("📩 Nhận dữ liệu:", topic, "=>", payload);
+            console.log("📩 Nhận dữ liệu JSON:", topic, "=>", payload);
 
-            if (topic.endsWith('luan.temperature')) {
-                document.getElementById('temp').innerText = payload;
-            } else if (topic.endsWith('luan.soil')) {
-                document.getElementById('soil').innerText = payload;
-            } else if (topic.endsWith('luan.water')) {
-                document.getElementById('water').innerText = payload;
+            if (topic.endsWith('system-data')) {
+                try {
+                    // Giải mã chuỗi JSON thành các biến riêng biệt
+                    const data = JSON.parse(payload);
+
+                    // Cập nhật lên giao diện HTML tương ứng
+                    if (data.temp !== undefined) {
+                        document.getElementById('temp').innerText = data.temp;
+                    }
+                    if (data.soil !== undefined) {
+                        document.getElementById('soil').innerText = data.soil;
+                    }
+                    if (data.water !== undefined) {
+                        document.getElementById('water').innerText = data.water;
+                    }
+                } catch (e) {
+                    console.error("🔴 Lỗi giải mã JSON:", e);
+                }
             }
         }
 
