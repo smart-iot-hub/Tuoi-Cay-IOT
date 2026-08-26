@@ -6,8 +6,8 @@
     <title>Smart Farm Dashboard - Ultimate Edition</title>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- MQTT.js CDN mới nhất -->
-    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <!-- MQTT.js CDN Chuẩn (Bản mới nhất từ cdnjs/unpkg) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
     <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
@@ -111,7 +111,7 @@
 <div class="container">
     <header>
         <h1>🌱 SMART FARM DASHBOARD</h1>
-        <div class="status-bar">Trạng thái MQTT: <span id="connection-status">Đang kết nối...</span></div>
+        <div class="status-bar">Trạng thái MQTT (Port 443): <span id="connection-status">Đang kết nối...</span></div>
         <div class="last-update-bar">Cập nhật lần cuối: <span id="last-update-time">--:--:--</span></div>
         
         <button class="config-btn" onclick="configureKeys()">
@@ -222,7 +222,7 @@
         const newUsername = prompt("Nhập Adafruit IO Username:", AIO_USERNAME);
         if (newUsername === null) return;
 
-        const newKey = prompt("Nhập Adafruit IO Key:", AIO_KEY);
+        const newKey = prompt("Nhập Adafruit IO Key (dạng aio_...):", AIO_KEY);
         if (newKey === null) return;
 
         if (newUsername.trim() !== "" && newKey.trim() !== "") {
@@ -278,7 +278,7 @@
         document.getElementById("last-update-time").innerText = new Date().toLocaleTimeString('vi-VN');
     }
 
-    // ==================== KẾT NỐI MQTT.JS ====================
+    // ==================== KẾT NỐI MQTT VIA PORT 443 ====================
     function connectMQTT() {
         AIO_USERNAME = (localStorage.getItem("AIO_USERNAME") || "").trim();
         AIO_KEY = (localStorage.getItem("AIO_KEY") || "").trim();
@@ -289,42 +289,64 @@
             return;
         }
 
-        document.getElementById("connection-status").innerText = "Đang kết nối...";
+        document.getElementById("connection-status").innerText = "Đang kết nối Port 443...";
         document.getElementById("connection-status").style.color = "var(--warning)";
 
-        if (client) { client.end(); }
+        if (client) { 
+            try { client.end(true); } catch(e){} 
+        }
 
         const options = {
             username: AIO_USERNAME,
             password: AIO_KEY,
-            clientId: "web_" + Math.random().toString(16).substring(2, 8),
+            clientId: "web_" + Math.random().toString(16).substring(2, 10),
             keepalive: 60,
-            reconnectPeriod: 5000
+            clean: true,
+            reconnectPeriod: 4000
         };
 
-        client = mqtt.connect("wss://io.adafruit.com:443/mqtt", options);
+        // KẾT NỐI CHÍNH THỨC PORT 443 WSS
+        const connectUrl = "wss://io.adafruit.com:443/mqtt";
+        console.log("Đang kết nối tới:", connectUrl);
+
+        try {
+            client = mqtt.connect(connectUrl, options);
+        } catch (err) {
+            console.error("Lỗi khởi tạo MQTT Client:", err);
+            document.getElementById("connection-status").innerText = "Lỗi khởi tạo JS";
+            return;
+        }
 
         client.on("connect", () => {
-            document.getElementById("connection-status").innerText = "Trực tuyến";
+            console.log("✅ MQTT Kết nối thành công tới Adafruit IO!");
+            document.getElementById("connection-status").innerText = "Trực tuyến (Port 443)";
             document.getElementById("connection-status").style.color = "var(--success)";
 
+            // Đăng ký Feed (Đã chuẩn hóa Key dấu gạch ngang '-')
             client.subscribe(AIO_USERNAME + "/feeds/system-data");
+            client.subscribe(AIO_USERNAME + "/feeds/luan-mode");
+            client.subscribe(AIO_USERNAME + "/feeds/luan-pump1");
+            client.subscribe(AIO_USERNAME + "/feeds/luan-pump2");
+            
+            // Backup trường hợp bạn tạo feed dạng luan.mode trên Adafruit
             client.subscribe(AIO_USERNAME + "/feeds/luan.mode");
             client.subscribe(AIO_USERNAME + "/feeds/luan.pump1");
             client.subscribe(AIO_USERNAME + "/feeds/luan.pump2");
         });
 
         client.on("message", (topic, payload) => {
+            console.log("📩 Nhận dữ liệu từ Topic:", topic, "-> Payload:", payload.toString());
             handleIncomingMessage(topic, payload.toString());
         });
 
         client.on("error", (err) => {
-            console.error("MQTT Error:", err);
-            document.getElementById("connection-status").innerText = "Lỗi kết nối / Key sai";
+            console.error("❌ MQTT Connection Error:", err);
+            document.getElementById("connection-status").innerText = "Lỗi kết nối / Sai Key";
             document.getElementById("connection-status").style.color = "var(--danger)";
         });
 
         client.on("offline", () => {
+            console.warn("⚠️ MQTT Client Mất kết nối...");
             document.getElementById("connection-status").innerText = "Đang kết nối lại...";
             document.getElementById("connection-status").style.color = "var(--warning)";
         });
@@ -432,15 +454,22 @@
             } catch (e) { console.error("Lỗi parse JSON:", e); }
         }
 
-        if (topic.endsWith("/feeds/luan.mode")) updateModeUI(payload.trim());
-        if (topic.endsWith("/feeds/luan.pump1")) { pump1State = (payload === "ON" || payload === "1") ? "ON" : "OFF"; updatePumpUI("pump1", pump1State); }
-        if (topic.endsWith("/feeds/luan.pump2")) { pump2State = (payload === "ON" || payload === "1") ? "ON" : "OFF"; updatePumpUI("pump2", pump2State); }
+        // Xử lý nút bấm từ các Feed Mode & Pump
+        if (topic.endsWith("/luan-mode") || topic.endsWith("/luan.mode")) updateModeUI(payload.trim());
+        if (topic.endsWith("/luan-pump1") || topic.endsWith("/luan.pump1")) { 
+            pump1State = (payload === "ON" || payload === "1") ? "ON" : "OFF"; 
+            updatePumpUI("pump1", pump1State); 
+        }
+        if (topic.endsWith("/luan-pump2") || topic.endsWith("/luan.pump2")) { 
+            pump2State = (payload === "ON" || payload === "1") ? "ON" : "OFF"; 
+            updatePumpUI("pump2", pump2State); 
+        }
     }
 
     // Điều khiển Chế độ
     function setMode(mode) {
         if (client && client.connected) {
-            client.publish(AIO_USERNAME + "/feeds/luan.mode", mode);
+            client.publish(AIO_USERNAME + "/feeds/luan-mode", mode);
         }
     }
 
@@ -463,7 +492,8 @@
     // Điều khiển Bơm
     function togglePump(pumpName) {
         if (currentMode === "auto" || !client || !client.connected) return;
-        let feed = AIO_USERNAME + "/feeds/" + (pumpName === "pump1" ? "luan.pump1" : "luan.pump2");
+        let feedKey = (pumpName === "pump1" ? "luan-pump1" : "luan-pump2");
+        let feed = AIO_USERNAME + "/feeds/" + feedKey;
         let state = (pumpName === "pump1" ? pump1State : pump2State);
         let nextState = (state === "ON") ? "OFF" : "ON";
         client.publish(feed, nextState);
