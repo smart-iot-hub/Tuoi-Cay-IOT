@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Giám Sát & Điều Khiển Tưới Cây</title>
+    <!-- Thư viện MQTT WebSocket -->
+    <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+    <!-- Font Google Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #f8fafc;
+            min-height: 100vh;
+            padding: 20px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container { width: 100%; max-width: 480px; }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 { font-size: 1.4rem; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px; }
+        .header p { font-size: 0.85rem; color: #94a3b8; margin-top: 4px; }
+        
+        /* Status Bar */
+        .status-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .status-indicator { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 500; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 8px #ef4444; }
+        .dot.connected { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+
+        /* Grid hiển thị cảm biến */
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .sensor-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 16px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        .sensor-title { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .sensor-value { font-size: 1.7rem; font-weight: 700; color: #f8fafc; }
+        .sensor-unit { font-size: 0.9rem; color: #38bdf8; font-weight: 500; }
+
+        /* Khối điều khiển */
+        .control-section { display: flex; flex-direction: column; gap: 15px; }
+        .control-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 18px;
+        }
+        .control-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .control-title { font-size: 1rem; font-weight: 600; color: #e2e8f0; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-off { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-on { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3); }
+
+        .btn-group { display: flex; gap: 10px; }
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-on { background: linear-gradient(135deg, #16a34a, #22c55e); color: white; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3); }
+        .btn-off { background: linear-gradient(135deg, #dc2626, #ef4444); color: white; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3); }
+        .btn:active { transform: scale(0.96); }
+
+        .footer { text-align: center; margin-top: 30px; font-size: 0.75rem; color: #64748b; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🌱 TRẠM TƯỚI CÂY TỰ ĐỘNG</h1>
+        <p>Bảng điều khiển dành cho Người vận hành</p>
+    </div>
+
+    <!-- Trạng thái kết nối -->
+    <div class="status-card">
+        <span style="font-size: 0.85rem; color: #94a3b8;">Trạng thái máy chủ</span>
+        <div class="status-indicator">
+            <div class="dot" id="status-dot"></div>
+            <span id="status-text" style="color: #ef4444;">Đang kết nối...</span>
+        </div>
+    </div>
+
+    <!-- Thông số cảm biến -->
+    <div class="sensor-grid">
+        <div class="sensor-card">
+            <div class="sensor-title">Nhiệt Độ</div>
+            <div class="sensor-value"><span id="val-temp">--</span> <span class="sensor-unit">°C</span></div>
+        </div>
+        <div class="sensor-card">
+            <div class="sensor-title">Độ Ẩm Khí</div>
+            <div class="sensor-value"><span id="val-hum">--</span> <span class="sensor-unit">%</span></div>
+        </div>
+        <div class="sensor-card">
+            <div class="sensor-title">Độ Ẩm Đất</div>
+            <div class="sensor-value"><span id="val-soil">--</span> <span class="sensor-unit">%</span></div>
+        </div>
+        <div class="sensor-card">
+            <div class="sensor-title">Mức Nước Bồn</div>
+            <div class="sensor-value"><span id="val-water">--</span> <span class="sensor-unit">%</span></div>
+        </div>
+    </div>
+
+    <!-- Điều khiển thiết bị -->
+    <div class="control-section">
+        <!-- Bơm 1 -->
+        <div class="control-card">
+            <div class="control-header">
+                <span class="control-title">🚰 Bơm Bồn Nước (Bơm 1)</span>
+                <span class="badge badge-off" id="badge-pump1">ĐANG TẮT</span>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-on" onclick="sendCmd('luan.pump1', 'ON')">BẬT BƠM</button>
+                <button class="btn btn-off" onclick="sendCmd('luan.pump1', 'OFF')">TẮT BƠM</button>
+            </div>
+        </div>
+
+        <!-- Bơm 2 -->
+        <div class="control-card">
+            <div class="control-header">
+                <span class="control-title">🌿 Bơm Tưới Cây (Bơm 2)</span>
+                <span class="badge badge-off" id="badge-pump2">ĐANG TẮT</span>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-on" onclick="sendCmd('luan.pump2', 'ON')">BẬT BƠM</button>
+                <button class="btn btn-off" onclick="sendCmd('luan.pump2', 'OFF')">TẮT BƠM</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Hệ thống IoT Tưới cây - Cập nhật tự động thời gian thực
+    </div>
+</div>
+
+<script>
+    // === CẤU HÌNH ADAFRUIT IO ===
+    const USERNAME = 'ZenoAdmin';
+    // THAY MÃ ACTIVE AIO KEY THẬT CỦA BẠN VÀO DƯỚI ĐÂY:
+    const AIO_KEY = 'DIEN_ACTIVE_AIO_KEY_THAT_CUA_BAN';
+
+    const client = mqtt.connect('wss://io.adafruit.com:443/mqtt', {
+        username: USERNAME,
+        password: AIO_KEY
+    });
+
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+
+    client.on('connect', () => {
+        statusDot.classList.add('connected');
+        statusText.innerText = 'Đã kết nối';
+        statusText.style.color = '#4ade80';
+
+        // Đăng ký nhận dữ liệu các Feed từ Adafruit IO
+        client.subscribe(`${USERNAME}/feeds/luan.temperature`);
+        client.subscribe(`${USERNAME}/feeds/luan.humidity`);
+        client.subscribe(`${USERNAME}/feeds/luan.soil`);
+        client.subscribe(`${USERNAME}/feeds/luan.water`);
+        client.subscribe(`${USERNAME}/feeds/luan.pump1`);
+        client.subscribe(`${USERNAME}/feeds/luan.pump2`);
+    });
+
+    client.on('offline', () => {
+        statusDot.classList.remove('connected');
+        statusText.innerText = 'Mất kết nối';
+        statusText.style.color = '#ef4444';
+    });
+
+    client.on('message', (topic, payload) => {
+        const value = payload.toString();
+
+        if (topic.endsWith('luan.temperature')) document.getElementById('val-temp').innerText = value;
+        if (topic.endsWith('luan.humidity')) document.getElementById('val-hum').innerText = value;
+        if (topic.endsWith('luan.soil')) document.getElementById('val-soil').innerText = value;
+        if (topic.endsWith('luan.water')) document.getElementById('val-water').innerText = value;
+
+        // Cập nhật trạng thái hiển thị của Bơm 1
+        if (topic.endsWith('luan.pump1')) {
+            const badge = document.getElementById('badge-pump1');
+            if (value === 'ON' || value === '1') {
+                badge.innerText = 'ĐANG BẬT';
+                badge.className = 'badge badge-on';
+            } else {
+                badge.innerText = 'ĐANG TẮT';
+                badge.className = 'badge badge-off';
+            }
+        }
+
+        // Cập nhật trạng thái hiển thị của Bơm 2
+        if (topic.endsWith('luan.pump2')) {
+            const badge = document.getElementById('badge-pump2');
+            if (value === 'ON' || value === '1') {
+                badge.innerText = 'ĐANG BẬT';
+                badge.className = 'badge badge-on';
+            } else {
+                badge.innerText = 'ĐANG TẮT';
+                badge.className = 'badge badge-off';
+            }
+        }
+    });
+
+    function sendCmd(feedKey, command) {
+        client.publish(`${USERNAME}/feeds/${feedKey}`, command);
+    }
+</script>
+</body>
+</html>
