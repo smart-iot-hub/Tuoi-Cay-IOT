@@ -116,12 +116,30 @@
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 20px; font-weight: 800; color: #0f172a; z-index: 6; text-shadow: 0 0 6px rgba(255,255,255,0.9);
         }
 
-        /* 3. MƯA */
+        /* 3. MƯA & GIỌT NƯỚC MƯA */
         .rain-display-container {
-            width: 100%; background: #f8fafc; border: 2px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: 0.3s;
+            width: 100%; background: #f8fafc; border: 2px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; transition: 0.3s; padding: 8px 0;
         }
-        .rain-icon { font-size: 32px; color: #64748b; transition: 0.3s; }
-        .rain-status { font-size: 15px; font-weight: bold; }
+        .rain-icon { font-size: 28px; color: #64748b; transition: 0.3s; }
+        .rain-status { font-size: 14px; font-weight: bold; }
+        
+        .rain-drops-box {
+            display: flex; gap: 6px; align-items: center; justify-content: center; margin-top: 4px; height: 20px;
+        }
+        .rain-drops-box i {
+            font-size: 13px; transition: all 0.3s ease;
+        }
+        .drop-active {
+            color: #0284c7; animation: dropBounce 1s infinite alternate;
+        }
+        .drop-inactive {
+            color: #cbd5e1; opacity: 0.3;
+        }
+
+        @keyframes dropBounce {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-3px) scale(1.2); }
+        }
 
         /* THANH FOOTER ĐỒNG NHẤT ĐÁY CARD (H=38px) */
         .info-footer-box {
@@ -224,17 +242,19 @@
             </div>
         </div>
 
-        <!-- 6. Cảm biến Mưa (Analog AO) -->
+        <!-- 6. Cảm biến Mưa Analog (ADC ngược + Hiển thị giọt nước) -->
         <div class="card">
             <h3>Rain Status / Cảm biến Mưa</h3>
             <div class="card-body-fixed">
                 <div class="rain-display-container" id="rain-bg">
                     <i id="rain-icon" class="fa-solid fa-sun rain-icon"></i>
                     <div class="rain-status" id="val-rain">Đang cập nhật...</div>
+                    <!-- Khung chứa icon các giọt nước mưa -->
+                    <div id="rain-drops-visual" class="rain-drops-box"></div>
                 </div>
                 <div class="info-footer-box">
-                    <div>🌧️ Độ ướt: <span id="val-rain-percent">--%</span></div>
-                    <div>ADC: <span id="val-rain-raw">--</span></div>
+                    <div>🌧️ Độ ướt: <span id="val-rain-percent">0%</span></div>
+                    <div>ADC: <span id="val-rain-raw">4095</span></div>
                 </div>
             </div>
         </div>
@@ -472,43 +492,70 @@
                     document.getElementById("val-water-raw").innerText = data.waterRaw;
                 }
 
-                // 6. XỬ LÝ MƯA ANALOG (Độ ướt % và ADC Raw)
-                let rainPct = data.rain !== undefined ? Number(data.rain) : 0;
-                let rainRaw = data.rainRaw !== undefined ? Number(data.rainRaw) : 4095;
+                // 6. XỬ LÝ MƯA ANALOG (Đo ngược ADC: ADC càng nhỏ -> Mưa càng lớn)
+                let rainRaw = 4095;
+                if (data.rainRaw !== undefined) {
+                    rainRaw = Number(data.rainRaw);
+                } else if (data.rain !== undefined) {
+                    // Nếu ESP32 gửi % độ ướt, tự suy ra ADC ước tính
+                    rainRaw = Math.round(4095 - (Number(data.rain) / 100 * 4095));
+                }
 
-                if (data.rain !== undefined || data.rainRaw !== undefined) {
-                    let rainBg = document.getElementById("rain-bg");
-                    let rainIcon = document.getElementById("rain-icon");
-                    let rainText = document.getElementById("val-rain");
-                    
-                    document.getElementById("val-rain-percent").innerText = rainPct + "%";
-                    document.getElementById("val-rain-raw").innerText = rainRaw;
+                // Tính % Độ ướt thực tế: ADC 4095 = 0%, ADC 0 = 100%
+                let rainPct = Math.max(0, Math.min(100, Math.round(((4095 - rainRaw) / 4095) * 100)));
 
-                    if (rainPct >= 40) {
-                        // Mưa nhiều / Mưa lớn
-                        rainBg.style.background = "#e0f2fe";
-                        rainBg.style.borderColor = "#0284c7";
-                        rainIcon.className = "fa-solid fa-cloud-showers-heavy rain-icon";
-                        rainIcon.style.color = "#0284c7";
-                        rainText.innerText = "🌧️ Mưa nhiều (Heavy Rain)";
-                        rainText.style.color = "#0369a1";
-                    } else if (rainPct >= 10) {
-                        // Mưa ít / Sương đọng
-                        rainBg.style.background = "#f0f9ff";
-                        rainBg.style.borderColor = "#7dd3fc";
-                        rainIcon.className = "fa-solid fa-cloud-rain rain-icon";
-                        rainIcon.style.color = "#38bdf8";
-                        rainText.innerText = "🌦️ Mưa ít / Sương (Light Rain)";
-                        rainText.style.color = "#0284c7";
+                let rainBg = document.getElementById("rain-bg");
+                let rainIcon = document.getElementById("rain-icon");
+                let rainText = document.getElementById("val-rain");
+                let dropsBox = document.getElementById("rain-drops-visual");
+
+                document.getElementById("val-rain-percent").innerText = rainPct + "%";
+                document.getElementById("val-rain-raw").innerText = rainRaw;
+
+                // Xác định số giọt nước mưa hiển thị (1 đến 5 giọt dựa theo ADC)
+                let activeDrops = 0;
+                if (rainRaw < 1500) { activeDrops = 5; }        // Mưa rất lớn (ADC cực thấp)
+                else if (rainRaw < 2300) { activeDrops = 4; }   // Mưa vừa - lớn
+                else if (rainRaw < 3100) { activeDrops = 3; }   // Mưa nhỏ
+                else if (rainRaw < 3700) { activeDrops = 1; }   // Sương / Vài giọt nhỏ
+                else { activeDrops = 0; }                       // Khô hoàn toàn (ADC > 3700)
+
+                // Render 5 icon giọt nước động
+                let dropsHTML = "";
+                for (let i = 1; i <= 5; i++) {
+                    if (i <= activeDrops) {
+                        dropsHTML += `<i class="fa-solid fa-droplet drop-active"></i>`;
                     } else {
-                        // Không mưa
-                        rainBg.style.background = "#f8fafc";
-                        rainBg.style.borderColor = "#e2e8f0";
-                        rainIcon.className = "fa-solid fa-sun rain-icon";
-                        rainIcon.style.color = "#eab308";
-                        rainText.innerText = "☀️ Không mưa (No Rain)";
-                        rainText.style.color = "#475569";
+                        dropsHTML += `<i class="fa-solid fa-droplet drop-inactive"></i>`;
                     }
+                }
+                dropsBox.innerHTML = dropsHTML;
+
+                // Cập nhật Giao diện & Trạng thái mưa
+                if (activeDrops >= 4) {
+                    // Mưa lớn (ADC < 2300)
+                    rainBg.style.background = "#e0f2fe";
+                    rainBg.style.borderColor = "#0284c7";
+                    rainIcon.className = "fa-solid fa-cloud-showers-heavy rain-icon";
+                    rainIcon.style.color = "#0284c7";
+                    rainText.innerText = "🌧️ Mưa lớn (Heavy Rain)";
+                    rainText.style.color = "#0369a1";
+                } else if (activeDrops >= 1) {
+                    // Mưa nhỏ / Sương (2300 <= ADC < 3700)
+                    rainBg.style.background = "#f0f9ff";
+                    rainBg.style.borderColor = "#7dd3fc";
+                    rainIcon.className = "fa-solid fa-cloud-rain rain-icon";
+                    rainIcon.style.color = "#38bdf8";
+                    rainText.innerText = "🌦️ Mưa nhỏ / Sương (Light Rain)";
+                    rainText.style.color = "#0284c7";
+                } else {
+                    // Khô / Không mưa (ADC >= 3700)
+                    rainBg.style.background = "#f8fafc";
+                    rainBg.style.borderColor = "#e2e8f0";
+                    rainIcon.className = "fa-solid fa-sun rain-icon";
+                    rainIcon.style.color = "#eab308";
+                    rainText.innerText = "☀️ Không mưa (No Rain)";
+                    rainText.style.color = "#475569";
                 }
 
                 // 7. Xử lý Chế độ từ gói telemetry JSON
