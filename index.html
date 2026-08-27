@@ -72,7 +72,7 @@
         .lux-value { font-size: 24px; font-weight: bold; color: #eab308; }
         .lux-desc { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
 
-        /* GIAO DIỆN BỒN NƯỚC MỚI (CHUẨN THEO ẢNH DEMO) */
+        /* GIAO DIỆN BỒN NƯỚC */
         .tank-card-body { display: flex; flex-direction: column; align-items: center; gap: 12px; }
         .tank-container {
             width: 130px; height: 170px; background: #f1f5f9; border: 2px solid #cbd5e1; border-radius: 16px;
@@ -179,7 +179,7 @@
             </div>
         </div>
 
-        <!-- 5. MỨC NƯỚC BỒN CHỨA (GIAO DIỆN MỚI CHUẨN DEMO) -->
+        <!-- 5. MỨC NƯỚC BỒN CHỨA -->
         <div class="card">
             <h3>Mức nước bồn chứa</h3>
             <div class="tank-card-body">
@@ -194,8 +194,8 @@
                 </div>
 
                 <div class="tank-footer-info">
-                    <div>🧪 Nhiệt độ nước: <span id="val-water-temp">28.5</span> °C</div>
-                    <div>ADC: <span id="val-water-raw">2048</span></div>
+                    <div>🧪 Nhiệt độ nước: <span id="val-water-temp">--</span> °C</div>
+                    <div>ADC: <span id="val-water-raw">--</span></div>
                 </div>
 
                 <div class="test-slider-box">
@@ -262,14 +262,15 @@
         }
     }
 
-    // ==================== BIẾN TRẠNG THÁI & CỜ TẠM KHÓA ====================
+    // ==================== BIẾN TRẠNG THÁI & CƠ CHẾ XÁC NHẬN ACK ====================
     let client = null;
     let currentMode = "auto";
     let pump1State = "OFF";
     let pump2State = "OFF";
 
-    // Cờ chống xung đột Race Condition khi người dùng vừa chuyển Mode
-    let isUserChangingMode = false;
+    // Cơ chế ACK: Khóa đè dữ liệu cho đến khi ESP32 trả về đúng Mode mong muốn
+    let desiredMode = null;
+    let isWaitingModeAck = false;
     let modeTimeout = null;
 
     // Chart.js
@@ -348,6 +349,7 @@
             document.getElementById("connection-status").innerText = "Trực tuyến (Port 443)";
             document.getElementById("connection-status").style.color = "var(--success)";
 
+            // Subscribes tất cả các feed có thể dùng
             client.subscribe(AIO_USERNAME + "/feeds/system-data");
             client.subscribe(AIO_USERNAME + "/feeds/luan-mode");
             client.subscribe(AIO_USERNAME + "/feeds/luan-pump1");
@@ -472,18 +474,20 @@
                     }
                 }
 
-                // CHỈ cập nhật Mode từ telemetry nếu người dùng KHÔNG đang thực hiện thao tác bấm chuyển
-                if (data.mode && !isUserChangingMode) {
-                    updateModeUI(data.mode);
+                // 7. Xử lý Chế độ từ gói telemetry JSON
+                if (data.mode !== undefined) {
+                    processIncomingMode(data.mode);
                 }
 
             } catch (e) { console.error("Lỗi parse JSON:", e); }
         }
 
-        // Cập nhật từ các Feed lẻ
-        if ((topic.endsWith("/luan-mode") || topic.endsWith("/luan.mode")) && !isUserChangingMode) {
-            updateModeUI(payload.trim());
+        // Cập nhật Mode từ các Feed lẻ
+        if (topic.endsWith("/luan-mode") || topic.endsWith("/luan.mode")) {
+            processIncomingMode(payload);
         }
+
+        // Cập nhật Bơm
         if (topic.endsWith("/luan-pump1") || topic.endsWith("/luan.pump1")) { 
             pump1State = (payload === "ON" || payload === "1") ? "ON" : "OFF"; 
             updatePumpUI("pump1", pump1State); 
@@ -491,6 +495,29 @@
         if (topic.endsWith("/luan-pump2") || topic.endsWith("/luan.pump2")) { 
             pump2State = (payload === "ON" || payload === "1") ? "ON" : "OFF"; 
             updatePumpUI("pump2", pump2State); 
+        }
+    }
+
+    // HÀM XỬ LÝ MODE THÔNG MINH - CHỐNG NHẢY GIAO DIỆN
+    function processIncomingMode(rawMode) {
+        if (!rawMode) return;
+        let mode = rawMode.toString().trim().toLowerCase();
+        if (mode === "1") mode = "manual";
+        if (mode === "0") mode = "auto";
+
+        if (isWaitingModeAck) {
+            // Nếu ESP32 đã phản hồi đúng Mode mới người dùng chọn -> Nhận xác nhận & Mở khóa
+            if (mode === desiredMode) {
+                isWaitingModeAck = false;
+                desiredMode = null;
+                updateModeUI(mode);
+            } else {
+                // Nếu ESP32 vẫn gửi Mode cũ (chưa kịp nhận lệnh mới) -> Bỏ qua không cho đè UI!
+                console.log("Bỏ qua Mode cũ từ ESP32 (" + mode + "), đang chờ xác nhận: " + desiredMode);
+            }
+        } else {
+            // Trường hợp bình thường (không bấm nút) -> Cập nhật UI từ ESP32
+            updateModeUI(mode);
         }
     }
 
@@ -504,28 +531,34 @@
 
     function testWaterLevel(val) {
         renderWaterLevel(val);
-        // Tự tính giá trị ADC giả lập tương ứng (0 - 4095)
         document.getElementById("val-water-raw").innerText = Math.round((val / 100) * 4095);
     }
 
-    // ==================== ĐIỀU KHIỂN CHẾ ĐỘ (CÓ KHÓA CHỐNG NGHẼN 3S) ====================
+    // ==================== ĐIỀU KHIỂN CHẾ ĐỘ ====================
     function setMode(mode) {
-        // 1. Bật cờ khóa không cho gói tin cũ từ ESP32 đè lại UI
-        isUserChangingMode = true;
+        desiredMode = mode.toLowerCase();
+        isWaitingModeAck = true;
 
-        // 2. Đổi giao diện Web ngay lập tức
-        updateModeUI(mode);
+        // Cập nhật ngay trên Web để trải nghiệm mượt mà
+        updateModeUI(desiredMode);
 
-        // 3. Gửi lệnh qua MQTT
         if (client && client.connected) {
-            client.publish(AIO_USERNAME + "/feeds/luan-mode", mode);
+            const upper = mode.toUpperCase();
+            const lower = mode.toLowerCase();
+
+            // Phát đa định dạng (cả chữ HOA, chữ thường, dấu gạch ngang và dấu chấm)
+            client.publish(AIO_USERNAME + "/feeds/luan-mode", upper);
+            client.publish(AIO_USERNAME + "/feeds/luan-mode", lower);
+            client.publish(AIO_USERNAME + "/feeds/luan.mode", upper);
+            client.publish(AIO_USERNAME + "/feeds/luan.mode", lower);
         }
 
-        // 4. Tự động mở khóa sau 3 giây để ESP32 kịp đồng bộ
+        // Phòng trường hợp ESP32 mất mạng hoàn toàn: Khóa tối đa 10s rồi tự nhả
         clearTimeout(modeTimeout);
         modeTimeout = setTimeout(() => {
-            isUserChangingMode = false;
-        }, 3000);
+            isWaitingModeAck = false;
+            desiredMode = null;
+        }, 10000);
     }
 
     function updateModeUI(mode) {
@@ -547,11 +580,18 @@
     // Điều khiển Bơm
     function togglePump(pumpName) {
         if (currentMode === "auto" || !client || !client.connected) return;
-        let feedKey = (pumpName === "pump1" ? "luan-pump1" : "luan-pump2");
-        let feed = AIO_USERNAME + "/feeds/" + feedKey;
+        
+        let feedDash = AIO_USERNAME + "/feeds/" + (pumpName === "pump1" ? "luan-pump1" : "luan-pump2");
+        let feedDot = AIO_USERNAME + "/feeds/" + (pumpName === "pump1" ? "luan.pump1" : "luan.pump2");
         let state = (pumpName === "pump1" ? pump1State : pump2State);
         let nextState = (state === "ON") ? "OFF" : "ON";
-        client.publish(feed, nextState);
+        let nextStateVal = (nextState === "ON") ? "1" : "0";
+
+        // Gửi cả dạng chữ (ON/OFF) lẫn dạng số (1/0)
+        client.publish(feedDash, nextState);
+        client.publish(feedDot, nextState);
+        client.publish(feedDash, nextStateVal);
+        client.publish(feedDot, nextStateVal);
     }
 
     function updatePumpUI(pumpName, state) {
@@ -560,7 +600,7 @@
         btn.className = "switch-btn " + (state === "ON" ? "btn-on" : "btn-off");
     }
 
-    // Thực thi kết nối ban đầu
+    // Khởi tạo kết nối
     connectMQTT();
 </script>
 </body>
