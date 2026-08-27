@@ -97,12 +97,6 @@
         .tank-container {
             width: 120px; background: #f1f5f9; border: 2px solid #cbd5e1; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end;
         }
-        .tank-badge {
-            position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
-            background: #0f172a; color: #38bdf8; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 10px; z-index: 5;
-            display: flex; align-items: center; gap: 4px;
-        }
-        .tank-badge::before { content: ""; display: inline-block; width: 6px; height: 6px; background: #22c55e; border-radius: 50%; }
         .tank-mark {
             position: absolute; width: 100%; border-top: 1px dashed #94a3b8; font-size: 9px; color: #475569; text-align: right; padding-right: 6px; z-index: 4; pointer-events: none;
         }
@@ -190,9 +184,9 @@
             </div>
         </div>
 
-        <!-- 2. Độ ẩm không khí -->
+        <!-- 2. Độ ẩm -->
         <div class="card">
-            <h3>Humidity / Độ ẩm KK</h3>
+            <h3>Humidity / Độ ẩm</h3>
             <div class="circular-progress" id="hum-circle">
                 <div class="circular-value"><span id="val-hum">--</span>%</div>
             </div>
@@ -226,7 +220,6 @@
             <h3>Water Tank / Bồn nước</h3>
             <div class="card-body-fixed">
                 <div class="tank-container">
-                    <div class="tank-badge">TÙY CHỈNH</div>
                     <div class="tank-mark m75">75%</div>
                     <div class="tank-mark m50">50%</div>
                     <div class="tank-mark m25">25%</div>
@@ -242,14 +235,13 @@
             </div>
         </div>
 
-        <!-- 6. Cảm biến Mưa Analog (ADC ngược + Hiển thị giọt nước) -->
+        <!-- 6. Cảm biến Mưa Analog -->
         <div class="card">
             <h3>Rain Status / Cảm biến Mưa</h3>
             <div class="card-body-fixed">
                 <div class="rain-display-container" id="rain-bg">
                     <i id="rain-icon" class="fa-solid fa-sun rain-icon"></i>
                     <div class="rain-status" id="val-rain">Đang cập nhật...</div>
-                    <!-- Khung chứa icon các giọt nước mưa -->
                     <div id="rain-drops-visual" class="rain-drops-box"></div>
                 </div>
                 <div class="info-footer-box">
@@ -484,7 +476,7 @@
                     updateChart(data.temp, data.soil);
                 }
 
-                // 5. Cập nhật Mức nước bồn chứa
+                // 5. Mức nước bồn chứa
                 if (data.water !== undefined) {
                     renderWaterLevel(data.water);
                 }
@@ -492,16 +484,14 @@
                     document.getElementById("val-water-raw").innerText = data.waterRaw;
                 }
 
-                // 6. XỬ LÝ MƯA ANALOG (Đo ngược ADC: ADC càng nhỏ -> Mưa càng lớn)
+                // 6. Xử lý Mưa Analog (Đo ngược ADC)
                 let rainRaw = 4095;
                 if (data.rainRaw !== undefined) {
                     rainRaw = Number(data.rainRaw);
                 } else if (data.rain !== undefined) {
-                    // Nếu ESP32 gửi % độ ướt, tự suy ra ADC ước tính
                     rainRaw = Math.round(4095 - (Number(data.rain) / 100 * 4095));
                 }
 
-                // Tính % Độ ướt thực tế: ADC 4095 = 0%, ADC 0 = 100%
                 let rainPct = Math.max(0, Math.min(100, Math.round(((4095 - rainRaw) / 4095) * 100)));
 
                 let rainBg = document.getElementById("rain-bg");
@@ -512,15 +502,13 @@
                 document.getElementById("val-rain-percent").innerText = rainPct + "%";
                 document.getElementById("val-rain-raw").innerText = rainRaw;
 
-                // Xác định số giọt nước mưa hiển thị (1 đến 5 giọt dựa theo ADC)
                 let activeDrops = 0;
-                if (rainRaw < 1500) { activeDrops = 5; }        // Mưa rất lớn (ADC cực thấp)
-                else if (rainRaw < 2300) { activeDrops = 4; }   // Mưa vừa - lớn
-                else if (rainRaw < 3100) { activeDrops = 3; }   // Mưa nhỏ
-                else if (rainRaw < 3700) { activeDrops = 1; }   // Sương / Vài giọt nhỏ
-                else { activeDrops = 0; }                       // Khô hoàn toàn (ADC > 3700)
+                if (rainRaw < 1500) { activeDrops = 5; }
+                else if (rainRaw < 2300) { activeDrops = 4; }
+                else if (rainRaw < 3100) { activeDrops = 3; }
+                else if (rainRaw < 3700) { activeDrops = 1; }
+                else { activeDrops = 0; }
 
-                // Render 5 icon giọt nước động
                 let dropsHTML = "";
                 for (let i = 1; i <= 5; i++) {
                     if (i <= activeDrops) {
@@ -531,9 +519,7 @@
                 }
                 dropsBox.innerHTML = dropsHTML;
 
-                // Cập nhật Giao diện & Trạng thái mưa
                 if (activeDrops >= 4) {
-                    // Mưa lớn (ADC < 2300)
                     rainBg.style.background = "#e0f2fe";
                     rainBg.style.borderColor = "#0284c7";
                     rainIcon.className = "fa-solid fa-cloud-showers-heavy rain-icon";
@@ -541,7 +527,6 @@
                     rainText.innerText = "🌧️ Mưa lớn (Heavy Rain)";
                     rainText.style.color = "#0369a1";
                 } else if (activeDrops >= 1) {
-                    // Mưa nhỏ / Sương (2300 <= ADC < 3700)
                     rainBg.style.background = "#f0f9ff";
                     rainBg.style.borderColor = "#7dd3fc";
                     rainIcon.className = "fa-solid fa-cloud-rain rain-icon";
@@ -549,7 +534,6 @@
                     rainText.innerText = "🌦️ Mưa nhỏ / Sương (Light Rain)";
                     rainText.style.color = "#0284c7";
                 } else {
-                    // Khô / Không mưa (ADC >= 3700)
                     rainBg.style.background = "#f8fafc";
                     rainBg.style.borderColor = "#e2e8f0";
                     rainIcon.className = "fa-solid fa-sun rain-icon";
@@ -558,7 +542,7 @@
                     rainText.style.color = "#475569";
                 }
 
-                // 7. Xử lý Chế độ từ gói telemetry JSON
+                // 7. Xử lý Mode
                 if (data.mode !== undefined) {
                     processIncomingMode(data.mode);
                 }
@@ -566,12 +550,10 @@
             } catch (e) { console.error("Lỗi parse JSON:", e); }
         }
 
-        // Cập nhật Mode từ các Feed lẻ
         if (topic.endsWith("/luan-mode") || topic.endsWith("/luan.mode")) {
             processIncomingMode(payload);
         }
 
-        // Cập nhật Bơm
         if (topic.endsWith("/luan-pump1") || topic.endsWith("/luan.pump1")) { 
             pump1State = (payload === "ON" || payload === "1") ? "ON" : "OFF"; 
             updatePumpUI("pump1", pump1State); 
@@ -582,7 +564,6 @@
         }
     }
 
-    // HÀM XỬ LÝ MODE THÔNG MINH
     function processIncomingMode(rawMode) {
         if (!rawMode) return;
         let mode = rawMode.toString().trim().toLowerCase();
@@ -594,15 +575,12 @@
                 isWaitingModeAck = false;
                 desiredMode = null;
                 updateModeUI(mode);
-            } else {
-                console.log("Bỏ qua Mode cũ từ ESP32 (" + mode + "), đang chờ xác nhận: " + desiredMode);
             }
         } else {
             updateModeUI(mode);
         }
     }
 
-    // ==================== CẬP NHẬT MỨC NƯỚC ====================
     function renderWaterLevel(percent) {
         percent = Math.max(0, Math.min(100, percent));
         document.getElementById("water-text").innerText = percent + "%";
@@ -610,7 +588,6 @@
         document.getElementById("water-fill").style.height = percent + "%";
     }
 
-    // ==================== ĐIỀU KHIỂN CHẾ ĐỘ ====================
     function setMode(mode) {
         desiredMode = mode.toLowerCase();
         isWaitingModeAck = true;
@@ -650,7 +627,6 @@
         }
     }
 
-    // Điều khiển Bơm
     function togglePump(pumpName) {
         if (currentMode === "auto" || !client || !client.connected) return;
         
@@ -672,7 +648,6 @@
         btn.className = "switch-btn " + (state === "ON" ? "btn-on" : "btn-off");
     }
 
-    // Khởi tạo kết nối
     connectMQTT();
 </script>
 </body>
