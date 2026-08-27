@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Farm Dashboard - Ultimate Edition</title>
+    <title>Automatic Irrigation Monitoring System</title>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- MQTT.js CDN -->
@@ -29,13 +29,14 @@
 
         /* Header */
         header { text-align: center; margin-bottom: 20px; }
-        header h1 { color: var(--primary); font-size: 24px; }
-        .status-bar { font-size: 13px; color: var(--text-sub); margin-top: 5px; }
+        header h1 { color: var(--primary); font-size: 22px; text-transform: uppercase; }
+        .sub-title { font-size: 13px; font-weight: 700; color: #0284c7; margin-top: 2px; letter-spacing: 0.5px; }
+        .status-bar { font-size: 13px; color: var(--text-sub); margin-top: 6px; }
         #connection-status { font-weight: bold; color: var(--danger); }
         .last-update-bar { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
 
         .config-btn {
-            background-color: #475569; color: white; border: none; padding: 6px 14px;
+            background-color: #475569; color: white; border: none; padding: 7px 16px;
             border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 10px;
         }
         .config-btn:hover { background-color: #334155; }
@@ -117,7 +118,7 @@
 
         /* 3. MƯA */
         .rain-display-container {
-            width: 100%; background: #f8fafc; border: 2px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: 0.3s;
+            width: 100%; background: #f8fafc; border: 2px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: 0.3s;
         }
         .rain-icon { font-size: 32px; color: #64748b; transition: 0.3s; }
         .rain-status { font-size: 15px; font-weight: bold; }
@@ -142,18 +143,19 @@
 
 <div class="container">
     <header>
-        <h1>🌱 SMART FARM DASHBOARD</h1>
-        <div class="status-bar">Trạng thái MQTT (Port 443): <span id="connection-status">Đang kết nối...</span></div>
-        <div class="last-update-bar">Cập nhật lần cuối: <span id="last-update-time">--:--:--</span></div>
+        <h1>🌱 HỆ THỐNG GIÁM SÁT TƯỚI CÂY TỰ ĐỘNG</h1>
+        <div class="sub-title">AUTOMATIC IRRIGATION MONITORING SYSTEM</div>
+        <div class="status-bar">MQTT Status (Port 443): <span id="connection-status">Connecting...</span></div>
+        <div class="last-update-bar">Last Update / Cập nhật: <span id="last-update-time">--:--:--</span></div>
         
         <button class="config-btn" onclick="configureKeys()">
-            <i class="fa-solid fa-key"></i> Cấu hình Adafruit Key
+            <i class="fa-solid fa-key"></i> Config Adafruit Key / Cấu hình Key
         </button>
     </header>
 
     <!-- THANH ĐIỀU KHIỂN CHẾ ĐỘ -->
     <div class="mode-panel">
-        <div style="font-weight: bold; font-size: 14px;"><i class="fa-solid fa-gears"></i> Chế độ vận hành</div>
+        <div style="font-weight: bold; font-size: 14px;"><i class="fa-solid fa-gears"></i> Mode / Chế độ vận hành</div>
         <div class="mode-btns">
             <button id="btn-auto" class="active-auto" onclick="setMode('auto')">AUTO</button>
             <button id="btn-manual" onclick="setMode('manual')">MANUAL</button>
@@ -164,7 +166,7 @@
     <div class="grid">
         <!-- 1. Nhiệt độ -->
         <div class="card">
-            <h3>Nhiệt độ không khí</h3>
+            <h3>Temperature / Nhiệt độ</h3>
             <div class="circular-progress" id="temp-circle">
                 <div class="circular-value"><span id="val-temp">--</span>°C</div>
             </div>
@@ -172,7 +174,7 @@
 
         <!-- 2. Độ ẩm không khí -->
         <div class="card">
-            <h3>Độ ẩm không khí</h3>
+            <h3>Humidity / Độ ẩm KK</h3>
             <div class="circular-progress" id="hum-circle">
                 <div class="circular-value"><span id="val-hum">--</span>%</div>
             </div>
@@ -180,7 +182,7 @@
 
         <!-- 3. Ánh sáng TEMT6000 -->
         <div class="card">
-            <h3>Cường độ ánh sáng</h3>
+            <h3>Light Intensity / Ánh sáng</h3>
             <div class="lux-box" id="lux-box-bg">
                 <div class="lux-value"><span id="val-light">--</span> Lux</div>
                 <div class="lux-desc" id="lux-text">Đang đo sáng...</div>
@@ -189,7 +191,7 @@
 
         <!-- 4. Độ ẩm đất -->
         <div class="card">
-            <h3>Độ ẩm đất & Khuyến nghị</h3>
+            <h3>Soil Moisture / Độ ẩm đất</h3>
             <div class="card-body-fixed">
                 <div class="soil-display-container">
                     <div class="soil-value"><span id="val-soil">--</span>%</div>
@@ -203,10 +205,10 @@
 
         <!-- 5. MỨC NƯỚC BỒN CHỨA -->
         <div class="card">
-            <h3>Mức nước bồn chứa</h3>
+            <h3>Water Tank / Bồn nước</h3>
             <div class="card-body-fixed">
                 <div class="tank-container">
-                    <div class="tank-badge">DS18B20</div>
+                    <div class="tank-badge">TÙY CHỈNH</div>
                     <div class="tank-mark m75">75%</div>
                     <div class="tank-mark m50">50%</div>
                     <div class="tank-mark m25">25%</div>
@@ -216,23 +218,23 @@
                 </div>
 
                 <div class="info-footer-box">
-                    <div>🧪 Nhiệt độ: <span id="val-water-temp">--</span> °C</div>
+                    <div>💧 Mực nước: <span id="water-text-sub">--%</span></div>
                     <div>ADC: <span id="val-water-raw">--</span></div>
                 </div>
             </div>
         </div>
 
-        <!-- 6. Cảm biến Mưa -->
+        <!-- 6. Cảm biến Mưa (Analog AO) -->
         <div class="card">
-            <h3>Trạng thái thời tiết (Mưa)</h3>
+            <h3>Rain Status / Cảm biến Mưa</h3>
             <div class="card-body-fixed">
                 <div class="rain-display-container" id="rain-bg">
-                    <i id="rain-icon" class="fa-solid fa-cloud rain-icon"></i>
+                    <i id="rain-icon" class="fa-solid fa-sun rain-icon"></i>
                     <div class="rain-status" id="val-rain">Đang cập nhật...</div>
                 </div>
                 <div class="info-footer-box">
-                    <div>🌧️ Cảm biến: Digital</div>
-                    <div>Trạng thái: <span id="val-rain-detail">Bình thường</span></div>
+                    <div>🌧️ Độ ướt: <span id="val-rain-percent">--%</span></div>
+                    <div>ADC: <span id="val-rain-raw">--</span></div>
                 </div>
             </div>
         </div>
@@ -241,19 +243,19 @@
     <!-- KHU VỰC ĐIỀU KHIỂN BƠM -->
     <div class="grid">
         <div class="card control-card">
-            <h3>Bơm 1 (Bơm cấp nước bồn)</h3>
-            <button id="pump1-btn" class="switch-btn btn-off" onclick="togglePump('pump1')" disabled>ĐANG TẮT</button>
+            <h3>Pump 1 / Bơm cấp nước bồn</h3>
+            <button id="pump1-btn" class="switch-btn btn-off" onclick="togglePump('pump1')" disabled>OFF / TẮT</button>
         </div>
         <div class="card control-card">
-            <h3>Bơm 2 (Bơm tưới cây)</h3>
-            <button id="pump2-btn" class="switch-btn btn-off" onclick="togglePump('pump2')" disabled>ĐANG TẮT</button>
+            <h3>Pump 2 / Bơm tưới cây</h3>
+            <button id="pump2-btn" class="switch-btn btn-off" onclick="togglePump('pump2')" disabled>OFF / TẮT</button>
         </div>
     </div>
 
     <!-- BIỂU ĐỒ THEO DÕI REALTIME -->
     <div class="chart-card">
         <h3 style="font-size: 14px; color: var(--text-sub); margin-bottom: 15px; text-transform: uppercase;">
-            <i class="fa-solid fa-chart-line"></i> Biểu đồ diễn biến Nhiệt độ & Độ ẩm đất
+            <i class="fa-solid fa-chart-line"></i> Analytics / Biểu đồ Nhiệt độ & Độ ẩm đất
         </h3>
         <canvas id="realtimeChart" height="100"></canvas>
     </div>
@@ -269,19 +271,19 @@
     }
 
     function configureKeys() {
-        const newUsername = prompt("Nhập Adafruit IO Username:", AIO_USERNAME);
+        const newUsername = prompt("Enter Adafruit IO Username / Nhập Username:", AIO_USERNAME);
         if (newUsername === null) return;
 
-        const newKey = prompt("Nhập Adafruit IO Key (dạng aio_...):", AIO_KEY);
+        const newKey = prompt("Enter Adafruit IO Key / Nhập Key (aio_...):", AIO_KEY);
         if (newKey === null) return;
 
         if (newUsername.trim() !== "" && newKey.trim() !== "") {
             localStorage.setItem("AIO_USERNAME", newUsername.trim());
             localStorage.setItem("AIO_KEY", newKey.trim());
-            alert("Đã lưu cài đặt thành công! Trang web sẽ tải lại.");
+            alert("Success / Đã lưu cài đặt thành công! Trang web sẽ tải lại.");
             location.reload();
         } else {
-            alert("Lỗi: Username và Key không được để trống!");
+            alert("Error / Lỗi: Username và Key không được để trống!");
         }
     }
 
@@ -302,14 +304,14 @@
         data: {
             labels: [],
             datasets: [
-                { label: 'Nhiệt độ (°C)', borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', data: [], fill: true, tension: 0.3 },
-                { label: 'Độ ẩm đất (%)', borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.1)', data: [], fill: true, tension: 0.3 }
+                { label: 'Temperature (°C)', borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', data: [], fill: true, tension: 0.3 },
+                { label: 'Soil Moisture (%)', borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.1)', data: [], fill: true, tension: 0.3 }
             ]
         },
         options: {
             responsive: true,
             scales: {
-                x: { display: true, title: { display: true, text: 'Thời gian' } },
+                x: { display: true, title: { display: true, text: 'Time / Thời gian' } },
                 y: { min: 0, max: 100 }
             }
         }
@@ -338,12 +340,12 @@
         AIO_KEY = (localStorage.getItem("AIO_KEY") || "").trim();
 
         if (!AIO_USERNAME || !AIO_KEY) {
-            document.getElementById("connection-status").innerText = "Chưa cấu hình Key!";
+            document.getElementById("connection-status").innerText = "Not Configured / Chưa cấu hình Key!";
             document.getElementById("connection-status").style.color = "var(--danger)";
             return;
         }
 
-        document.getElementById("connection-status").innerText = "Đang kết nối Port 443...";
+        document.getElementById("connection-status").innerText = "Connecting Port 443...";
         document.getElementById("connection-status").style.color = "var(--warning)";
 
         if (client) { try { client.end(true); } catch(e){} }
@@ -362,13 +364,13 @@
             client = mqtt.connect(connectUrl, options);
         } catch (err) {
             console.error("Lỗi khởi tạo MQTT Client:", err);
-            document.getElementById("connection-status").innerText = "Lỗi khởi tạo JS";
+            document.getElementById("connection-status").innerText = "JS Init Error";
             return;
         }
 
         client.on("connect", () => {
-            console.log("✅ MQTT Kết nối thành công tới Adafruit IO!");
-            document.getElementById("connection-status").innerText = "Trực tuyến (Port 443)";
+            console.log("✅ MQTT Connected to Adafruit IO!");
+            document.getElementById("connection-status").innerText = "Online / Trực tuyến (Port 443)";
             document.getElementById("connection-status").style.color = "var(--success)";
 
             client.subscribe(AIO_USERNAME + "/feeds/system-data");
@@ -386,12 +388,12 @@
         });
 
         client.on("error", (err) => {
-            document.getElementById("connection-status").innerText = "Lỗi kết nối / Sai Key";
+            document.getElementById("connection-status").innerText = "Connection Error / Sai Key";
             document.getElementById("connection-status").style.color = "var(--danger)";
         });
 
         client.on("offline", () => {
-            document.getElementById("connection-status").innerText = "Đang kết nối lại...";
+            document.getElementById("connection-status").innerText = "Reconnecting / Đang nối lại...";
             document.getElementById("connection-status").style.color = "var(--warning)";
         });
     }
@@ -424,11 +426,11 @@
                     let box = document.getElementById("lux-box-bg");
                     let text = document.getElementById("lux-text");
                     if (lux > 1000) {
-                        box.style.background = "#fef08a"; text.innerText = "☀️ Nắng gắt / Sáng mạnh";
+                        box.style.background = "#fef08a"; text.innerText = "☀️ Nắng gắt / Bright Sunlight";
                     } else if (lux > 300) {
-                        box.style.background = "#fef9c3"; text.innerText = "⛅ Ánh sáng tự nhiên tốt";
+                        box.style.background = "#fef9c3"; text.innerText = "⛅ Ánh sáng tốt / Moderate Light";
                     } else {
-                        box.style.background = "#f1f5f9"; text.innerText = "🌙 Trời tối / Ánh sáng yếu";
+                        box.style.background = "#f1f5f9"; text.innerText = "🌙 Sáng yếu / Dark Night";
                     }
                 }
 
@@ -469,34 +471,43 @@
                 if (data.waterRaw !== undefined) {
                     document.getElementById("val-water-raw").innerText = data.waterRaw;
                 }
-                if (data.waterTemp !== undefined || data.water_temp !== undefined) {
-                    document.getElementById("val-water-temp").innerText = data.waterTemp || data.water_temp;
-                }
 
-                // 6. Mưa
-                if (data.rain !== undefined) {
-                    let isRaining = (data.rain == 0 || data.rain === "0");
+                // 6. XỬ LÝ MƯA ANALOG (Độ ướt % và ADC Raw)
+                let rainPct = data.rain !== undefined ? Number(data.rain) : 0;
+                let rainRaw = data.rainRaw !== undefined ? Number(data.rainRaw) : 4095;
+
+                if (data.rain !== undefined || data.rainRaw !== undefined) {
                     let rainBg = document.getElementById("rain-bg");
                     let rainIcon = document.getElementById("rain-icon");
                     let rainText = document.getElementById("val-rain");
-                    let rainDetail = document.getElementById("val-rain-detail");
+                    
+                    document.getElementById("val-rain-percent").innerText = rainPct + "%";
+                    document.getElementById("val-rain-raw").innerText = rainRaw;
 
-                    if (isRaining) {
+                    if (rainPct >= 40) {
+                        // Mưa nhiều / Mưa lớn
                         rainBg.style.background = "#e0f2fe";
-                        rainBg.style.borderColor = "#7dd3fc";
+                        rainBg.style.borderColor = "#0284c7";
                         rainIcon.className = "fa-solid fa-cloud-showers-heavy rain-icon";
                         rainIcon.style.color = "#0284c7";
-                        rainText.innerText = "🌧️ Trời đang mưa";
+                        rainText.innerText = "🌧️ Mưa nhiều (Heavy Rain)";
                         rainText.style.color = "#0369a1";
-                        if (rainDetail) rainDetail.innerText = "Có mưa";
+                    } else if (rainPct >= 10) {
+                        // Mưa ít / Sương đọng
+                        rainBg.style.background = "#f0f9ff";
+                        rainBg.style.borderColor = "#7dd3fc";
+                        rainIcon.className = "fa-solid fa-cloud-rain rain-icon";
+                        rainIcon.style.color = "#38bdf8";
+                        rainText.innerText = "🌦️ Mưa ít / Sương (Light Rain)";
+                        rainText.style.color = "#0284c7";
                     } else {
+                        // Không mưa
                         rainBg.style.background = "#f8fafc";
                         rainBg.style.borderColor = "#e2e8f0";
                         rainIcon.className = "fa-solid fa-sun rain-icon";
                         rainIcon.style.color = "#eab308";
-                        rainText.innerText = "☀️ Không mưa";
+                        rainText.innerText = "☀️ Không mưa (No Rain)";
                         rainText.style.color = "#475569";
-                        if (rainDetail) rainDetail.innerText = "Khô ráo";
                     }
                 }
 
@@ -548,6 +559,7 @@
     function renderWaterLevel(percent) {
         percent = Math.max(0, Math.min(100, percent));
         document.getElementById("water-text").innerText = percent + "%";
+        document.getElementById("water-text-sub").innerText = percent + "%";
         document.getElementById("water-fill").style.height = percent + "%";
     }
 
@@ -609,7 +621,7 @@
 
     function updatePumpUI(pumpName, state) {
         let btn = document.getElementById(pumpName + "-btn");
-        btn.innerText = (state === "ON") ? "ĐANG BẬT" : "ĐANG TẮT";
+        btn.innerText = (state === "ON") ? "ON / ĐANG BẬT" : "OFF / ĐANG TẮT";
         btn.className = "switch-btn " + (state === "ON" ? "btn-on" : "btn-off");
     }
 
