@@ -4,11 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Automatic Irrigation Monitoring System</title>
-    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- MQTT.js CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
-    <!-- Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
@@ -165,7 +162,6 @@
         </button>
     </header>
 
-    <!-- THANH ĐIỀU KHIỂN CHẾ ĐỘ -->
     <div class="mode-panel">
         <div style="font-weight: bold; font-size: 14px;"><i class="fa-solid fa-gears"></i> Mode / Chế độ vận hành</div>
         <div class="mode-btns">
@@ -174,9 +170,7 @@
         </div>
     </div>
 
-    <!-- KHU VỰC HIỂN THỊ CẢM BIẾN -->
     <div class="grid">
-        <!-- 1. Nhiệt độ -->
         <div class="card">
             <h3>Temperature / Nhiệt độ</h3>
             <div class="circular-progress" id="temp-circle">
@@ -184,7 +178,6 @@
             </div>
         </div>
 
-        <!-- 2. Độ ẩm -->
         <div class="card">
             <h3>Humidity / Độ ẩm</h3>
             <div class="circular-progress" id="hum-circle">
@@ -192,7 +185,6 @@
             </div>
         </div>
 
-        <!-- 3. Ánh sáng TEMT6000 -->
         <div class="card">
             <h3>Light Intensity / Ánh sáng</h3>
             <div class="lux-box" id="lux-box-bg">
@@ -201,7 +193,6 @@
             </div>
         </div>
 
-        <!-- 4. Độ ẩm đất -->
         <div class="card">
             <h3>Soil Moisture / Độ ẩm đất</h3>
             <div class="card-body-fixed">
@@ -215,7 +206,6 @@
             </div>
         </div>
 
-        <!-- 5. MỨC NƯỚC BỒN CHỨA -->
         <div class="card">
             <h3>Water Tank / Bồn nước</h3>
             <div class="card-body-fixed">
@@ -235,7 +225,6 @@
             </div>
         </div>
 
-        <!-- 6. Cảm biến Mưa Analog -->
         <div class="card">
             <h3>Rain Status / Cảm biến Mưa</h3>
             <div class="card-body-fixed">
@@ -252,7 +241,6 @@
         </div>
     </div>
 
-    <!-- KHU VỰC ĐIỀU KHIỂN BƠM -->
     <div class="grid">
         <div class="card control-card">
             <h3>Pump 1 / Bơm cấp nước bồn</h3>
@@ -264,7 +252,6 @@
         </div>
     </div>
 
-    <!-- BIỂU ĐỒ THEO DÕI REALTIME -->
     <div class="chart-card">
         <h3 style="font-size: 14px; color: var(--text-sub); margin-bottom: 15px; text-transform: uppercase;">
             <i class="fa-solid fa-chart-line"></i> Analytics / Biểu đồ Nhiệt độ & Độ ẩm đất
@@ -385,14 +372,11 @@
             document.getElementById("connection-status").innerText = "Online / Trực tuyến (Port 443)";
             document.getElementById("connection-status").style.color = "var(--success)";
 
+            // Đăng ký các Feeds quy chuẩn mới (dùng 'farm')
             client.subscribe(AIO_USERNAME + "/feeds/system-data");
-            client.subscribe(AIO_USERNAME + "/feeds/luan-mode");
-            client.subscribe(AIO_USERNAME + "/feeds/luan-pump1");
-            client.subscribe(AIO_USERNAME + "/feeds/luan-pump2");
-            
-            client.subscribe(AIO_USERNAME + "/feeds/luan.mode");
-            client.subscribe(AIO_USERNAME + "/feeds/luan.pump1");
-            client.subscribe(AIO_USERNAME + "/feeds/luan.pump2");
+            client.subscribe(AIO_USERNAME + "/feeds/farm-mode");
+            client.subscribe(AIO_USERNAME + "/feeds/farm-pump1");
+            client.subscribe(AIO_USERNAME + "/feeds/farm-pump2");
         });
 
         client.on("message", (topic, payload) => {
@@ -542,7 +526,7 @@
                     rainText.style.color = "#475569";
                 }
 
-                // 7. Xử lý Mode
+                // 7. Xử lý Mode từ JSON
                 if (data.mode !== undefined) {
                     processIncomingMode(data.mode);
                 }
@@ -550,15 +534,16 @@
             } catch (e) { console.error("Lỗi parse JSON:", e); }
         }
 
-        if (topic.endsWith("/luan-mode") || topic.endsWith("/luan.mode")) {
+        // Nhận trực tiếp tin nhắn từ các Topic đơn lẻ
+        if (topic.endsWith("/farm-mode")) {
             processIncomingMode(payload);
         }
 
-        if (topic.endsWith("/luan-pump1") || topic.endsWith("/luan.pump1")) { 
+        if (topic.endsWith("/farm-pump1")) { 
             pump1State = (payload === "ON" || payload === "1") ? "ON" : "OFF"; 
             updatePumpUI("pump1", pump1State); 
         }
-        if (topic.endsWith("/luan-pump2") || topic.endsWith("/luan.pump2")) { 
+        if (topic.endsWith("/farm-pump2")) { 
             pump2State = (payload === "ON" || payload === "1") ? "ON" : "OFF"; 
             updatePumpUI("pump2", pump2State); 
         }
@@ -596,12 +581,7 @@
 
         if (client && client.connected) {
             const upper = mode.toUpperCase();
-            const lower = mode.toLowerCase();
-
-            client.publish(AIO_USERNAME + "/feeds/luan-mode", upper);
-            client.publish(AIO_USERNAME + "/feeds/luan-mode", lower);
-            client.publish(AIO_USERNAME + "/feeds/luan.mode", upper);
-            client.publish(AIO_USERNAME + "/feeds/luan.mode", lower);
+            client.publish(AIO_USERNAME + "/feeds/farm-mode", upper);
         }
 
         clearTimeout(modeTimeout);
@@ -630,16 +610,11 @@
     function togglePump(pumpName) {
         if (currentMode === "auto" || !client || !client.connected) return;
         
-        let feedDash = AIO_USERNAME + "/feeds/" + (pumpName === "pump1" ? "luan-pump1" : "luan-pump2");
-        let feedDot = AIO_USERNAME + "/feeds/" + (pumpName === "pump1" ? "luan.pump1" : "luan.pump2");
+        let feed = AIO_USERNAME + "/feeds/" + (pumpName === "pump1" ? "farm-pump1" : "farm-pump2");
         let state = (pumpName === "pump1" ? pump1State : pump2State);
         let nextState = (state === "ON") ? "OFF" : "ON";
-        let nextStateVal = (nextState === "ON") ? "1" : "0";
 
-        client.publish(feedDash, nextState);
-        client.publish(feedDot, nextState);
-        client.publish(feedDash, nextStateVal);
-        client.publish(feedDot, nextStateVal);
+        client.publish(feed, nextState);
     }
 
     function updatePumpUI(pumpName, state) {
