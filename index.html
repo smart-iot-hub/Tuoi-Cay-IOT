@@ -453,12 +453,12 @@
                     let sugText = "";
                     let sugBox = document.getElementById("soil-suggestion-text");
                     
-                    if (soil < 30) {
+                    if (soil < 70) {
                         sugText = "⚠️ Đất khô! Cần tưới ngay";
                         sugBox.style.borderColor = "#fca5a5";
                         sugBox.style.background = "#fef2f2";
                         sugBox.style.color = "#991b1b";
-                    } else if (soil <= 70) {
+                    } else if (soil <= 90) {
                         sugText = "✅ Độ ẩm đất lý tưởng";
                         sugBox.style.borderColor = "#86efac";
                         sugBox.style.background = "#f0fdf4";
