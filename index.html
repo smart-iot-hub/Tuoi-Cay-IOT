@@ -26,7 +26,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg); color: var(--text); padding: 20px; }
 
-        .container { max-width: 1200px; margin: 0 auto; }
+        .container { max-width: 1280px; margin: 0 auto; }
 
         /* Header */
         header {
@@ -43,7 +43,7 @@
         .btn-config:hover { opacity: 0.9; }
 
         /* Controls Grid */
-        .grid-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .grid-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 20px; }
         .card {
             background: var(--card-bg); padding: 20px; border-radius: 12px;
             border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -68,7 +68,20 @@
         .btn-off { background: #94a3b8; color: white; }
 
         /* Sensor Grid */
-        .grid-sensors { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .grid-sensors { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 20px; 
+            margin-bottom: 20px; 
+        }
+
+        /* Responsive Grid Layout */
+        @media (max-width: 1024px) {
+            .grid-sensors { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 640px) {
+            .grid-sensors { grid-template-columns: 1fr; }
+        }
         
         /* Circle Displays */
         .circle-container { display: flex; justify-content: center; align-items: center; margin: 15px 0; }
@@ -89,8 +102,26 @@
         .drop-active { color: #0284c7; }
         .drop-inactive { color: #cbd5e1; }
 
-        /* Chart */
-        .chart-card { width: 100%; }
+        /* Chart Card */
+        .chart-card { 
+            grid-column: span 2; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        @media (max-width: 1024px) {
+            .chart-card { grid-column: span 2; }
+        }
+        @media (max-width: 640px) {
+            .chart-card { grid-column: span 1; }
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 160px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -127,7 +158,7 @@
         </div>
     </div>
 
-    <!-- Sensor Data -->
+    <!-- Sensor & Chart Grid -->
     <div class="grid-sensors">
         <!-- Temp -->
         <div class="card">
@@ -190,12 +221,14 @@
                 <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Độ ẩm: <span id="val-rain-percent">--%</span> (ADC: <span id="val-rain-raw">--</span>)</div>
             </div>
         </div>
-    </div>
 
-    <!-- Chart -->
-    <div class="card chart-card">
-        <div class="card-title"><i class="fa-solid fa-chart-line"></i> Biểu đồ theo dõi thời gian thực</div>
-        <canvas id="realtimeChart" height="80"></canvas>
+        <!-- Chart (Đã gom lên cùng hàng bên phải Cảm biến mưa) -->
+        <div class="card chart-card">
+            <div class="card-title"><i class="fa-solid fa-chart-line"></i> Biểu đồ theo dõi thời gian thực</div>
+            <div class="chart-wrapper">
+                <canvas id="realtimeChart"></canvas>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -248,8 +281,9 @@
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false,
             scales: {
-                x: { display: true, title: { display: true, text: 'Thời gian' } },
+                x: { display: true },
                 y: { min: 0, max: 100 }
             }
         }
@@ -311,7 +345,6 @@
             document.getElementById("connection-status").innerText = "Trực tuyến (Port 443)";
             document.getElementById("connection-status").style.color = "var(--success)";
 
-            // Đăng ký nhận dữ liệu từ các Feed
             client.subscribe(AIO_USERNAME + "/feeds/system-data");
             client.subscribe(AIO_USERNAME + "/feeds/farm-mode");
             client.subscribe(AIO_USERNAME + "/feeds/farm-pump1");
@@ -443,7 +476,7 @@
                     rainText.innerText = "☀️ Không mưa"; rainText.style.color = "#475569";
                 }
 
-                // 7. Đồng bộ trạng thái Mode & Bơm từ JSON nếu có
+                // 7. Đồng bộ trạng thái Mode & Bơm
                 if (data.mode !== undefined) processIncomingMode(data.mode);
                 if (data.pump1 !== undefined) {
                     pump1State = (data.pump1 == "1" || data.pump1 == "ON") ? "ON" : "OFF";
@@ -457,7 +490,6 @@
             } catch (e) { console.error("Lỗi parse JSON:", e); }
         }
 
-        // Nhận dữ liệu từ Feed riêng lẻ
         if (topic.endsWith("/farm-mode")) processIncomingMode(payload);
         if (topic.endsWith("/farm-pump1")) {
             pump1State = (payload === "ON" || payload === "1") ? "ON" : "OFF";
@@ -526,7 +558,7 @@
         }
     }
 
-    // ==================== ĐIỀU KHUYỂN BƠM (OPTIMISTIC UI) ====================
+    // ==================== ĐIỀU KHUYỂN BƠM ====================
     function togglePump(pumpName) {
         if (currentMode === "auto") {
             alert("Chức năng chỉ hoạt động ở chế độ MANUAL!");
@@ -539,11 +571,11 @@
         
         if (pumpName === "pump1") {
             pump1State = (pump1State === "ON") ? "OFF" : "ON";
-            updatePumpUI("pump1", pump1State); // Đổi trạng thái giao diện lập tức
+            updatePumpUI("pump1", pump1State);
             client.publish(AIO_USERNAME + "/feeds/farm-pump1", pump1State);
         } else if (pumpName === "pump2") {
             pump2State = (pump2State === "ON") ? "OFF" : "ON";
-            updatePumpUI("pump2", pump2State); // Đổi trạng thái giao diện lập tức
+            updatePumpUI("pump2", pump2State);
             client.publish(AIO_USERNAME + "/feeds/farm-pump2", pump2State);
         }
     }
