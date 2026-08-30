@@ -222,7 +222,7 @@
             </div>
         </div>
 
-        <!-- Chart (Đã gom lên cùng hàng bên phải Cảm biến mưa) -->
+        <!-- Realtime Chart -->
         <div class="card chart-card">
             <div class="card-title"><i class="fa-solid fa-chart-line"></i> Biểu đồ theo dõi thời gian thực</div>
             <div class="chart-wrapper">
@@ -258,7 +258,7 @@
         }
     }
 
-    // ==================== BIẾN TRẠNG THÁI & CƠ CHẾ XÁC NHẬN ACK ====================
+    // ==================== BIẾN TRẠNG THÁI ====================
     let client = null;
     let currentMode = "auto";
     let pump1State = "OFF";
@@ -476,7 +476,7 @@
                     rainText.innerText = "☀️ Không mưa"; rainText.style.color = "#475569";
                 }
 
-                // 7. Đồng bộ trạng thái Mode & Bơm
+                // 7. Đồng bộ trạng thái Mode & Bơm từ JSON của ESP32
                 if (data.mode !== undefined) processIncomingMode(data.mode);
                 if (data.pump1 !== undefined) {
                     pump1State = (data.pump1 == "1" || data.pump1 == "ON") ? "ON" : "OFF";
@@ -491,6 +491,7 @@
         }
 
         if (topic.endsWith("/farm-mode")) processIncomingMode(payload);
+        
         if (topic.endsWith("/farm-pump1")) {
             pump1State = (payload === "ON" || payload === "1") ? "ON" : "OFF";
             updatePumpUI("pump1", pump1State);
@@ -525,21 +526,35 @@
         document.getElementById("water-fill").style.height = percent + "%";
     }
 
+    // ==================== THAY ĐỔI CHẾ ĐỘ (MODE) ====================
     function setMode(mode) {
-        desiredMode = mode.toLowerCase();
+        let newMode = mode.toLowerCase();
+        desiredMode = newMode;
         isWaitingModeAck = true;
 
-        updateModeUI(desiredMode);
+        updateModeUI(newMode);
 
         if (client && client.connected) {
-            client.publish(AIO_USERNAME + "/feeds/farm-mode", mode.toUpperCase());
+            // Gửi lệnh Mode
+            client.publish(AIO_USERNAME + "/feeds/farm-mode", newMode.toUpperCase());
+
+            // ĐẶC BIỆT: Nếu bấm MANUAL -> Ép tắt bơm ngay tại Web và xóa trạng thái lưu cũ trên Adafruit IO Feed
+            if (newMode === "manual") {
+                pump1State = "OFF";
+                pump2State = "OFF";
+                updatePumpUI("pump1", "OFF");
+                updatePumpUI("pump2", "OFF");
+
+                client.publish(AIO_USERNAME + "/feeds/farm-pump1", "OFF");
+                client.publish(AIO_USERNAME + "/feeds/farm-pump2", "OFF");
+            }
         }
 
         clearTimeout(modeTimeout);
         modeTimeout = setTimeout(() => {
             isWaitingModeAck = false;
             desiredMode = null;
-        }, 10000);
+        }, 5000);
     }
 
     function updateModeUI(mode) {
