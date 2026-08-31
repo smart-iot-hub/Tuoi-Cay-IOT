@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Farm Dashboard - Adafruit IO</title>
-    <!-- Font Awesome -->
+    <!-- Font Awesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,114 +14,135 @@
     <style>
         :root {
             --primary: #2563eb;
-            --success: #16a34a;
-            --warning: #d97706;
-            --danger: #dc2626;
-            --bg: #f8fafc;
+            --primary-hover: #1d4ed8;
+            --success: #10b981;
+            --success-hover: #059669;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #f1f5f9;
             --card-bg: #ffffff;
-            --text: #1e293b;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
             --border: #e2e8f0;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --radius: 12px;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg); color: var(--text); padding: 20px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg); color: var(--text-main); padding: 20px; line-height: 1.5; }
 
         .container { max-width: 1280px; margin: 0 auto; }
 
         /* Header */
         header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: var(--card-bg); padding: 20px; border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;
+            background: var(--card-bg); padding: 20px 24px; border-radius: var(--radius);
+            box-shadow: var(--shadow); margin-bottom: 20px; border: 1px solid var(--border);
         }
-        .header-info h1 { font-size: 20px; color: var(--primary); margin-bottom: 5px; }
-        .status-badge { font-weight: bold; }
+        .header-info h1 { font-size: 22px; color: var(--primary); display: flex; align-items: center; gap: 10px; }
+        .status-badge { font-weight: 600; padding: 4px 10px; border-radius: 20px; font-size: 13px; background: #fef3c7; color: #d97706; }
+        .status-badge.online { background: #d1fae5; color: #059669; }
+        .status-badge.offline { background: #fee2e2; color: #dc2626; }
+
         .btn-config {
-            background: var(--primary); color: white; border: none;
-            padding: 8px 16px; border-radius: 6px; cursor: pointer; transition: 0.2s;
+            background: var(--primary); color: white; border: none; font-weight: 600;
+            padding: 10px 18px; border-radius: 8px; cursor: pointer; transition: 0.2s;
+            display: inline-flex; align-items: center; gap: 8px; font-size: 14px;
         }
-        .btn-config:hover { opacity: 0.9; }
+        .btn-config:hover { background: var(--primary-hover); }
 
-        /* Controls Grid */
+        /* Grid Layouts */
         .grid-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 20px; }
-        .card {
-            background: var(--card-bg); padding: 20px; border-radius: 12px;
-            border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .card-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .grid-sensors { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
 
-        /* Mode & Pump Buttons */
-        .btn-group { display: flex; gap: 10px; margin-bottom: 15px; }
-        .btn-group button {
-            flex: 1; padding: 12px; border: 1px solid var(--border);
-            border-radius: 8px; background: #f1f5f9; cursor: pointer; font-weight: bold; transition: 0.2s;
-        }
-        .btn-group button.active-auto { background: var(--primary); color: white; border-color: var(--primary); }
-        .btn-group button.active-manual { background: var(--warning); color: white; border-color: var(--warning); }
-
-        .switch-btn {
-            width: 100%; padding: 12px; border: none; border-radius: 8px;
-            font-weight: bold; cursor: pointer; transition: 0.2s;
-        }
-        .switch-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-on { background: var(--success); color: white; }
-        .btn-off { background: #94a3b8; color: white; }
-
-        /* Sensor Grid */
-        .grid-sensors { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 20px; 
-            margin-bottom: 20px; 
-        }
-
-        /* Responsive Grid Layout */
         @media (max-width: 1024px) {
             .grid-sensors { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 640px) {
             .grid-sensors { grid-template-columns: 1fr; }
         }
-        
-        /* Circle Displays */
-        .circle-container { display: flex; justify-content: center; align-items: center; margin: 15px 0; }
-        .circle-progress {
-            width: 100px; height: 100px; border-radius: 50%; display: flex;
-            justify-content: center; align-items: center; background: conic-gradient(#e2e8f0 0deg, #e2e8f0 360deg);
-        }
-        .circle-inner { width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 18px; }
 
-        /* Tank Display */
-        .tank-container { width: 60px; height: 100px; border: 2px solid #3b82f6; border-radius: 8px; margin: 0 auto; position: relative; overflow: hidden; background: #eff6ff; }
-        .tank-fill { position: absolute; bottom: 0; width: 100%; background: #3b82f6; transition: height 0.5s ease; }
-        .tank-text { position: absolute; width: 100%; text-align: center; top: 40%; font-weight: bold; color: #1e3a8a; z-index: 1; }
+        /* Cards */
+        .card {
+            background: var(--card-bg); padding: 20px; border-radius: var(--radius);
+            border: 1px solid var(--border); box-shadow: var(--shadow); transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card-title { font-size: 15px; font-weight: 700; color: var(--text-sub); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* Controls */
+        .btn-group { display: flex; gap: 10px; }
+        .btn-group button {
+            flex: 1; padding: 12px; border: 1px solid var(--border);
+            border-radius: 8px; background: #f8fafc; cursor: pointer; font-weight: 700; transition: 0.2s; color: var(--text-sub);
+        }
+        .btn-group button.active-auto { background: var(--primary); color: white; border-color: var(--primary); }
+        .btn-group button.active-manual { background: var(--warning); color: white; border-color: var(--warning); }
+
+        .switch-btn {
+            width: 100%; padding: 12px; border: none; border-radius: 8px;
+            font-weight: 700; cursor: pointer; transition: 0.2s; font-size: 15px;
+        }
+        .switch-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-on { background: var(--success); color: white; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); }
+        .btn-off { background: #94a3b8; color: white; }
+
+        /* Progress Circles */
+        .circle-container { display: flex; justify-content: center; align-items: center; margin: 10px 0; }
+        .circle-progress {
+            width: 110px; height: 110px; border-radius: 50%; display: flex;
+            justify-content: center; align-items: center; background: conic-gradient(#e2e8f0 0deg, #e2e8f0 360deg);
+            transition: background 0.4s ease;
+        }
+        .circle-inner { width: 88px; height: 88px; background: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: 700; font-size: 20px; }
+
+        /* Water Tank */
+        .tank-container { width: 64px; height: 110px; border: 3px solid #3b82f6; border-radius: 10px; margin: 0 auto; position: relative; overflow: hidden; background: #eff6ff; }
+        .tank-fill { position: absolute; bottom: 0; width: 100%; background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%); transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .tank-text { position: absolute; width: 100%; text-align: center; top: 40%; font-weight: 800; color: #1e3a8a; z-index: 1; font-size: 15px; text-shadow: 0 0 4px rgba(255,255,255,0.8); }
 
         /* Rain Indicator */
-        .rain-box { padding: 10px; border-radius: 8px; text-align: center; border: 1px solid var(--border); }
-        .rain-drops { display: flex; justify-content: center; gap: 5px; margin-top: 5px; }
+        .rain-box { padding: 12px; border-radius: 8px; text-align: center; border: 1px solid var(--border); transition: 0.3s; }
+        .rain-drops { display: flex; justify-content: center; gap: 6px; margin-top: 8px; }
         .drop-active { color: #0284c7; }
         .drop-inactive { color: #cbd5e1; }
 
-        /* Chart Card */
-        .chart-card { 
-            grid-column: span 2; 
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
+        /* Chart */
+        .chart-card { grid-column: span 2; display: flex; flex-direction: column; justify-content: space-between; }
+        @media (max-width: 1024px) { .chart-card { grid-column: span 2; } }
+        @media (max-width: 640px) { .chart-card { grid-column: span 1; } }
+        .chart-wrapper { position: relative; height: 180px; width: 100%; }
 
-        @media (max-width: 1024px) {
-            .chart-card { grid-column: span 2; }
+        /* Toast Notifications */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast {
+            min-width: 250px; padding: 12px 16px; border-radius: 8px; background: #1e293b; color: white;
+            font-size: 14px; font-weight: 500; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+            display: flex; align-items: center; gap: 10px; animation: slideIn 0.3s forwards, fadeOut 0.3s 2.7s forwards;
         }
-        @media (max-width: 640px) {
-            .chart-card { grid-column: span 1; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+        /* Config Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center; z-index: 10000;
         }
-        
-        .chart-wrapper {
-            position: relative;
-            height: 160px;
-            width: 100%;
+        .modal-card {
+            background: white; width: 90%; max-width: 440px; border-radius: var(--radius);
+            padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid var(--border);
         }
+        .modal-header { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--primary); display: flex; justify-content: space-between; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; }
+        .form-group input {
+            width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px;
+            font-size: 14px; outline: none; transition: 0.2s;
+        }
+        .form-group input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .btn-secondary { background: #e2e8f0; color: var(--text-main); border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -131,10 +152,12 @@
     <header>
         <div class="header-info">
             <h1><i class="fa-solid fa-seedling"></i> Hệ Thống Giám Sát Nông Nghiệp Thông Minh</h1>
-            <div>Trạng thái: <span id="connection-status" class="status-badge" style="color: var(--warning);">Đang kết nối...</span></div>
-            <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Cập nhật lần cuối: <span id="last-update-time">--:--:--</span></div>
+            <div style="display: flex; align-items: center; gap: 12px; margin-top: 6px;">
+                <span id="connection-status" class="status-badge">Đang kết nối...</span>
+                <span style="font-size: 12px; color: var(--text-sub);">Cập nhật: <b id="last-update-time">--:--:--</b></span>
+            </div>
         </div>
-        <button class="btn-config" onclick="configureKeys()"><i class="fa-solid fa-gear"></i> Cấu hình Key</button>
+        <button class="btn-config" onclick="openConfigModal()"><i class="fa-solid fa-gear"></i> Cấu hình Key</button>
     </header>
 
     <!-- Controls -->
@@ -183,16 +206,16 @@
         <!-- Light -->
         <div class="card">
             <div class="card-title"><i class="fa-solid fa-sun" style="color: #eab308;"></i> Ánh sáng</div>
-            <div id="lux-box-bg" style="padding: 15px; border-radius: 8px; text-align: center; margin-top: 10px;">
+            <div id="lux-box-bg" style="padding: 15px; border-radius: 8px; text-align: center; margin-top: 10px; background: #f8fafc; border: 1px solid var(--border);">
                 <div style="font-size: 22px; font-weight: bold;"><span id="val-light">--</span> Lux</div>
-                <div id="lux-text" style="font-size: 13px; margin-top: 5px;">Đang tải...</div>
+                <div id="lux-text" style="font-size: 13px; margin-top: 5px; color: var(--text-sub);">Đang tải...</div>
             </div>
         </div>
 
         <!-- Soil -->
         <div class="card">
             <div class="card-title"><i class="fa-solid fa-plant-wilt" style="color: #16a34a;"></i> Độ ẩm đất</div>
-            <div style="text-align: center; font-size: 22px; font-weight: bold; margin: 10px 0;"><span id="val-soil">--</span>%</div>
+            <div style="text-align: center; font-size: 24px; font-weight: bold; margin: 8px 0;"><span id="val-soil">--</span>%</div>
             <div id="soil-suggestion-text" style="padding: 8px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; text-align: center;">--</div>
         </div>
 
@@ -206,7 +229,7 @@
                 </div>
                 <div style="font-size: 13px;">
                     <div>Mực nước: <b id="water-text-sub">--%</b></div>
-                    <div style="color: #64748b; font-size: 11px; margin-top: 4px;">RAW: <span id="val-water-raw">--</span></div>
+                    <div style="color: var(--text-sub); font-size: 11px; margin-top: 4px;">RAW: <span id="val-water-raw">--</span></div>
                 </div>
             </div>
         </div>
@@ -215,10 +238,12 @@
         <div class="card">
             <div class="card-title"><i class="fa-solid fa-cloud-rain" style="color: #38bdf8;"></i> Cảm biến mưa</div>
             <div id="rain-bg" class="rain-box">
-                <i id="rain-icon" class="fa-solid fa-sun rain-icon" style="font-size: 24px; color: #eab308;"></i>
+                <i id="rain-icon" class="fa-solid fa-sun" style="font-size: 24px; color: #eab308;"></i>
                 <div id="val-rain" style="font-weight: bold; margin-top: 5px;">--</div>
                 <div class="rain-drops" id="rain-drops-visual"></div>
-                <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Độ ẩm: <span id="val-rain-percent">--%</span> (ADC: <span id="val-rain-raw">--</span>)</div>
+                <div style="font-size: 11px; color: var(--text-sub); margin-top: 6px;">
+                    Độ ẩm: <span id="val-rain-percent">--%</span> (ADC: <span id="val-rain-raw">--</span>)
+                </div>
             </div>
         </div>
 
@@ -232,30 +257,81 @@
     </div>
 </div>
 
+<!-- Modal Cấu Hình Key -->
+<div id="config-modal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <span>Cấu Hình Adafruit IO</span>
+            <i class="fa-solid fa-xmark" style="cursor: pointer;" onclick="closeConfigModal()"></i>
+        </div>
+        <div class="form-group">
+            <label for="cfg-username">Adafruit Username</label>
+            <input type="text" id="cfg-username" placeholder="Ví dụ: my_username">
+        </div>
+        <div class="form-group">
+            <label for="cfg-key">Adafruit Active Key</label>
+            <input type="password" id="cfg-key" placeholder="aio_...">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-secondary" onclick="closeConfigModal()">Hủy</button>
+            <button class="btn-primary" onclick="saveConfiguration()">Lưu & Kết Nối</button>
+        </div>
+    </div>
+</div>
+
+<!-- Container thông báo Toast -->
+<div id="toast-container"></div>
+
 <script>
-    // ==================== QUẢN LÝ KEY QUA LOCALSTORAGE ====================
+    // ==================== TOAST NOTIFICATION SYSTEM ====================
+    function showToast(message, type = "info") {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        
+        let icon = '<i class="fa-solid fa-circle-info" style="color: #60a5fa;"></i>';
+        if (type === "success") icon = '<i class="fa-solid fa-circle-check" style="color: #34d399;"></i>';
+        if (type === "warning") icon = '<i class="fa-solid fa-triangle-exclamation" style="color: #fbbf24;"></i>';
+        if (type === "danger") icon = '<i class="fa-solid fa-circle-xmark" style="color: #f87171;"></i>';
+
+        toast.innerHTML = `${icon} <span>${message}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    // ==================== QUẢN LÝ KEY & MODAL ====================
     let AIO_USERNAME = (localStorage.getItem("AIO_USERNAME") || "").trim();
     let AIO_KEY = (localStorage.getItem("AIO_KEY") || "").trim();
 
-    if (!AIO_USERNAME || !AIO_KEY) {
-        setTimeout(() => configureKeys(), 500);
+    function openConfigModal() {
+        document.getElementById("cfg-username").value = AIO_USERNAME;
+        document.getElementById("cfg-key").value = AIO_KEY;
+        document.getElementById("config-modal").style.display = "flex";
     }
 
-    function configureKeys() {
-        const newUsername = prompt("Enter Adafruit IO Username / Nhập Username:", AIO_USERNAME);
-        if (newUsername === null) return;
+    function closeConfigModal() {
+        document.getElementById("config-modal").style.display = "none";
+    }
 
-        const newKey = prompt("Enter Adafruit IO Key / Nhập Key (aio_...):", AIO_KEY);
-        if (newKey === null) return;
+    function saveConfiguration() {
+        const user = document.getElementById("cfg-username").value.trim();
+        const key = document.getElementById("cfg-key").value.trim();
 
-        if (newUsername.trim() !== "" && newKey.trim() !== "") {
-            localStorage.setItem("AIO_USERNAME", newUsername.trim());
-            localStorage.setItem("AIO_KEY", newKey.trim());
-            alert("Đã lưu cài đặt thành công! Trang web sẽ tải lại.");
-            location.reload();
-        } else {
-            alert("Lỗi: Username và Key không được để trống!");
+        if (!user || !key) {
+            showToast("Vui lòng nhập đầy đủ Username và Key!", "warning");
+            return;
         }
+
+        localStorage.setItem("AIO_USERNAME", user);
+        localStorage.setItem("AIO_KEY", key);
+        closeConfigModal();
+        showToast("Đã lưu cấu hình! Đang kết nối lại...", "success");
+        connectMQTT();
+    }
+
+    if (!AIO_USERNAME || !AIO_KEY) {
+        setTimeout(openConfigModal, 500);
     }
 
     // ==================== BIẾN TRẠNG THÁI ====================
@@ -268,37 +344,49 @@
     let isWaitingModeAck = false;
     let modeTimeout = null;
 
-    // Chart.js Setup
+    // ==================== CHART.JS SETUP ====================
     const ctx = document.getElementById('realtimeChart').getContext('2d');
+    
+    // Gradient màu nền cho biểu đồ
+    const tempGradient = ctx.createLinearGradient(0, 0, 0, 160);
+    tempGradient.addColorStop(0, 'rgba(239, 68, 68, 0.25)');
+    tempGradient.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+
+    const soilGradient = ctx.createLinearGradient(0, 0, 0, 160);
+    soilGradient.addColorStop(0, 'rgba(22, 163, 74, 0.25)');
+    soilGradient.addColorStop(1, 'rgba(22, 163, 74, 0.0)');
+
     const sensorChart = new Chart(ctx, {
         type: 'line',
         data: {
             labels: [],
             datasets: [
-                { label: 'Nhiệt độ (°C)', borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', data: [], fill: true, tension: 0.3 },
-                { label: 'Độ ẩm đất (%)', borderColor: '#16a34a', backgroundColor: 'rgba(22, 163, 74, 0.1)', data: [], fill: true, tension: 0.3 }
+                { label: 'Nhiệt độ (°C)', borderColor: '#ef4444', backgroundColor: tempGradient, data: [], fill: true, tension: 0.35, pointRadius: 2 },
+                { label: 'Độ ẩm đất (%)', borderColor: '#16a34a', backgroundColor: soilGradient, data: [], fill: true, tension: 0.35, pointRadius: 2 }
             ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            animation: { duration: 300 },
             scales: {
-                x: { display: true },
-                y: { min: 0, max: 100 }
-            }
+                x: { display: true, grid: { display: false } },
+                y: { min: 0, max: 100, grid: { color: '#f1f5f9' } }
+            },
+            plugins: { legend: { position: 'top' } }
         }
     });
 
     function updateChart(temp, soil) {
         const now = new Date().toLocaleTimeString('vi-VN');
-        if (sensorChart.data.labels.length > 12) {
+        if (sensorChart.data.labels.length >= 15) {
             sensorChart.data.labels.shift();
             sensorChart.data.datasets[0].data.shift();
             sensorChart.data.datasets[1].data.shift();
         }
         sensorChart.data.labels.push(now);
-        if (temp !== undefined) sensorChart.data.datasets[0].data.push(temp);
-        if (soil !== undefined) sensorChart.data.datasets[1].data.push(soil);
+        sensorChart.data.datasets[0].data.push(temp !== undefined ? temp : null);
+        sensorChart.data.datasets[1].data.push(soil !== undefined ? soil : null);
         sensorChart.update();
     }
 
@@ -306,19 +394,21 @@
         document.getElementById("last-update-time").innerText = new Date().toLocaleTimeString('vi-VN');
     }
 
-    // ==================== KẾT NỐI MQTT VIA PORT 443 ====================
+    // ==================== KẾT NỐI MQTT ====================
     function connectMQTT() {
         AIO_USERNAME = (localStorage.getItem("AIO_USERNAME") || "").trim();
         AIO_KEY = (localStorage.getItem("AIO_KEY") || "").trim();
 
+        const statusEl = document.getElementById("connection-status");
+
         if (!AIO_USERNAME || !AIO_KEY) {
-            document.getElementById("connection-status").innerText = "Chưa cấu hình Key!";
-            document.getElementById("connection-status").style.color = "var(--danger)";
+            statusEl.innerText = "Chưa cấu hình Key";
+            statusEl.className = "status-badge offline";
             return;
         }
 
-        document.getElementById("connection-status").innerText = "Đang nối Port 443...";
-        document.getElementById("connection-status").style.color = "var(--warning)";
+        statusEl.innerText = "Đang kết nối...";
+        statusEl.className = "status-badge";
 
         if (client) { try { client.end(true); } catch(e){} }
 
@@ -331,19 +421,19 @@
             reconnectPeriod: 4000
         };
 
-        const connectUrl = "wss://io.adafruit.com:443/mqtt";
         try {
-            client = mqtt.connect(connectUrl, options);
+            client = mqtt.connect("wss://io.adafruit.com:443/mqtt", options);
         } catch (err) {
-            console.error("Lỗi kết nối MQTT:", err);
-            document.getElementById("connection-status").innerText = "Lỗi khởi tạo MQTT";
+            console.error("Lỗi MQTT:", err);
+            statusEl.innerText = "Lỗi khởi tạo MQTT";
+            statusEl.className = "status-badge offline";
             return;
         }
 
         client.on("connect", () => {
-            console.log("✅ Đã kết nối MQTT Adafruit IO!");
-            document.getElementById("connection-status").innerText = "Trực tuyến (Port 443)";
-            document.getElementById("connection-status").style.color = "var(--success)";
+            statusEl.innerText = "Trực tuyến";
+            statusEl.className = "status-badge online";
+            showToast("Đã kết nối Adafruit IO thành công!", "success");
 
             client.subscribe(AIO_USERNAME + "/feeds/system-data");
             client.subscribe(AIO_USERNAME + "/feeds/farm-mode");
@@ -355,18 +445,18 @@
             handleIncomingMessage(topic, payload.toString());
         });
 
-        client.on("error", (err) => {
-            document.getElementById("connection-status").innerText = "Lỗi kết nối / Sai Key";
-            document.getElementById("connection-status").style.color = "var(--danger)";
+        client.on("error", () => {
+            statusEl.innerText = "Sai Key / Mất kết nối";
+            statusEl.className = "status-badge offline";
         });
 
         client.on("offline", () => {
-            document.getElementById("connection-status").innerText = "Đang kết nối lại...";
-            document.getElementById("connection-status").style.color = "var(--warning)";
+            statusEl.innerText = "Đang kết nối lại...";
+            statusEl.className = "status-badge";
         });
     }
 
-    // ==================== XỬ LÝ DỮ LIỆU TỪ ADAFRUIT ====================
+    // ==================== XỬ LÝ DỮ LIỆU ĐẾN ====================
     function handleIncomingMessage(topic, payload) {
         if (topic.endsWith("/feeds/system-data")) {
             try {
@@ -375,55 +465,51 @@
 
                 // 1. Nhiệt độ
                 if (data.temp !== undefined) {
-                    document.getElementById("val-temp").innerText = data.temp;
-                    let tempDeg = Math.min((data.temp / 50) * 360, 360);
+                    const tempVal = Number(data.temp);
+                    document.getElementById("val-temp").innerText = tempVal;
+                    let tempDeg = Math.min((tempVal / 50) * 360, 360);
                     document.getElementById("temp-circle").style.background = `conic-gradient(#ef4444 ${tempDeg}deg, #e2e8f0 0deg)`;
                 }
 
                 // 2. Độ ẩm không khí
                 if (data.hum !== undefined) {
-                    document.getElementById("val-hum").innerText = data.hum;
-                    let humDeg = Math.min((data.hum / 100) * 360, 360);
+                    const humVal = Number(data.hum);
+                    document.getElementById("val-hum").innerText = humVal;
+                    let humDeg = Math.min((humVal / 100) * 360, 360);
                     document.getElementById("hum-circle").style.background = `conic-gradient(#3b82f6 ${humDeg}deg, #e2e8f0 0deg)`;
                 }
 
                 // 3. Ánh sáng
                 if (data.light !== undefined) {
-                    let lux = data.light;
+                    let lux = Number(data.light);
                     document.getElementById("val-light").innerText = lux;
                     let box = document.getElementById("lux-box-bg");
                     let text = document.getElementById("lux-text");
                     if (lux > 1000) {
-                        box.style.background = "#fef08a"; text.innerText = "☀️ Nắng gắt";
+                        box.style.background = "#fef08a"; text.innerText = "☀️ Nắng gắt"; text.style.color = "#854d0e";
                     } else if (lux > 300) {
-                        box.style.background = "#fef9c3"; text.innerText = "⛅ Ánh sáng tốt";
+                        box.style.background = "#fef9c3"; text.innerText = "⛅ Ánh sáng tốt"; text.style.color = "#a16207";
                     } else {
-                        box.style.background = "#f1f5f9"; text.innerText = "🌙 Sáng yếu / Đêm";
+                        box.style.background = "#f1f5f9"; text.innerText = "🌙 Sáng yếu / Đêm"; text.style.color = "#475569";
                     }
                 }
 
                 // 4. Độ ẩm đất
                 if (data.soil !== undefined) {
-                    let soil = data.soil;
+                    let soil = Number(data.soil);
                     document.getElementById("val-soil").innerText = soil;
                     let sugText = "";
                     let sugBox = document.getElementById("soil-suggestion-text");
                     
                     if (soil < 70) {
                         sugText = "⚠️ Đất khô! Cần tưới ngay";
-                        sugBox.style.borderColor = "#fca5a5";
-                        sugBox.style.background = "#fef2f2";
-                        sugBox.style.color = "#991b1b";
+                        sugBox.style.borderColor = "#fca5a5"; sugBox.style.background = "#fef2f2"; sugBox.style.color = "#991b1b";
                     } else if (soil <= 90) {
                         sugText = "✅ Độ ẩm đất lý tưởng";
-                        sugBox.style.borderColor = "#86efac";
-                        sugBox.style.background = "#f0fdf4";
-                        sugBox.style.color = "#166534";
+                        sugBox.style.borderColor = "#86efac"; sugBox.style.background = "#f0fdf4"; sugBox.style.color = "#166534";
                     } else {
                         sugText = "💧 Đất quá ẩm! Tránh tưới";
-                        sugBox.style.borderColor = "#7dd3fc";
-                        sugBox.style.background = "#f0f9ff";
-                        sugBox.style.color = "#0369a1";
+                        sugBox.style.borderColor = "#7dd3fc"; sugBox.style.background = "#f0f9ff"; sugBox.style.color = "#0369a1";
                     }
                     sugBox.innerHTML = `<i class="fa-solid fa-lightbulb"></i> ${sugText}`;
                 }
@@ -433,7 +519,7 @@
                 }
 
                 // 5. Bồn nước
-                if (data.water !== undefined) renderWaterLevel(data.water);
+                if (data.water !== undefined) renderWaterLevel(Number(data.water));
                 if (data.waterRaw !== undefined) document.getElementById("val-water-raw").innerText = data.waterRaw;
 
                 // 6. Cảm biến Mưa
@@ -464,19 +550,19 @@
 
                 if (activeDrops >= 4) {
                     rainBg.style.background = "#e0f2fe"; rainBg.style.borderColor = "#0284c7";
-                    rainIcon.className = "fa-solid fa-cloud-showers-heavy rain-icon"; rainIcon.style.color = "#0284c7";
+                    rainIcon.className = "fa-solid fa-cloud-showers-heavy"; rainIcon.style.color = "#0284c7";
                     rainText.innerText = "🌧️ Mưa lớn"; rainText.style.color = "#0369a1";
                 } else if (activeDrops >= 1) {
                     rainBg.style.background = "#f0f9ff"; rainBg.style.borderColor = "#7dd3fc";
-                    rainIcon.className = "fa-solid fa-cloud-rain rain-icon"; rainIcon.style.color = "#38bdf8";
+                    rainIcon.className = "fa-solid fa-cloud-rain"; rainIcon.style.color = "#38bdf8";
                     rainText.innerText = "🌦️ Mưa nhỏ / Sương"; rainText.style.color = "#0284c7";
                 } else {
                     rainBg.style.background = "#f8fafc"; rainBg.style.borderColor = "#e2e8f0";
-                    rainIcon.className = "fa-solid fa-sun rain-icon"; rainIcon.style.color = "#eab308";
+                    rainIcon.className = "fa-solid fa-sun"; rainIcon.style.color = "#eab308";
                     rainText.innerText = "☀️ Không mưa"; rainText.style.color = "#475569";
                 }
 
-                // 7. Đồng bộ trạng thái Mode & Bơm từ JSON của ESP32
+                // 7. Đồng bộ trạng thái Chế độ & Bơm
                 if (data.mode !== undefined) processIncomingMode(data.mode);
                 if (data.pump1 !== undefined) {
                     pump1State = (data.pump1 == "1" || data.pump1 == "ON") ? "ON" : "OFF";
@@ -487,7 +573,7 @@
                     updatePumpUI("pump2", pump2State);
                 }
 
-            } catch (e) { console.error("Lỗi parse JSON:", e); }
+            } catch (e) { console.error("Lỗi Parse JSON:", e); }
         }
 
         if (topic.endsWith("/farm-mode")) processIncomingMode(payload);
@@ -526,19 +612,20 @@
         document.getElementById("water-fill").style.height = percent + "%";
     }
 
-    // ==================== THAY ĐỔI CHẾ ĐỘ (MODE) ====================
+    // ==================== ĐIỀU KHUYỂN MODE ====================
     function setMode(mode) {
         let newMode = mode.toLowerCase();
+        if (currentMode === newMode) return;
+
         desiredMode = newMode;
         isWaitingModeAck = true;
 
         updateModeUI(newMode);
 
         if (client && client.connected) {
-            // Gửi lệnh Mode
             client.publish(AIO_USERNAME + "/feeds/farm-mode", newMode.toUpperCase());
+            showToast(`Đã chuyển sang chế độ ${newMode.toUpperCase()}`, "info");
 
-            // ĐẶC BIỆT: Nếu bấm MANUAL -> Ép tắt bơm ngay tại Web và xóa trạng thái lưu cũ trên Adafruit IO Feed
             if (newMode === "manual") {
                 pump1State = "OFF";
                 pump2State = "OFF";
@@ -576,11 +663,11 @@
     // ==================== ĐIỀU KHUYỂN BƠM ====================
     function togglePump(pumpName) {
         if (currentMode === "auto") {
-            alert("Chức năng chỉ hoạt động ở chế độ MANUAL!");
+            showToast("Chức năng chỉ hoạt động ở chế độ MANUAL!", "warning");
             return;
         }
         if (!client || !client.connected) {
-            alert("Chưa kết nối đến MQTT Server!");
+            showToast("Chưa kết nối đến MQTT Server!", "danger");
             return;
         }
         
@@ -588,10 +675,12 @@
             pump1State = (pump1State === "ON") ? "OFF" : "ON";
             updatePumpUI("pump1", pump1State);
             client.publish(AIO_USERNAME + "/feeds/farm-pump1", pump1State);
+            showToast(`Đã gửi lệnh ${pump1State} cho Bơm 1`, "info");
         } else if (pumpName === "pump2") {
             pump2State = (pump2State === "ON") ? "OFF" : "ON";
             updatePumpUI("pump2", pump2State);
             client.publish(AIO_USERNAME + "/feeds/farm-pump2", pump2State);
+            showToast(`Đã gửi lệnh ${pump2State} cho Bơm 2`, "info");
         }
     }
 
@@ -602,7 +691,7 @@
         btn.className = "switch-btn " + (state === "ON" ? "btn-on" : "btn-off");
     }
 
-    // Khởi chạy kết nối
+    // Khởi tạo kết nối khi load trang
     connectMQTT();
 </script>
 </body>
