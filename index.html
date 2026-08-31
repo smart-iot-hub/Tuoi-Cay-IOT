@@ -86,6 +86,13 @@
         .btn-on { background: var(--success); color: white; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); }
         .btn-off { background: #94a3b8; color: white; }
 
+        /* Sliders PWM */
+        .slider-control {
+            width: 100%; height: 6px; border-radius: 3px; background: #cbd5e1;
+            outline: none; accent-color: var(--primary); cursor: pointer; transition: 0.2s;
+        }
+        .slider-control:disabled { opacity: 0.4; cursor: not-allowed; }
+
         /* Progress Circles */
         .circle-container { display: flex; justify-content: center; align-items: center; margin: 10px 0; }
         .circle-progress {
@@ -170,14 +177,32 @@
             </div>
         </div>
 
+        <!-- Pump 1 Control + Speed Slider -->
         <div class="card">
             <div class="card-title"><i class="fa-solid fa-faucet-drip"></i> Điều khiển Bơm 1</div>
             <button id="pump1-btn" class="switch-btn btn-off" onclick="togglePump('pump1')" disabled>OFF / ĐANG TẮT</button>
+            <div style="margin-top: 15px;">
+                <label style="font-size: 13px; font-weight: 600; color: var(--text-sub); display: flex; justify-content: space-between;">
+                    Tốc độ Bơm 1 PWM: <b id="speed1-val" style="color: var(--primary);">255 (100%)</b>
+                </label>
+                <input type="range" id="speed1-slider" class="slider-control" min="0" max="255" value="255" 
+                       oninput="updateSpeedLabel('speed1', this.value)" 
+                       onchange="changeSpeed('pump1', this.value)" disabled>
+            </div>
         </div>
 
+        <!-- Pump 2 Control + Speed Slider -->
         <div class="card">
             <div class="card-title"><i class="fa-solid fa-shower"></i> Điều khiển Bơm 2</div>
             <button id="pump2-btn" class="switch-btn btn-off" onclick="togglePump('pump2')" disabled>OFF / ĐANG TẮT</button>
+            <div style="margin-top: 15px;">
+                <label style="font-size: 13px; font-weight: 600; color: var(--text-sub); display: flex; justify-content: space-between;">
+                    Tốc độ Bơm 2 PWM: <b id="speed2-val" style="color: var(--primary);">255 (100%)</b>
+                </label>
+                <input type="range" id="speed2-slider" class="slider-control" min="0" max="255" value="255" 
+                       oninput="updateSpeedLabel('speed2', this.value)" 
+                       onchange="changeSpeed('pump2', this.value)" disabled>
+            </div>
         </div>
     </div>
 
@@ -334,7 +359,7 @@
         setTimeout(openConfigModal, 500);
     }
 
-    // ==================== BIẾN TRẠNG THÁI ====================
+    // ==================== BIẾN TRẠNG THÁI & KHÓA LOCK TIMER ====================
     let client = null;
     let currentMode = "auto";
     let pump1State = "OFF";
@@ -344,10 +369,12 @@
     let isWaitingModeAck = false;
     let modeTimeout = null;
 
+    let lastActionTime = 0;
+    const IGNORE_SYNC_DURATION = 3000; // Khóa đồng bộ UI 3 giây khi thao tác
+
     // ==================== CHART.JS SETUP ====================
     const ctx = document.getElementById('realtimeChart').getContext('2d');
     
-    // Gradient màu nền cho biểu đồ
     const tempGradient = ctx.createLinearGradient(0, 0, 0, 160);
     tempGradient.addColorStop(0, 'rgba(239, 68, 68, 0.25)');
     tempGradient.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
@@ -439,6 +466,8 @@
             client.subscribe(AIO_USERNAME + "/feeds/farm-mode");
             client.subscribe(AIO_USERNAME + "/feeds/farm-pump1");
             client.subscribe(AIO_USERNAME + "/feeds/farm-pump2");
+            client.subscribe(AIO_USERNAME + "/feeds/farm-speed1");
+            client.subscribe(AIO_USERNAME + "/feeds/farm-speed2");
         });
 
         client.on("message", (topic, payload) => {
@@ -458,6 +487,9 @@
 
     // ==================== XỬ LÝ DỮ LIỆU ĐẾN ====================
     function handleIncomingMessage(topic, payload) {
+        const now = Date.now();
+        const isLocked = (now - lastActionTime) < IGNORE_SYNC_DURATION;
+
         if (topic.endsWith("/feeds/system-data")) {
             try {
                 const data = JSON.parse(payload);
@@ -562,29 +594,50 @@
                     rainText.innerText = "☀️ Không mưa"; rainText.style.color = "#475569";
                 }
 
-                // 7. Đồng bộ trạng thái Chế độ & Bơm
-                if (data.mode !== undefined) processIncomingMode(data.mode);
-                if (data.pump1 !== undefined) {
-                    pump1State = (data.pump1 == "1" || data.pump1 == "ON") ? "ON" : "OFF";
-                    updatePumpUI("pump1", pump1State);
-                }
-                if (data.pump2 !== undefined) {
-                    pump2State = (data.pump2 == "1" || data.pump2 == "ON") ? "ON" : "OFF";
-                    updatePumpUI("pump2", pump2State);
+                // 7. Đồng bộ trạng thái Chế độ, Bơm & Tốc độ PWM (Chỉ đồng bộ khi KHÔNG bị khóa)
+                if (!isLocked) {
+                    if (data.mode !== undefined) processIncomingMode(data.mode);
+                    if (data.pump1 !== undefined) {
+                        pump1State = (data.pump1 == "1" || data.pump1 == "ON") ? "ON" : "OFF";
+                        updatePumpUI("pump1", pump1State);
+                    }
+                    if (data.pump2 !== undefined) {
+                        pump2State = (data.pump2 == "1" || data.pump2 == "ON") ? "ON" : "OFF";
+                        updatePumpUI("pump2", pump2State);
+                    }
+                    if (data.speed1 !== undefined) {
+                        const s1 = document.getElementById("speed1-slider");
+                        if (s1) { s1.value = data.speed1; updateSpeedLabel("speed1", data.speed1); }
+                    }
+                    if (data.speed2 !== undefined) {
+                        const s2 = document.getElementById("speed2-slider");
+                        if (s2) { s2.value = data.speed2; updateSpeedLabel("speed2", data.speed2); }
+                    }
                 }
 
             } catch (e) { console.error("Lỗi Parse JSON:", e); }
         }
 
-        if (topic.endsWith("/farm-mode")) processIncomingMode(payload);
-        
-        if (topic.endsWith("/farm-pump1")) {
-            pump1State = (payload === "ON" || payload === "1") ? "ON" : "OFF";
-            updatePumpUI("pump1", pump1State);
-        }
-        if (topic.endsWith("/farm-pump2")) {
-            pump2State = (payload === "ON" || payload === "1") ? "ON" : "OFF";
-            updatePumpUI("pump2", pump2State);
+        // Xử lý các topic đơn lẻ (Nếu không bị khóa Lock Timer)
+        if (!isLocked) {
+            if (topic.endsWith("/farm-mode")) processIncomingMode(payload);
+            
+            if (topic.endsWith("/farm-pump1")) {
+                pump1State = (payload === "ON" || payload === "1") ? "ON" : "OFF";
+                updatePumpUI("pump1", pump1State);
+            }
+            if (topic.endsWith("/farm-pump2")) {
+                pump2State = (payload === "ON" || payload === "1") ? "ON" : "OFF";
+                updatePumpUI("pump2", pump2State);
+            }
+            if (topic.endsWith("/farm-speed1")) {
+                const s1 = document.getElementById("speed1-slider");
+                if (s1) { s1.value = payload; updateSpeedLabel("speed1", payload); }
+            }
+            if (topic.endsWith("/farm-speed2")) {
+                const s2 = document.getElementById("speed2-slider");
+                if (s2) { s2.value = payload; updateSpeedLabel("speed2", payload); }
+            }
         }
     }
 
@@ -612,11 +665,12 @@
         document.getElementById("water-fill").style.height = percent + "%";
     }
 
-    // ==================== ĐIỀU KHUYỂN MODE ====================
+    // ==================== ĐIỀU KHIỂN MODE ====================
     function setMode(mode) {
         let newMode = mode.toLowerCase();
         if (currentMode === newMode) return;
 
+        lastActionTime = Date.now(); // Kích hoạt khóa Lock Timer
         desiredMode = newMode;
         isWaitingModeAck = true;
 
@@ -650,17 +704,23 @@
         let btnManual = document.getElementById("btn-manual");
         let btnP1 = document.getElementById("pump1-btn");
         let btnP2 = document.getElementById("pump2-btn");
+        let s1 = document.getElementById("speed1-slider");
+        let s2 = document.getElementById("speed2-slider");
 
         if (mode === "auto") {
             btnAuto.className = "active-auto"; btnManual.className = "";
             btnP1.disabled = true; btnP2.disabled = true;
+            if (s1) s1.disabled = true;
+            if (s2) s2.disabled = true;
         } else {
             btnManual.className = "active-manual"; btnAuto.className = "";
             btnP1.disabled = false; btnP2.disabled = false;
+            if (s1) s1.disabled = false;
+            if (s2) s2.disabled = false;
         }
     }
 
-    // ==================== ĐIỀU KHUYỂN BƠM ====================
+    // ==================== ĐIỀU KHIỂN BƠM & TỐC ĐỘ PWM ====================
     function togglePump(pumpName) {
         if (currentMode === "auto") {
             showToast("Chức năng chỉ hoạt động ở chế độ MANUAL!", "warning");
@@ -670,6 +730,8 @@
             showToast("Chưa kết nối đến MQTT Server!", "danger");
             return;
         }
+        
+        lastActionTime = Date.now(); // Kích hoạt khóa Lock Timer
         
         if (pumpName === "pump1") {
             pump1State = (pump1State === "ON") ? "OFF" : "ON";
@@ -689,6 +751,27 @@
         if (!btn) return;
         btn.innerText = (state === "ON") ? "ON / ĐANG BẬT" : "OFF / ĐANG TẮT";
         btn.className = "switch-btn " + (state === "ON" ? "btn-on" : "btn-off");
+    }
+
+    function updateSpeedLabel(speedId, val) {
+        const pct = Math.round((val / 255) * 100);
+        const label = document.getElementById(speedId + "-val");
+        if (label) label.innerText = `${val} (${pct}%)`;
+    }
+
+    function changeSpeed(pumpName, val) {
+        if (currentMode === "auto") return;
+        if (!client || !client.connected) {
+            showToast("Chưa kết nối MQTT!", "danger");
+            return;
+        }
+
+        lastActionTime = Date.now(); // Kích hoạt khóa Lock Timer
+        const topicSuffix = (pumpName === "pump1") ? "/feeds/farm-speed1" : "/feeds/farm-speed2";
+        client.publish(AIO_USERNAME + topicSuffix, val.toString());
+
+        const pct = Math.round((val / 255) * 100);
+        showToast(`Đã đặt tốc độ ${pumpName === "pump1" ? "Bơm 1" : "Bơm 2"}: ${pct}%`, "info");
     }
 
     // Khởi tạo kết nối khi load trang
