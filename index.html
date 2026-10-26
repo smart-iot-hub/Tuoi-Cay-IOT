@@ -490,13 +490,16 @@
                 emergencyBanner.classList.add('hidden');
             }
 
-            // Diagnostics
+            // Diagnostics (Đã sửa lỗi hiển thị cảm biến Đất và Mưa)
+            const isSoilValid = d.soil_moisture >= 0 && d.soil_moisture <= 100;
+            const isRainValid = (d.rain === 0 || d.rain === 1 || d.rain === true || d.rain === false);
+            
             document.getElementById('diagTimeout1').innerHTML = `P1 Timeout: <span class="font-bold ${d.pump1_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump1_timeout ? 'LỖI' : 'OK'}</span>`;
             document.getElementById('diagTimeout2').innerHTML = `P2 Timeout: <span class="font-bold ${d.pump2_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump2_timeout ? 'LỖI' : 'OK'}</span>`;
             document.getElementById('diagTank').innerHTML = `Bồn: <span class="font-bold ${d.tank_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.tank_valid ? 'OK' : 'Lỗi'}</span>`;
             document.getElementById('diagDht').innerHTML = `DHT: <span class="font-bold ${d.dht11_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.dht11_valid ? 'OK' : 'Lỗi'}</span>`;
-            document.getElementById('diagSoil').innerHTML = `Đất: <span class="font-bold ${d.soil_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.soil_valid ? 'OK' : 'Lỗi'}</span>`;
-            document.getElementById('diagRain').innerHTML = `Mưa: <span class="font-bold ${d.rain_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.rain_valid ? 'OK' : 'Lỗi'}</span>`;
+            document.getElementById('diagSoil').innerHTML = `Đất: <span class="font-bold ${isSoilValid ? 'text-emerald-400' : 'text-rose-500'}">${isSoilValid ? 'OK' : 'Lỗi'}</span>`;
+            document.getElementById('diagRain').innerHTML = `Mưa: <span class="font-bold ${isRainValid ? 'text-emerald-400' : 'text-rose-500'}">${isRainValid ? 'OK' : 'Lỗi'}</span>`;
 
             // Update Chart
             const timeNow = new Date().toLocaleTimeString();
