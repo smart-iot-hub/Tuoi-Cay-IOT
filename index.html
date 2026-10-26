@@ -96,7 +96,7 @@
             <div class="bg-slate-800 p-3.5 md:p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition col-span-2 sm:col-span-1">
                 <div class="text-slate-400 text-[11px] uppercase font-semibold">Trạng thái Thời tiết</div>
                 <div class="flex items-baseline justify-between my-2">
-                    <span id="valRain" class="text-sm md:text-base px-3 py-1 rounded bg-slate-700 font-bold text-slate-300">KHÔ RỐI</span>
+                    <span id="valRain" class="text-sm md:text-base px-3 py-1 rounded bg-slate-700 font-bold text-slate-300">KHÔ RÁO</span>
                     <span id="badgeRain" class="text-[10px] md:text-xs text-slate-400">ADC7</span>
                 </div>
                 <div class="text-[10px] text-slate-500">Cảm biến mưa Analog</div>
@@ -169,7 +169,7 @@
                             <label class="block text-xs text-slate-400 mb-1">Lựa chọn loại cây</label>
                             <select id="selectPlant" onchange="changePlantProfile()" class="w-full bg-slate-800 text-emerald-400 font-bold text-sm p-2 rounded border border-slate-600 focus:outline-none focus:border-emerald-500">
                                 <option value="CUSTOM">CUSTOM (Tùy chỉnh)</option>
-                                <option value="RAU AN LA">RAU ĂN LÁ (30% - 65%)</option>
+                                <option value="RAU AN LA">RAU ĂN LÁ (40% - 65%)</option>
                                 <option value="CA CHUA">CÀ CHUA (35% - 60%)</option>
                                 <option value="DUA LEO">DƯA LEO (40% - 65%)</option>
                                 <option value="XUONG RONG">XƯƠNG RỒNG (15% - 30%)</option>
@@ -179,7 +179,7 @@
                         <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
                             <div>
                                 <div class="text-xs text-slate-400">Ngưỡng Bắt đầu (Start)</div>
-                                <div id="infoStartTh" class="text-xl font-extrabold text-amber-400 mt-0.5">30%</div>
+                                <div id="infoStartTh" class="text-xl font-extrabold text-amber-400 mt-0.5">35%</div>
                             </div>
                             <span class="text-xs text-slate-500">Tưới khi $\le$ %</span>
                         </div>
@@ -187,7 +187,7 @@
                         <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
                             <div>
                                 <div class="text-xs text-slate-400">Ngưỡng Dừng (Stop)</div>
-                                <div id="infoStopTh" class="text-xl font-extrabold text-cyan-400 mt-0.5">45%</div>
+                                <div id="infoStopTh" class="text-xl font-extrabold text-cyan-400 mt-0.5">60%</div>
                             </div>
                             <span class="text-xs text-slate-500">Ngắt khi $\ge$ %</span>
                         </div>
@@ -195,11 +195,45 @@
                     </div>
 
                     <!-- System Diagnostics -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
                         <div id="diagTimeout1" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">P1 Timeout: <span class="font-bold text-emerald-400">OK</span></div>
                         <div id="diagTimeout2" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">P2 Timeout: <span class="font-bold text-emerald-400">OK</span></div>
                         <div id="diagTank" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến bồn: <span class="font-bold text-emerald-400">OK</span></div>
                         <div id="diagDht" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến DHT: <span class="font-bold text-emerald-400">OK</span></div>
+                        <div id="diagSoil" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến đất: <span class="font-bold text-emerald-400">OK</span></div>
+                        <div id="diagRain" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến mưa: <span class="font-bold text-emerald-400">OK</span></div>
+                    </div>
+
+                    <!-- Plant profile manager: add profiles from web only -->
+                    <div class="mt-4 bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
+                        <div class="flex items-center justify-between gap-2">
+                            <h3 class="font-bold text-sm">Thêm loại cây mới</h3>
+                            <span class="text-[10px] text-slate-400">Lưu trên ESP32 qua MQTT</span>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                                <label for="newPlantName" class="block text-xs text-slate-400 mb-1">Tên cây</label>
+                                <input id="newPlantName" maxlength="23" type="text" placeholder="VD: ỚT CHUÔNG"
+                                  class="w-full bg-slate-800 px-3 py-2 rounded border border-slate-600 text-sm focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="newPlantStart" class="block text-xs text-slate-400 mb-1">Bắt đầu tưới (%)</label>
+                                <input id="newPlantStart" type="number" min="0" max="95" value="35"
+                                  class="w-full bg-slate-800 px-3 py-2 rounded border border-slate-600 text-sm focus:outline-none focus:border-emerald-500">
+                            </div>
+                            <div>
+                                <label for="newPlantStop" class="block text-xs text-slate-400 mb-1">Dừng tưới (%)</label>
+                                <input id="newPlantStop" type="number" min="5" max="100" value="60"
+                                  class="w-full bg-slate-800 px-3 py-2 rounded border border-slate-600 text-sm focus:outline-none focus:border-emerald-500">
+                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
+                            <p class="text-[11px] text-slate-400">Ngưỡng phải thỏa mãn: 0 ≤ bắt đầu < dừng ≤ 100. Hồ sơ chỉ được xác nhận khi ESP32 lưu thành công.</p>
+                            <button id="addPlantBtn" onclick="addPlantProfile()" class="shrink-0 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-400 text-white px-4 py-2 rounded-lg font-bold text-xs">
+                                + Thêm / cập nhật cây
+                            </button>
+                        </div>
+                        <div id="configSyncStatus" class="text-xs text-slate-400" role="status" aria-live="polite">Chưa gửi cấu hình.</div>
                     </div>
                 </div>
 
@@ -213,11 +247,60 @@
 
     </main>
 
+    <!-- Alert history -->
+    <section class="container mx-auto px-4 pb-6">
+        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <h2 class="font-bold">Trung tâm cảnh báo</h2>
+                <span id="alertCount" class="text-xs text-slate-400">0 sự kiện</span>
+            </div>
+            <div id="alertHistory" class="space-y-2 text-sm">
+                <p class="text-slate-500 text-xs">Chưa có cảnh báo nhận được trong phiên này.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Critical alert modal -->
+    <div id="alertModal" class="hidden fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle">
+        <div class="w-full max-w-xl bg-slate-800 border border-rose-500/70 rounded-2xl shadow-2xl overflow-hidden">
+            <div id="alertModalHeader" class="bg-rose-700 px-5 py-4 flex items-start gap-3">
+                <span class="text-2xl">⚠️</span>
+                <div class="flex-1">
+                    <h2 id="alertModalTitle" class="font-extrabold text-lg">Cảnh báo hệ thống</h2>
+                    <p id="alertModalCode" class="text-xs text-rose-100 mt-1">--</p>
+                </div>
+                <button onclick="dismissAlertModal()" aria-label="Đóng cửa sổ cảnh báo" class="text-white/80 hover:text-white text-2xl leading-none">×</button>
+            </div>
+            <div class="p-5 space-y-4">
+                <p id="alertModalMessage" class="text-sm text-slate-100">Đang chờ dữ liệu từ ESP32...</p>
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-4">
+                    <h3 class="font-bold text-sm mb-2">Hướng kiểm tra / khắc phục</h3>
+                    <ol id="alertModalActions" class="list-decimal pl-5 space-y-1.5 text-sm text-slate-300"></ol>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2 sm:justify-between sm:items-center">
+                    <p id="alertModalState" class="text-xs text-amber-300">Trạng thái do ESP32 xác nhận.</p>
+                    <div class="flex gap-2">
+                        <button onclick="dismissAlertModal()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-sm font-semibold">Đã xem</button>
+                        <button onclick="acknowledgeAlert()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg text-sm font-bold">Đã kiểm tra</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="toastHost" class="fixed right-4 top-20 z-[110] space-y-2 w-[min(24rem,calc(100vw-2rem))]" aria-live="polite"></div>
+
     <!-- JavaScript MQTT & UI Logic -->
     <script>
         let mqttClient = null;
         let isConnected = false;
         let baseTopic = "smartgarden";
+        let plantProfiles = [];
+        let alertHistory = [];
+        let lastAlertKey = "";
+        let currentAlert = null;
+        let pendingConfig = false;
+        let lastStateVersion = -1;
+        let lastStatusAt = 0;
 
         // Chart.js Setup (Thêm đường Ánh sáng màu vàng)
         const ctx = document.getElementById('sensorChart').getContext('2d');
@@ -272,7 +355,10 @@
                 onSuccess: () => {
                     console.log("MQTT Connected successfully");
                     updateConnectionUI(true);
-                    mqttClient.subscribe(baseTopic + "/sensor/status");
+                    mqttClient.subscribe(baseTopic + "/sensor/status", {qos: 1});
+                    mqttClient.subscribe(baseTopic + "/plant/list", {qos: 1});
+                    mqttClient.subscribe(baseTopic + "/config/ack", {qos: 1});
+                    mqttClient.subscribe(baseTopic + "/alert", {qos: 1});
                 },
                 onFailure: (err) => {
                     alert("Kết nối MQTT thất bại: " + err.errorMessage);
@@ -302,17 +388,243 @@
         }
 
         function handleIncomingMessage(topic, payload) {
-            if (topic.endsWith("/sensor/status")) {
-                try {
-                    const data = JSON.parse(payload);
+            try {
+                const data = JSON.parse(payload);
+                if (topic.endsWith("/sensor/status")) {
                     updateDashboardUI(data);
-                } catch(e) {
-                    console.error("Lỗi parse JSON telemetry:", e);
+                } else if (topic.endsWith("/plant/list")) {
+                    plantProfiles = Array.isArray(data) ? data : [];
+                    renderPlantOptions();
+                } else if (topic.endsWith("/config/ack")) {
+                    pendingConfig = false;
+                    const status = document.getElementById("configSyncStatus");
+                    status.textContent = data.ok
+                        ? `Đã lưu trên ESP32 · phiên bản cấu hình ${data.config_version}`
+                        : "ESP32 từ chối lưu cấu hình. Kiểm tra tên cây, ngưỡng hoặc dung lượng hồ sơ.";
+                    status.className = data.ok ? "text-xs text-emerald-400" : "text-xs text-rose-400";
+                    document.getElementById("addPlantBtn").disabled = false;
+                    if (data.ok) showToast("Đã đồng bộ hồ sơ cây với ESP32.", "success");
+                } else if (topic.endsWith("/alert")) {
+                    handleAlertEvent(data);
                 }
+            } catch(e) {
+                console.error("Lỗi parse JSON MQTT:", topic, e);
             }
         }
 
+        function renderPlantOptions() {
+            const select = document.getElementById("selectPlant");
+            if (!select || !plantProfiles.length) return;
+            const current = select.value;
+            select.innerHTML = "";
+            plantProfiles.forEach(p => {
+                const option = document.createElement("option");
+                option.value = p.name;
+                option.textContent = `${p.name} (${p.start_threshold}% - ${p.stop_threshold}%)`;
+                select.appendChild(option);
+            });
+            const active = window.lastPlantType || current;
+            if ([...select.options].some(o => o.value === active)) select.value = active;
+            changePlantPreviewOnly(select.value);
+        }
+
+        function changePlantPreviewOnly(val) {
+            const p = plantProfiles.find(item => item.name === val);
+            const defaults = {
+                "CUSTOM": [35, 60], "RAU AN LA": [40, 65],
+                "CA CHUA": [35, 60], "DUA LEO": [40, 65],
+                "XUONG RONG": [15, 30]
+            };
+            const start = p ? p.start_threshold : (defaults[val] || [35, 60])[0];
+            const stop = p ? p.stop_threshold : (defaults[val] || [35, 60])[1];
+            document.getElementById("infoStartTh").textContent = start + "%";
+            document.getElementById("infoStopTh").textContent = stop + "%";
+        }
+
+        function addPlantProfile() {
+            if (!isConnected || !mqttClient) {
+                showToast("Chưa kết nối MQTT; chưa gửi cấu hình.", "error");
+                return;
+            }
+            if (pendingConfig) {
+                showToast("Đang chờ ESP32 xác nhận cấu hình trước đó.", "warning");
+                return;
+            }
+            const name = document.getElementById("newPlantName").value.trim();
+            const start = Number(document.getElementById("newPlantStart").value);
+            const stop = Number(document.getElementById("newPlantStop").value);
+            if (!name || name.length > 23 || !Number.isInteger(start) || !Number.isInteger(stop) ||
+                start < 0 || start > 95 || stop > 100 || stop <= start) {
+                showToast("Dữ liệu chưa hợp lệ. Nhập tên và bảo đảm 0 ≤ bắt đầu < dừng ≤ 100.", "error");
+                return;
+            }
+            const payload = {name, start_threshold: start, stop_threshold: stop};
+            const message = new Paho.MQTT.Message(JSON.stringify(payload));
+            message.destinationName = baseTopic + "/control/plant/add";
+            message.qos = 1;
+            pendingConfig = true;
+            document.getElementById("addPlantBtn").disabled = true;
+            document.getElementById("configSyncStatus").textContent = "Đang gửi cấu hình và chờ ESP32 lưu...";
+            document.getElementById("configSyncStatus").className = "text-xs text-amber-300";
+            mqttClient.send(message);
+            // Timeout only affects UI status; it does not imply the ESP32 failed to save.
+            window.setTimeout(() => {
+                if (pendingConfig) {
+                    pendingConfig = false;
+                    document.getElementById("addPlantBtn").disabled = false;
+                    document.getElementById("configSyncStatus").textContent =
+                        "Chưa nhận xác nhận. Kiểm tra kết nối MQTT và trạng thái ESP32 trước khi gửi lại.";
+                    document.getElementById("configSyncStatus").className = "text-xs text-amber-300";
+                }
+            }, 5000);
+        }
+
+        function getAlertActions(code) {
+            const guides = {
+                EMERGENCY_STOP: ["Kiểm tra khu vực, bơm và dây điện trước khi phục hồi.", "Xác nhận nguyên nhân đã được xử lý.", "Chỉ nhả EMC bằng thao tác phục hồi được thiết kế tại trạm; không dùng nút đóng cửa sổ để mở khóa."],
+                PUMP1_TIMEOUT: ["Kiểm tra bồn nước và nguồn cấp.", "Kiểm tra bơm tưới, ống dẫn, rò rỉ hoặc tắc nghẽn.", "Để ESP32 xác nhận điều kiện an toàn trước khi cho phép chạy lại."],
+                PUMP2_TIMEOUT: ["Kiểm tra nguồn nước cấp và đường ống nạp bồn.", "Kiểm tra bơm nạp và cảm biến siêu âm.", "Không cưỡng ép chạy lại nếu chưa tìm được nguyên nhân."],
+                WATER_LEVEL_LOW: ["Bổ sung nước vào bồn.", "So sánh mực nước thực tế với số đo cảm biến siêu âm.", "Chờ ESP32 xác nhận mực nước an toàn; không bỏ qua khóa bơm."],
+                TANK_SENSOR_FAULT: ["Kiểm tra dây TRIG/ECHO và nguồn cảm biến.", "Đảm bảo cảm biến đặt chắc chắn, không bị ngập hoặc cản trở.", "Đợi nhiều phép đo hợp lệ trước khi cho phép tưới."],
+                SOIL_SENSOR_FAULT: ["Kiểm tra dây và nguồn cảm biến độ ẩm đất.", "Kiểm tra đầu dò có tiếp xúc tốt với giá thể không.", "Không tăng tưới theo số đo lỗi; thay cảm biến nếu lỗi vẫn tiếp diễn."],
+                RAIN_SENSOR_FAULT: ["Kiểm tra nguồn, dây và đầu ra analog của cảm biến mưa.", "Làm sạch, để khô và kiểm tra giá trị ADC.", "Giữ khóa tưới cho đến khi cảm biến hợp lệ."],
+                DHT_SENSOR_FAULT: ["Kiểm tra chân DATA, nguồn và điện trở kéo lên nếu cần.", "Kiểm tra dây nối và đọc lại sau chu kỳ tiếp theo.", "Nhiệt độ/độ ẩm không khí có thể tạm thời không khả dụng."],
+                RAIN_DETECTED: ["Kiểm tra tình trạng mưa thực tế.", "Giữ nguyên khóa tưới trong lúc cảm biến báo mưa.", "Khi hết mưa, chờ bộ lọc xác nhận trạng thái khô."],
+                SOIL_TOO_WET: ["Tạm ngừng tưới và kiểm tra thoát nước.", "Kiểm tra vị trí cảm biến và độ ẩm thực tế của giá thể.", "Chỉ tưới lại khi độ ẩm về vùng phù hợp với hồ sơ cây."]
+            };
+            return guides[code] || ["Đọc mã lỗi và kiểm tra cảm biến/thiết bị liên quan.", "Không bỏ qua khóa an toàn.", "Nếu lỗi vẫn còn, kiểm tra log ESP32 và đấu nối phần cứng."];
+        }
+
+        function handleAlertEvent(event) {
+            if (!event || !event.code || event.code === "NONE" || event.active === false) return;
+            if (currentAlert && currentAlert.alert_code === event.code) return;
+            currentAlert = {
+                alert_code: event.code,
+                alert_severity: event.severity || "WARNING",
+                alert_message: event.message || "ESP32 phát hiện sự cố cần kiểm tra.",
+                alert_active: true,
+                active: true
+            };
+            lastAlertKey = `${event.code}:${event.event_id || event.state_version || ""}`;
+            addAlertHistory({...event, alert_code: event.code, alert_severity: event.severity, alert_message: event.message});
+            showAlertModal(currentAlert);
+        }
+
+        function handleAlertFromStatus(d) {
+            if (!d.alert_active || !d.alert_code || d.alert_code === "NONE") {
+                if (currentAlert && currentAlert.active) {
+                    currentAlert.active = false;
+                    const state = document.getElementById("alertModalState");
+                    if (state) state.textContent = "ESP32 báo đã phục hồi điều kiện cảnh báo.";
+                    showToast("ESP32 báo đã phục hồi điều kiện cảnh báo.", "success");
+                    document.getElementById("alertModal").classList.add("hidden");
+                    currentAlert = null;
+                }
+                return;
+            }
+            const key = `${d.alert_code}:${d.config_version || ""}`;
+            if (currentAlert && currentAlert.code === d.alert_code) {
+                currentAlert = {...currentAlert, ...d};
+                return;
+            }
+            currentAlert = {...d, active: true};
+            lastAlertKey = key;
+            addAlertHistory({...d, event_id: d.state_version, active: true});
+            showAlertModal(d);
+        }
+
+        function showAlertModal(d) {
+            const modal = document.getElementById("alertModal");
+            const severity = (d.alert_severity || "WARNING").toUpperCase();
+            const critical = ["CRITICAL", "EMERGENCY"].includes(severity);
+            document.getElementById("alertModalTitle").textContent =
+                severity === "EMERGENCY" ? "DỪNG KHẨN CẤP" : (critical ? "Cảnh báo nghiêm trọng" : "Cảnh báo hệ thống");
+            document.getElementById("alertModalCode").textContent = `${d.alert_code || "ALERT"} · ${severity}`;
+            document.getElementById("alertModalMessage").textContent = d.alert_message || "ESP32 phát hiện trạng thái cần kiểm tra.";
+            document.getElementById("alertModalState").textContent = "Trạng thái do ESP32 xác nhận. Đóng cửa sổ không xóa lỗi.";
+            const list = document.getElementById("alertModalActions");
+            list.replaceChildren();
+            getAlertActions(d.alert_code).forEach(action => {
+                const li = document.createElement("li");
+                li.textContent = action;
+                list.appendChild(li);
+            });
+            document.getElementById("alertModalHeader").className = critical
+                ? "bg-rose-700 px-5 py-4 flex items-start gap-3"
+                : "bg-amber-600 px-5 py-4 flex items-start gap-3";
+            modal.classList.remove("hidden");
+        }
+
+        function dismissAlertModal() {
+            document.getElementById("alertModal").classList.add("hidden");
+            // The event remains active and visible in the alert history.
+        }
+
+        function acknowledgeAlert() {
+            // Acknowledgement is UI-only for now; it never clears an ESP32 safety latch.
+            showToast("Đã ghi nhận bạn đã xem. ESP32 vẫn giữ khóa cho đến khi xác nhận an toàn.", "warning");
+            dismissAlertModal();
+        }
+
+        function addAlertHistory(event) {
+            const item = {
+                code: event.code || "ALERT",
+                severity: event.alert_severity || event.severity || "WARNING",
+                message: event.alert_message || event.message || "Có sự kiện cần kiểm tra.",
+                time: new Date().toLocaleTimeString(),
+                active: event.active !== false
+            };
+            alertHistory.unshift(item);
+            alertHistory = alertHistory.slice(0, 12);
+            document.getElementById("alertCount").textContent = `${alertHistory.length} sự kiện`;
+            const host = document.getElementById("alertHistory");
+            host.replaceChildren();
+            alertHistory.forEach(a => {
+                const row = document.createElement("div");
+                row.className = "flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 bg-slate-900 border border-slate-700 rounded-lg p-3";
+                const level = document.createElement("span");
+                level.className = a.severity === "CRITICAL" || a.severity === "EMERGENCY"
+                    ? "text-rose-400 font-bold text-xs" : "text-amber-300 font-bold text-xs";
+                level.textContent = a.severity;
+                const content = document.createElement("div");
+                content.className = "flex-1 min-w-0";
+                const title = document.createElement("div");
+                title.className = "font-semibold text-sm";
+                title.textContent = a.code;
+                const msg = document.createElement("div");
+                msg.className = "text-slate-400 text-xs mt-0.5";
+                msg.textContent = a.message;
+                content.append(title, msg);
+                const time = document.createElement("span");
+                time.className = "text-slate-500 text-[11px]";
+                time.textContent = a.time;
+                row.append(level, content, time);
+                host.appendChild(row);
+            });
+        }
+
+        function showToast(message, type = "info") {
+            const host = document.getElementById("toastHost");
+            const el = document.createElement("div");
+            const color = type === "error" ? "border-rose-500" : type === "success" ? "border-emerald-500" : type === "warning" ? "border-amber-500" : "border-sky-500";
+            el.className = `bg-slate-800 border-l-4 ${color} shadow-xl rounded-lg p-3 text-sm`;
+            el.textContent = message;
+            host.appendChild(el);
+            window.setTimeout(() => el.remove(), 4500);
+        }
+
         function updateDashboardUI(d) {
+            const incomingVersion = Number(d.state_version ?? 0);
+            if (incomingVersion && incomingVersion < lastStateVersion) return;
+            if (incomingVersion) lastStateVersion = incomingVersion;
+            lastStatusAt = Date.now();
+            handleAlertFromStatus(d);
+            window.lastPlantType = d.plant_type || window.lastPlantType;
+            if (d.plant_type && plantProfiles.length) {
+                const selectPlant = document.getElementById("selectPlant");
+                if ([...selectPlant.options].some(o => o.value === d.plant_type)) selectPlant.value = d.plant_type;
+                changePlantPreviewOnly(d.plant_type);
+            }
             // 1. Soil
             document.getElementById('valSoil').textContent = d.soil_moisture + "%";
             let soilBadge = document.getElementById('badgeSoil');
@@ -324,7 +636,7 @@
             document.getElementById('valTemp').textContent = d.temperature_c.toFixed(1) + "°C";
             document.getElementById('valHum').textContent = d.humidity_percent + "%";
             let dhtBadge = document.getElementById('badgeDht');
-            if (d.dht11_valid) { dhtBadge.textContent = "OK"; dhtBadge.className = "text-[10px] md:text-xs px-1.5 py-0.5 rounded bg-emerald-900 text-emerald-200"; }
+            if (d.dht11_valid === true || d.dht11_valid === 1) { dhtBadge.textContent = "OK"; dhtBadge.className = "text-[10px] md:text-xs px-1.5 py-0.5 rounded bg-emerald-900 text-emerald-200"; }
             else { dhtBadge.textContent = "ERR"; dhtBadge.className = "text-[10px] md:text-xs px-1.5 py-0.5 rounded bg-rose-900 text-rose-200"; }
 
             // 3. Light Sensor
@@ -340,8 +652,8 @@
 
             // 5. Rain
             let rainEl = document.getElementById('valRain');
-            if (d.rain) { rainEl.textContent = "ĐANG MƯA 🌧️"; rainEl.className = "text-sm md:text-base px-3 py-1 rounded bg-blue-900 text-blue-200 font-bold animate-bounce"; }
-            else { rainEl.textContent = "KHÔ RỐI ☀️"; rainEl.className = "text-sm md:text-base px-3 py-1 rounded bg-slate-700 text-slate-300 font-bold"; }
+            if (d.rain === true || d.rain === 1) { rainEl.textContent = "ĐANG MƯA 🌧️"; rainEl.className = "text-sm md:text-base px-3 py-1 rounded bg-blue-900 text-blue-200 font-bold animate-bounce"; }
+            else { rainEl.textContent = "KHÔ RÁO ☀️"; rainEl.className = "text-sm md:text-base px-3 py-1 rounded bg-slate-700 text-slate-300 font-bold"; }
 
             // 6. Mode & Pumps Status
             let isManual = (d.mode === "manual");
@@ -389,7 +701,7 @@
 
             // 7. Emergency & Timeouts banner check
             let emergencyBanner = document.getElementById('emergencyBanner');
-            if (d.emergency || d.pump1_timeout || d.pump2_timeout) {
+            if (d.emergency === true || d.emergency === 1 || d.pump1_timeout === true || d.pump1_timeout === 1 || d.pump2_timeout === true || d.pump2_timeout === 1) {
                 emergencyBanner.classList.remove('hidden');
             } else {
                 emergencyBanner.classList.add('hidden');
@@ -398,8 +710,12 @@
             // Diagnostics info
             document.getElementById('diagTimeout1').innerHTML = `P1 Timeout: <span class="font-bold ${d.pump1_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump1_timeout ? 'LỖI' : 'OK'}</span>`;
             document.getElementById('diagTimeout2').innerHTML = `P2 Timeout: <span class="font-bold ${d.pump2_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump2_timeout ? 'LỖI' : 'OK'}</span>`;
-            document.getElementById('diagTank').innerHTML = `Cảm biến bồn: <span class="font-bold ${d.tank_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.tank_valid ? 'OK' : 'Lỗi'}</span>`;
-            document.getElementById('diagDht').innerHTML = `Cảm biến DHT: <span class="font-bold ${d.dht11_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.dht11_valid ? 'OK' : 'Lỗi'}</span>`;
+            document.getElementById('diagTank').innerHTML = `Cảm biến bồn: <span class="font-bold ${(d.tank_valid === true || d.tank_valid === 1) ? 'text-emerald-400' : 'text-rose-500'}">${(d.tank_valid === true || d.tank_valid === 1) ? 'OK' : 'Lỗi'}</span>`;
+            document.getElementById('diagDht').innerHTML = `Cảm biến DHT: <span class="font-bold ${(d.dht11_valid === true || d.dht11_valid === 1) ? 'text-emerald-400' : 'text-rose-500'}">${(d.dht11_valid === true || d.dht11_valid === 1) ? 'OK' : 'Lỗi'}</span>`;
+            const soilOk = d.soil_valid === true || d.soil_valid === 1;
+            const rainOk = d.rain_valid === true || d.rain_valid === 1;
+            document.getElementById('diagSoil').innerHTML = `Cảm biến đất: <span class="font-bold ${soilOk ? 'text-emerald-400' : 'text-rose-500'}">${soilOk ? 'OK' : 'Lỗi'}</span>`;
+            document.getElementById('diagRain').innerHTML = `Cảm biến mưa: <span class="font-bold ${rainOk ? 'text-emerald-400' : 'text-rose-500'}">${rainOk ? 'OK' : 'Lỗi'}</span>`;
 
             // Update Chart
             const timeNow = new Date().toLocaleTimeString();
@@ -417,6 +733,14 @@
             sensorChart.data.datasets[3].data.push(d.tank_percent);
             sensorChart.update();
         }
+
+        // Mark telemetry stale if the ESP32 status stream stops unexpectedly.
+        window.setInterval(() => {
+            if (isConnected && lastStatusAt && Date.now() - lastStatusAt > 4000) {
+                document.getElementById("emergencyBanner").classList.remove("hidden");
+                document.getElementById("emergencyBanner").textContent = "⚠️ MẤT CẬP NHẬT TRẠNG THÁI TỪ ESP32 — DỮ LIỆU CÓ THỂ ĐÃ CŨ";
+            }
+        }, 1000);
 
         // MQTT Publishers
         function setMode(mode) {
@@ -445,26 +769,20 @@
         }
 
         function changePlantProfile() {
-            const select = document.getElementById('selectPlant');
-            const val = select.value;
-            
-            // Cập nhật giao diện xem trước ngưỡng
-            let startTh = 30, stopTh = 45;
-            if (val === "RAU AN LA") { startTh = 40; stopTh = 65; }
-            else if (val === "CA CHUA") { startTh = 35; stopTh = 60; }
-            else if (val === "DUA LEO") { startTh = 40; stopTh = 65; }
-            else if (val === "XUONG RONG") { startTh = 15; stopTh = 30; }
-
-            document.getElementById('infoStartTh').textContent = startTh + "%";
-            document.getElementById('infoStopTh').textContent = stopTh + "%";
-
-            // Nếu đã kết nối MQTT, gửi lệnh cập nhật plant profile tới ESP32
-            if (isConnected) {
-                let message = new Paho.MQTT.Message(val);
-                message.destinationName = baseTopic + "/control/plant";
-                mqttClient.send(message);
+            const val = document.getElementById("selectPlant").value;
+            changePlantPreviewOnly(val);
+            if (!isConnected || !mqttClient) {
+                showToast("Chưa kết nối MQTT. Loại cây chưa được đổi trên ESP32.", "warning");
+                return;
             }
+            const message = new Paho.MQTT.Message(val);
+            message.destinationName = baseTopic + "/control/plant";
+            message.qos = 1;
+            mqttClient.send(message);
+            document.getElementById("configSyncStatus").textContent = "Đang yêu cầu ESP32 áp dụng hồ sơ " + val + "...";
+            document.getElementById("configSyncStatus").className = "text-xs text-amber-300";
         }
+
     </script>
 </body>
 </html>
