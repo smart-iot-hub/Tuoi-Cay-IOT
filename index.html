@@ -169,7 +169,7 @@
                     </div>
                     
                     <!-- Chọn loại cây bên trái, nút thêm loại cây bên phải -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 shrink-0">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 shrink-0">
                         <div class="bg-slate-900 p-2 rounded-md border border-slate-700 min-w-0">
                             <label class="block text-[10px] text-slate-400 mb-1">Lựa chọn loại cây</label>
                             <select id="selectPlant" onchange="changePlantProfile()" class="w-full bg-slate-800 text-emerald-400 font-bold text-xs p-2 rounded border border-slate-600 focus:outline-none focus:border-emerald-500">
@@ -183,7 +183,13 @@
                         <div class="bg-slate-900 p-2 rounded-md border border-slate-700 flex items-center">
                             <button type="button" onclick="openAddPlantModal()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs p-2 rounded-md transition shadow flex items-center justify-center gap-2">
                                 <span class="text-base leading-none">＋</span>
-                                <span>Thêm loại cây mới</span>
+                                <span>Thêm loại cây</span>
+                            </button>
+                        </div>
+                        <div class="bg-slate-900 p-2 rounded-md border border-slate-700 flex items-center">
+                            <button id="editPlantBtn" type="button" onclick="openEditPlantModal()" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs p-2 rounded-md transition shadow flex items-center justify-center gap-2">
+                                <span class="text-base leading-none">✎</span>
+                                <span>Sửa cây đã chọn</span>
                             </button>
                         </div>
 
@@ -270,7 +276,7 @@
             </div>
             <div>
                 <label for="newPlantName" class="block text-xs text-slate-300 mb-1">Tên loại cây</label>
-                <input id="newPlantName" type="text" maxlength="32" placeholder="Ví dụ: Hoa hồng"
+                <input id="newPlantName" type="text" maxlength="23" placeholder="Ví dụ: Hoa hồng"
                     class="w-full bg-slate-900 px-3 py-2 rounded border border-slate-700 text-sm focus:outline-none focus:border-emerald-500">
             </div>
             <div class="grid grid-cols-2 gap-3">
@@ -285,10 +291,10 @@
                         class="w-full bg-slate-900 px-3 py-2 rounded border border-slate-700 text-sm">
                 </div>
             </div>
-            <p class="text-[10px] text-slate-400 leading-relaxed">Ngưỡng tắt phải lớn hơn ngưỡng bật. Hồ sơ mới được lưu trên trình duyệt này.</p>
+            <p id="plantModalHint" class="text-[10px] text-slate-400 leading-relaxed">Ngưỡng tắt phải lớn hơn ngưỡng bật. Tên cây tối đa 23 ký tự để tương thích ESP32.</p>
             <div class="flex justify-end gap-2 pt-2 border-t border-slate-700">
                 <button type="button" onclick="closeAddPlantModal()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-xs font-semibold">Hủy</button>
-                <button type="button" onclick="addPlantProfile()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded text-xs font-bold">Lưu loại cây</button>
+                <button id="savePlantBtn" type="button" onclick="savePlantProfile()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded text-xs font-bold">Lưu loại cây</button>
             </div>
         </div>
     </div>
@@ -305,32 +311,38 @@
         let feedPrefix = "smartgarden";
         let alertHistory = [];
 
-        // Hồ sơ cây có sẵn trên dashboard; hồ sơ do người dùng thêm được lưu riêng trên trình duyệt.
+        // Hồ sơ cây có sẵn trên dashboard; cây tự tạo được đồng bộ với ESP32 qua MQTT.
         const BUILTIN_PLANTS = [
-            { value: "CUSTOM", label: "CUSTOM (Tùy chỉnh)", start: 35, stop: 60 },
-            { value: "RAU AN LA", label: "RAU ĂN LÁ (40% - 65%)", start: 40, stop: 65 },
-            { value: "CA CHUA", label: "CÀ CHUA (35% - 60%)", start: 35, stop: 60 },
-            { value: "DUA LEO", label: "DƯA LEO (40% - 65%)", start: 40, stop: 65 },
-            { value: "XUONGRONG", label: "XƯƠNG RỒNG (15% - 30%)", start: 15, stop: 30 }
+            { value: "CUSTOM", label: "CUSTOM (Tùy chỉnh)", start: 35, stop: 60, builtin: true },
+            { value: "RAU AN LA", label: "RAU ĂN LÁ (40% - 65%)", start: 40, stop: 65, builtin: true },
+            { value: "CA CHUA", label: "CÀ CHUA (35% - 60%)", start: 35, stop: 60, builtin: true },
+            { value: "DUA LEO", label: "DƯA LEO (40% - 65%)", start: 40, stop: 65, builtin: true },
+            { value: "XUONG RONG", label: "XƯƠNG RỒNG (15% - 30%)", start: 15, stop: 30, builtin: true }
         ];
         let customPlantProfiles = [];
+        let plantModalMode = "add";
+        let editingPlantOldName = "";
+
+        function saveCustomPlantProfiles() {
+            localStorage.setItem("smartgarden_custom_plants", JSON.stringify(customPlantProfiles));
+        }
 
         function loadCustomPlantProfiles() {
             try {
                 const saved = JSON.parse(localStorage.getItem("smartgarden_custom_plants") || "[]");
                 customPlantProfiles = Array.isArray(saved) ? saved.filter(p =>
-                    p && typeof p.name === "string" &&
-                    Number.isFinite(Number(p.start)) && Number.isFinite(Number(p.stop)) &&
-                    Number(p.start) >= 0 && Number(p.stop) <= 100 && Number(p.stop) > Number(p.start)
-                ) : [];
-            } catch (_) {
-                customPlantProfiles = [];
-            }
+                    p && typeof p.name === "string" && p.name.trim().length > 0 &&
+                    p.name.length <= 23 && Number.isFinite(Number(p.start)) &&
+                    Number.isFinite(Number(p.stop)) && Number(p.start) >= 0 &&
+                    Number(p.stop) <= 100 && Number(p.stop) > Number(p.start)
+                ).map(p => ({name:p.name.trim(), start:Number(p.start), stop:Number(p.stop)})) : [];
+            } catch (_) { customPlantProfiles = []; }
         }
 
         function populatePlantSelect(selectedValue) {
             const select = document.getElementById("selectPlant");
             if (!select) return;
+            const previous = selectedValue || select.value;
             select.innerHTML = "";
             BUILTIN_PLANTS.forEach(p => {
                 const option = document.createElement("option");
@@ -344,9 +356,8 @@
                 option.textContent = `${p.name} (${p.start}% - ${p.stop}%)`;
                 select.appendChild(option);
             });
-            if (selectedValue && Array.from(select.options).some(o => o.value === selectedValue)) {
-                select.value = selectedValue;
-            }
+            if (previous && Array.from(select.options).some(o => o.value === previous)) select.value = previous;
+            updateEditPlantButton();
         }
 
         function getSelectedPlantProfile() {
@@ -356,26 +367,58 @@
             if (value.startsWith("CUSTOM_PLANT_")) {
                 const index = Number(value.substring("CUSTOM_PLANT_".length));
                 const p = customPlantProfiles[index];
-                if (p) return { value: p.name, label: p.name, start: Number(p.start), stop: Number(p.stop), custom: true };
+                if (p) return { value: p.name, label: p.name, start: Number(p.start), stop: Number(p.stop), custom: true, index };
             }
-            return BUILTIN_PLANTS[0];
+            return { ...BUILTIN_PLANTS[0], custom: false };
         }
 
-        function changePlantProfile() {
+        function updateEditPlantButton() {
+            const btn = document.getElementById("editPlantBtn");
+            if (!btn) return;
+            const p = getSelectedPlantProfile();
+            btn.disabled = !p.custom;
+            btn.classList.toggle("opacity-40", !p.custom);
+            btn.classList.toggle("cursor-not-allowed", !p.custom);
+            btn.title = p.custom ? "Sửa tên và ngưỡng của cây tự tạo" : "Chỉ sửa được hồ sơ cây đã tự tạo";
+        }
+
+        function changePlantProfile(sendCommand = true) {
             const p = getSelectedPlantProfile();
             document.getElementById("infoStartTh").textContent = p.start + "%";
             document.getElementById("infoStopTh").textContent = p.stop + "%";
-            // Gửi lựa chọn qua MQTT. Firmware phải nhận diện profile này để áp dụng trên ESP32.
-            if (isConnected) {
-                const firmwareName = p.value === "XUONGRONG" ? "XUONG RONG" : p.value;
-                publishAioCommand("plant-config", `SELECT|${firmwareName}|${p.start}|${p.stop}`);
+            updateEditPlantButton();
+            if (sendCommand && isConnected) {
+                publishAioCommand("plant-config", `SELECT|${p.value}|${p.start}|${p.stop}`);
             }
         }
 
         function openAddPlantModal() {
+            plantModalMode = "add";
+            editingPlantOldName = "";
+            document.getElementById("addPlantTitle").textContent = "Thêm loại cây mới";
+            document.getElementById("savePlantBtn").textContent = "Thêm cây";
             document.getElementById("newPlantName").value = "";
             document.getElementById("newPlantStart").value = "30";
             document.getElementById("newPlantStop").value = "45";
+            document.getElementById("plantModalHint").textContent = "Ngưỡng tắt phải lớn hơn ngưỡng bật. Tên cây tối đa 23 ký tự.";
+            document.getElementById("addPlantModal").classList.remove("hidden");
+            document.getElementById("newPlantName").focus();
+        }
+
+        function openEditPlantModal() {
+            const p = getSelectedPlantProfile();
+            if (!p.custom) {
+                showToast("Chỉ có thể sửa cây do bạn tự tạo. Các hồ sơ mặc định được giữ nguyên.", "info");
+                return;
+            }
+            plantModalMode = "edit";
+            editingPlantOldName = p.name;
+            document.getElementById("addPlantTitle").textContent = "Sửa loại cây";
+            document.getElementById("savePlantBtn").textContent = "Lưu thay đổi";
+            document.getElementById("newPlantName").value = p.name;
+            document.getElementById("newPlantStart").value = String(p.start);
+            document.getElementById("newPlantStop").value = String(p.stop);
+            document.getElementById("plantModalHint").textContent = "Đổi tên hoặc ngưỡng sẽ cập nhật hồ sơ trên ESP32 và lưu lại.";
             document.getElementById("addPlantModal").classList.remove("hidden");
             document.getElementById("newPlantName").focus();
         }
@@ -384,46 +427,94 @@
             document.getElementById("addPlantModal").classList.add("hidden");
         }
 
-        function addPlantProfile() {
-            const name = document.getElementById("newPlantName").value.trim();
+        function savePlantProfile() {
+            const name = document.getElementById("newPlantName").value.trim().replace(/[|\r\n]/g, " ");
             const start = Number(document.getElementById("newPlantStart").value);
             const stop = Number(document.getElementById("newPlantStop").value);
-
-            if (!name) {
-                alert("Vui lòng nhập tên loại cây.");
-                return;
+            if (!name) { alert("Vui lòng nhập tên loại cây."); return; }
+            if (name.length > 23) { alert("Tên cây tối đa 23 ký tự để tương thích firmware ESP32."); return; }
+            if (!Number.isInteger(start) || !Number.isInteger(stop) || start < 0 || stop > 100 || stop <= start) {
+                alert("Ngưỡng phải là số nguyên từ 0–100 và ngưỡng tắt phải lớn hơn ngưỡng bật."); return;
             }
-            if (!Number.isInteger(start) || !Number.isInteger(stop) ||
-                start < 0 || stop > 100 || stop <= start) {
-                alert("Ngưỡng phải là số nguyên từ 0–100 và ngưỡng tắt phải lớn hơn ngưỡng bật.");
-                return;
-            }
-
-            const duplicate = [...BUILTIN_PLANTS.map(p => p.label.split(" (")[0].toLowerCase()),
-                ...customPlantProfiles.map(p => p.name.toLowerCase())]
-                .includes(name.toLowerCase());
-            if (duplicate) {
-                alert("Tên loại cây này đã tồn tại. Vui lòng chọn tên khác.");
-                return;
+            const normalized = name.toLocaleLowerCase();
+            if (BUILTIN_PLANTS.some(p => p.value.toLocaleLowerCase() === normalized)) {
+                alert("Tên này thuộc hồ sơ mặc định. Vui lòng dùng tên khác."); return;
             }
 
-            customPlantProfiles.push({ name, start, stop });
-            localStorage.setItem("smartgarden_custom_plants", JSON.stringify(customPlantProfiles));
-            const value = "CUSTOM_PLANT_" + (customPlantProfiles.length - 1);
+            if (plantModalMode === "add") {
+                if (customPlantProfiles.some(p => p.name.toLocaleLowerCase() === normalized)) {
+                    alert("Tên loại cây này đã tồn tại. Hãy chọn tên khác."); return;
+                }
+                if (customPlantProfiles.length >= 11) { alert("Đã đạt giới hạn 11 cây tự tạo trên ESP32."); return; }
+                customPlantProfiles.push({name, start, stop});
+                saveCustomPlantProfiles();
+                const value = "CUSTOM_PLANT_" + (customPlantProfiles.length - 1);
+                populatePlantSelect(value);
+                changePlantProfile(false);
+                closeAddPlantModal();
+                if (isConnected) {
+                    publishAioCommand("plant-config", `ADD|${name}|${start}|${stop}`);
+                    showToast("Đã gửi cây mới và ngưỡng tưới xuống ESP32.", "success");
+                } else showToast("Đã lưu trên trình duyệt. Kết nối MQTT để gửi cây xuống ESP32.", "info");
+                return;
+            }
+
+            const index = customPlantProfiles.findIndex(p => p.name === editingPlantOldName);
+            if (index < 0) { alert("Không tìm thấy hồ sơ cần sửa."); return; }
+            if (customPlantProfiles.some((p, i) => i !== index && p.name.toLocaleLowerCase() === normalized)) {
+                alert("Tên loại cây này đã tồn tại."); return;
+            }
+            const oldName = customPlantProfiles[index].name;
+            customPlantProfiles[index] = {name, start, stop};
+            saveCustomPlantProfiles();
+            const value = "CUSTOM_PLANT_" + index;
             populatePlantSelect(value);
-            document.getElementById("infoStartTh").textContent = start + "%";
-            document.getElementById("infoStopTh").textContent = stop + "%";
+            changePlantProfile(false);
             closeAddPlantModal();
-            showToast("Đã lưu hồ sơ cây trên trình duyệt.", "success");
             if (isConnected) {
-                const safeName = name.replace(/[|\\r\\n]/g, " ").trim().slice(0, 23);
-                publishAioCommand("plant-config", `ADD|${safeName}|${start}|${stop}`);
-                showToast("Đã gửi tên cây và ngưỡng tưới xuống ESP32 qua MQTT.", "success");
-            } else {
-                showToast("Cây đã lưu trên trình duyệt; hãy kết nối MQTT để gửi cấu hình xuống ESP32.", "info");
-            }
+                publishAioCommand("plant-config", `EDIT|${oldName}|${name}|${start}|${stop}`);
+                showToast("Đã gửi thay đổi tên/ngưỡng xuống ESP32.", "success");
+            } else showToast("Đã sửa trên trình duyệt; kết nối MQTT để cập nhật ESP32.", "info");
         }
 
+        function syncPlantFromEsp32(data) {
+            if (!data || typeof data.plant_type !== "string" || !data.plant_type.trim()) return;
+            const name = data.plant_type.trim();
+            const start = Number(data.plant_start_threshold);
+            const stop = Number(data.plant_stop_threshold);
+            let optionValue = null;
+            const builtin = BUILTIN_PLANTS.find(p => p.value.toLowerCase() === name.toLowerCase() ||
+                (p.value === "XUONG RONG" && name.toUpperCase() === "XUONGRONG"));
+            if (builtin) {
+                optionValue = builtin.value;
+                if (Number.isFinite(start) && Number.isFinite(stop) && stop > start) {
+                    builtin.start = start; builtin.stop = stop;
+                }
+            } else {
+                let idx = customPlantProfiles.findIndex(p => p.name.toLowerCase() === name.toLowerCase());
+                if (idx < 0 && Number.isFinite(start) && Number.isFinite(stop) && start >= 0 && stop <= 100 &&
+                    stop > start && customPlantProfiles.length < 11) {
+                    customPlantProfiles.push({name: name.slice(0,23), start, stop});
+                    saveCustomPlantProfiles();
+                    idx = customPlantProfiles.length - 1;
+                } else if (idx >= 0 && Number.isFinite(start) && Number.isFinite(stop) &&
+                    start >= 0 && stop <= 100 && stop > start) {
+                    customPlantProfiles[idx] = {name: name.slice(0,23), start, stop};
+                    saveCustomPlantProfiles();
+                }
+                if (idx >= 0) optionValue = "CUSTOM_PLANT_" + idx;
+            }
+            if (optionValue) {
+                const select = document.getElementById("selectPlant");
+                const changed = select.value !== optionValue;
+                populatePlantSelect(optionValue);
+                const p = getSelectedPlantProfile();
+                document.getElementById("infoStartTh").textContent = p.start + "%";
+                document.getElementById("infoStopTh").textContent = p.stop + "%";
+                updateEditPlantButton();
+                if (changed) showToast(`Đã đồng bộ loại cây từ ESP32: ${name}`, "success");
+            }
+        }
 
         // Tự động nạp cấu hình từ localStorage khi tải trang
         window.addEventListener('DOMContentLoaded', () => {
@@ -589,6 +680,7 @@
                 const data = JSON.parse(payload);
                 if (topic.includes(`${feedPrefix}-status`)) {
                     updateDashboardUI(data);
+                    syncPlantFromEsp32(data);
                 }
             } catch(e) {
                 console.error("Lỗi parse JSON MQTT:", topic, e);
