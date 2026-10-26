@@ -14,155 +14,197 @@
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
 
     <!-- Header -->
-    <header class="bg-slate-800 border-b border-slate-700 p-4 shadow-md">
+    <header class="bg-slate-800 border-b border-slate-700 p-4 shadow-md sticky top-0 z-50">
         <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3">
-                <div class="bg-emerald-500 text-slate-900 p-2 rounded-lg font-bold text-xl">🌱</div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-wide">Smart Garden Controller</h1>
-                    <p class="text-xs text-slate-400">ESP32 Edge Computing & MQTT Web Console</p>
+            <div class="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-start">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-emerald-500 text-slate-900 p-2 rounded-lg font-bold text-xl shadow">🌱</div>
+                    <div>
+                        <h1 class="text-lg md:text-xl font-bold tracking-wide">Smart Garden Controller</h1>
+                        <p class="text-xs text-slate-400">ESP32 Edge Computing & MQTT Console</p>
+                    </div>
                 </div>
+                <!-- Status Dot Mobile -->
+                <span id="connStatusMobile" class="inline-block w-3 h-3 rounded-full bg-rose-500 md:hidden"></span>
             </div>
             <!-- MQTT Connection Form -->
-            <div class="flex flex-wrap items-center gap-2 bg-slate-900 p-2 rounded-lg border border-slate-700 text-sm">
-                <input id="mqttHost" type="text" value="broker.hivemq.com" placeholder="Broker Host" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-36">
-                <input id="mqttPort" type="number" value="8000" placeholder="WS Port" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-20">
-                <input id="mqttTopic" type="text" value="smartgarden" placeholder="Base Topic" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-28">
-                <button id="connectBtn" onclick="toggleMqttConnection()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded font-medium text-xs transition">Kết nối</button>
-                <span id="connStatus" class="inline-block w-3 h-3 rounded-full bg-rose-500" title="Mất kết nối"></span>
+            <div class="flex flex-wrap items-center justify-end gap-2 bg-slate-900 p-2 rounded-lg border border-slate-700 text-sm w-full md:w-auto">
+                <input id="mqttHost" type="text" value="broker.hivemq.com" placeholder="Broker Host" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-28 sm:w-36 focus:outline-none focus:border-emerald-500">
+                <input id="mqttPort" type="number" value="8000" placeholder="WS Port" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-16 focus:outline-none focus:border-emerald-500">
+                <input id="mqttTopic" type="text" value="smartgarden" placeholder="Base Topic" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-24 focus:outline-none focus:border-emerald-500">
+                <button id="connectBtn" onclick="toggleMqttConnection()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded font-medium text-xs transition shadow">Kết nối</button>
+                <span id="connStatus" class="hidden md:inline-block w-3 h-3 rounded-full bg-rose-500" title="Mất kết nối"></span>
             </div>
         </div>
     </header>
 
     <!-- Emergency & Warning Banner -->
-    <div id="emergencyBanner" class="hidden bg-rose-600 text-white text-center py-2 px-4 font-bold text-sm tracking-wider animate-pulse">
+    <div id="emergencyBanner" class="hidden bg-rose-600 text-white text-center py-2 px-4 font-bold text-sm tracking-wider animate-pulse shadow-lg">
         ⚠️ HỆ THỐNG ĐANG Ở TRẠNG THÁI DỪNG KHẨN CẤP (EMERGENCY STOP) HOẶC LỖI TIMEOUT BƠM!
     </div>
 
     <!-- Main Container -->
     <main class="container mx-auto p-4 space-y-6">
 
-        <!-- Top Overview Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <!-- Soil Moisture -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between">
-                <div class="text-slate-400 text-xs uppercase font-semibold">Độ ẩm đất (Soil)</div>
+        <!-- Top Overview Cards (5 thẻ cảm biến linh hoạt) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+            
+            <!-- 1. Soil Moisture -->
+            <div class="bg-slate-800 p-3.5 md:p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+                <div class="text-slate-400 text-[11px] uppercase font-semibold">Độ ẩm đất (Soil)</div>
                 <div class="flex items-baseline justify-between my-2">
-                    <span id="valSoil" class="text-3xl font-extrabold text-emerald-400">--%</span>
-                    <span id="badgeSoil" class="text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">--</span>
+                    <span id="valSoil" class="text-2xl md:text-3xl font-extrabold text-emerald-400">--%</span>
+                    <span id="badgeSoil" class="text-[10px] md:text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">--</span>
                 </div>
-                <div class="text-xs text-slate-500">Cảm biến ADC6 (GPIO34)</div>
+                <div class="text-[10px] text-slate-500">ADC6 (GPIO34)</div>
             </div>
-            <!-- Temperature & Humidity -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between">
-                <div class="text-slate-400 text-xs uppercase font-semibold">Nhiệt độ / Độ ẩm (DHT11)</div>
+
+            <!-- 2. Temperature & Humidity -->
+            <div class="bg-slate-800 p-3.5 md:p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+                <div class="text-slate-400 text-[11px] uppercase font-semibold">Nhiệt độ / Độ ẩm</div>
                 <div class="flex items-baseline justify-between my-2">
                     <div>
-                        <span id="valTemp" class="text-2xl font-extrabold text-amber-400">--°C</span>
-                        <span id="valHum" class="text-lg font-bold text-cyan-400 ml-2">--%</span>
+                        <span id="valTemp" class="text-xl md:text-2xl font-extrabold text-amber-400">--°C</span>
+                        <span id="valHum" class="text-sm md:text-lg font-bold text-cyan-400 ml-1">--%</span>
                     </div>
-                    <span id="badgeDht" class="text-xs px-2 py-0.5 rounded bg-rose-900 text-rose-200">ERR</span>
+                    <span id="badgeDht" class="text-[10px] md:text-xs px-1.5 py-0.5 rounded bg-rose-900 text-rose-200">ERR</span>
                 </div>
-                <div class="text-xs text-slate-500">Chân GPIO17</div>
+                <div class="text-[10px] text-slate-500">Cảm biến DHT11</div>
             </div>
-            <!-- Water Tank Level -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between">
-                <div class="text-slate-400 text-xs uppercase font-semibold">Mực nước bồn (Tank)</div>
+
+            <!-- 3. Light Sensor -->
+            <div class="bg-slate-800 p-3.5 md:p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+                <div class="text-slate-400 text-[11px] uppercase font-semibold">Cường độ Ánh sáng</div>
                 <div class="flex items-baseline justify-between my-2">
-                    <span id="valTank" class="text-3xl font-extrabold text-blue-400">--%</span>
-                    <span id="valTankDist" class="text-xs text-slate-400">-- cm</span>
+                    <span id="valLight" class="text-2xl md:text-3xl font-extrabold text-yellow-400">--%</span>
+                    <span id="badgeLight" class="text-[10px] md:text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">--</span>
                 </div>
-                <div class="text-xs text-slate-500">HC-SR04 (Trig:4, Echo:16)</div>
+                <div class="text-[10px] text-slate-500">ADC0 (GPIO36)</div>
             </div>
-            <!-- Light & Rain -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between">
-                <div class="text-slate-400 text-xs uppercase font-semibold">Ánh sáng & Mưa</div>
+
+            <!-- 4. Water Tank Level -->
+            <div class="bg-slate-800 p-3.5 md:p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+                <div class="text-slate-400 text-[11px] uppercase font-semibold">Mực nước bồn chứa</div>
                 <div class="flex items-baseline justify-between my-2">
-                    <span id="valLight" class="text-2xl font-extrabold text-yellow-400">--%</span>
-                    <span id="valRain" class="text-xs px-2 py-1 rounded bg-slate-700 font-bold">KHÔ</span>
+                    <span id="valTank" class="text-2xl md:text-3xl font-extrabold text-blue-400">--%</span>
+                    <span id="valTankDist" class="text-[10px] md:text-xs text-slate-400">-- cm</span>
                 </div>
-                <div class="text-xs text-slate-500">Cảm biến quang & Mưa ADC[cite: 2]</div>
+                <div class="text-[10px] text-slate-500">HC-SR04 (GPIO4/16)</div>
             </div>
+
+            <!-- 5. Rain Sensor -->
+            <div class="bg-slate-800 p-3.5 md:p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition col-span-2 sm:col-span-1">
+                <div class="text-slate-400 text-[11px] uppercase font-semibold">Trạng thái Thời tiết</div>
+                <div class="flex items-baseline justify-between my-2">
+                    <span id="valRain" class="text-sm md:text-base px-3 py-1 rounded bg-slate-700 font-bold text-slate-300">KHÔ RỐI</span>
+                    <span id="badgeRain" class="text-[10px] md:text-xs text-slate-400">ADC7</span>
+                </div>
+                <div class="text-[10px] text-slate-500">Cảm biến mưa Analog</div>
+            </div>
+
         </div>
 
         <!-- Control & Status Section -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <!-- Controls Panel -->
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4">
-                <h2 class="text-lg font-bold border-b border-slate-700 pb-2 flex justify-between items-center">
-                    <span>Bảng điều khiển</span>
-                    <span id="lblMode" class="text-xs px-2 py-1 rounded bg-blue-900 text-blue-200 uppercase">AUTO</span>
-                </h2>
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 flex flex-col justify-between">
+                <div class="space-y-4">
+                    <h2 class="text-lg font-bold border-b border-slate-700 pb-2 flex justify-between items-center">
+                        <span>Bảng điều khiển</span>
+                        <span id="lblMode" class="text-xs px-2.5 py-1 rounded-full bg-blue-900 text-blue-200 uppercase font-bold tracking-wider">AUTO</span>
+                    </h2>
 
-                <!-- Mode Selector -->
-                <div>
-                    <label class="block text-xs text-slate-400 mb-1">Chế độ vận hành hệ thống</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="setMode('auto')" id="btnAuto" class="bg-blue-600 hover:bg-blue-500 py-2 rounded font-bold text-sm transition">AUTO</button>
-                        <button onclick="setMode('manual')" id="btnManual" class="bg-slate-700 hover:bg-slate-600 py-2 rounded font-bold text-sm transition">MANUAL</button>
+                    <!-- Mode Selector -->
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-2">Chế độ vận hành hệ thống</label>
+                        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-900 rounded-lg border border-slate-700">
+                            <button onclick="setMode('auto')" id="btnAuto" class="bg-blue-600 text-white py-2 rounded-md font-bold text-sm transition shadow">AUTO</button>
+                            <button onclick="setMode('manual')" id="btnManual" class="text-slate-400 hover:text-slate-200 py-2 rounded-md font-bold text-sm transition">MANUAL</button>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Manual Pumps Control -->
-                <div class="space-y-2 pt-2 border-t border-slate-700">
-                    <label class="block text-xs text-slate-400">Điều khiển máy bơm thủ công (Chỉ khả dụng khi Manual)</label>
-                    <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700">
-                        <div>
-                            <div class="font-semibold text-sm">Bơm 1 (Tưới cây)[cite: 2]</div>
-                            <div id="statusPump1" class="text-xs text-slate-400">Trạng thái: TẮT</div>
+                    <!-- Manual Pumps Control -->
+                    <div class="space-y-3 pt-2 border-t border-slate-700">
+                        <label class="block text-xs text-slate-400">Điều khiển máy bơm thủ công (Chế độ MANUAL)</label>
+                        
+                        <!-- Pump 1 -->
+                        <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700">
+                            <div>
+                                <div class="font-semibold text-sm">Bơm 1 (Tưới cây)</div>
+                                <div id="statusPump1" class="text-xs text-slate-400 mt-0.5">Trạng thái: TẮT</div>
+                            </div>
+                            <button onclick="togglePump(1)" id="btnPump1" disabled class="bg-slate-700 text-slate-500 px-4 py-2 rounded-lg font-bold text-xs transition">BẬT P1</button>
                         </div>
-                        <button onclick="togglePump(1)" id="btnPump1" disabled class="bg-slate-700 text-slate-400 px-4 py-1.5 rounded font-bold text-xs transition">BẬT P1</button>
-                    </div>
-                    <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700">
-                        <div>
-                            <div class="font-semibold text-sm">Bơm 2 (Nạp bồn)[cite: 2]</div>
-                            <div id="statusPump2" class="text-xs text-slate-400">Trạng thái: TẮT</div>
+
+                        <!-- Pump 2 -->
+                        <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700">
+                            <div>
+                                <div class="font-semibold text-sm">Bơm 2 (Nạp bồn)</div>
+                                <div id="statusPump2" class="text-xs text-slate-400 mt-0.5">Trạng thái: TẮT</div>
+                            </div>
+                            <button onclick="togglePump(2)" id="btnPump2" disabled class="bg-slate-700 text-slate-500 px-4 py-2 rounded-lg font-bold text-xs transition">BẬT P2</button>
                         </div>
-                        <button onclick="togglePump(2)" id="btnPump2" disabled class="bg-slate-700 text-slate-400 px-4 py-1.5 rounded font-bold text-xs transition">BẬT P2</button>
                     </div>
                 </div>
 
                 <!-- Emergency Stop Button -->
-                <div class="pt-2 border-t border-slate-700">
-                    <button onclick="sendEmergency()" class="w-full bg-rose-700 hover:bg-rose-600 text-white font-extrabold py-3 rounded-lg shadow-lg tracking-wider transition flex items-center justify-center space-x-2">
-                        <span>🛑 DỪNG KHẨN CẤP (EMERGENCY STOP)</span>
+                <div class="pt-4 border-t border-slate-700">
+                    <button onclick="sendEmergency()" class="w-full bg-rose-700 hover:bg-rose-600 text-white font-extrabold py-3.5 rounded-lg shadow-lg tracking-wider transition flex items-center justify-center space-x-2 active:scale-95">
+                        <span class="text-base">🛑 DỪNG KHẨN CẤP (EMERGENCY)</span>
                     </button>
-                    <p class="text-[10px] text-slate-400 text-center mt-1">Lệnh kích hoạt khóa khẩn cấp toàn bộ hệ thống bơm qua MQTT[cite: 2].</p>
+                    <p class="text-[10px] text-slate-400 text-center mt-1.5">Ngắt ngay lập tức toàn bộ rơ-le bơm để bảo vệ nông trại.</p>
                 </div>
             </div>
 
-            <!-- Plant Profiles & System Info -->
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 md:col-span-2 flex flex-col justify-between">
+            <!-- Plant Profiles & Charts Section -->
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 lg:col-span-2 flex flex-col justify-between">
                 <div>
-                    <h2 class="text-lg font-bold border-b border-slate-700 pb-2 mb-4">Thông tin cấu hình & Cây trồng (Plant Profiles)</h2>
+                    <h2 class="text-lg font-bold border-b border-slate-700 pb-2 mb-4">Cấu hình Cây trồng & Ngưỡng tưới (Plant Profiles)</h2>
                     
-                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4">
-                        <div class="bg-slate-900 p-3 rounded border border-slate-700">
-                            <div class="text-xs text-slate-400">Cấu hình cây trồng</div>
-                            <div id="infoPlant" class="text-sm font-bold text-emerald-400 mt-1">RAU AN LA / CUSTOM[cite: 2]</div>
+                    <!-- Interactive Plant Select -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                        
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 sm:col-span-1">
+                            <label class="block text-xs text-slate-400 mb-1">Lựa chọn loại cây</label>
+                            <select id="selectPlant" onchange="changePlantProfile()" class="w-full bg-slate-800 text-emerald-400 font-bold text-sm p-2 rounded border border-slate-600 focus:outline-none focus:border-emerald-500">
+                                <option value="CUSTOM">CUSTOM (Tùy chỉnh)</option>
+                                <option value="RAU AN LA">RAU ĂN LÁ (30% - 65%)</option>
+                                <option value="CA CHUA">CÀ CHUA (35% - 60%)</option>
+                                <option value="DUA LEO">DƯA LEO (40% - 65%)</option>
+                                <option value="XUONG RONG">XƯƠNG RỒNG (15% - 30%)</option>
+                            </select>
                         </div>
-                        <div class="bg-slate-900 p-3 rounded border border-slate-700">
-                            <div class="text-xs text-slate-400">Ngưỡng Bắt đầu (Start)</div>
-                            <div id="infoStartTh" class="text-sm font-bold text-amber-400 mt-1">30%[cite: 2]</div>
+
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
+                            <div>
+                                <div class="text-xs text-slate-400">Ngưỡng Bắt đầu (Start)</div>
+                                <div id="infoStartTh" class="text-xl font-extrabold text-amber-400 mt-0.5">30%</div>
+                            </div>
+                            <span class="text-xs text-slate-500">Tưới khi $\le$ %</span>
                         </div>
-                        <div class="bg-slate-900 p-3 rounded border border-slate-700">
-                            <div class="text-xs text-slate-400">Ngưỡng Dừng (Stop)</div>
-                            <div id="infoStopTh" class="text-sm font-bold text-cyan-400 mt-1">45%[cite: 2]</div>
+
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
+                            <div>
+                                <div class="text-xs text-slate-400">Ngưỡng Dừng (Stop)</div>
+                                <div id="infoStopTh" class="text-xl font-extrabold text-cyan-400 mt-0.5">45%</div>
+                            </div>
+                            <span class="text-xs text-slate-500">Ngắt khi $\ge$ %</span>
                         </div>
+
                     </div>
 
-                    <!-- System Diagnostics flags -->
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    <!-- System Diagnostics -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                         <div id="diagTimeout1" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">P1 Timeout: <span class="font-bold text-emerald-400">OK</span></div>
                         <div id="diagTimeout2" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">P2 Timeout: <span class="font-bold text-emerald-400">OK</span></div>
-                        <div id="diagTank" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến bồn: <span class="font-bold text-emerald-400">Hợp lệ</span></div>
-                        <div id="diagDht" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến DHT: <span class="font-bold text-emerald-400">Hợp lệ</span></div>
+                        <div id="diagTank" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến bồn: <span class="font-bold text-emerald-400">OK</span></div>
+                        <div id="diagDht" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến DHT: <span class="font-bold text-emerald-400">OK</span></div>
                     </div>
                 </div>
 
-                <!-- Real-time Chart Container -->
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 h-64 mt-4">
+                <!-- Real-time Chart Container (Có đường Ánh sáng) -->
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 h-64 md:h-72 mt-4 relative">
                     <canvas id="sensorChart"></canvas>
                 </div>
             </div>
@@ -177,26 +219,29 @@
         let isConnected = false;
         let baseTopic = "smartgarden";
 
-        // Chart.js Setup
+        // Chart.js Setup (Thêm đường Ánh sáng màu vàng)
         const ctx = document.getElementById('sensorChart').getContext('2d');
         const sensorChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: [],
                 datasets: [
-                    { label: 'Độ ẩm đất (%)', data: [], borderColor: '#34d399', backgroundColor: '#34d39922', tension: 0.3, yAxisID: 'y' },
-                    { label: 'Nhiệt độ (°C)', data: [], borderColor: '#fbbf24', backgroundColor: '#fbbf2422', tension: 0.3, yAxisID: 'y' },
-                    { label: 'Mực nước bồn (%)', data: [], borderColor: '#60a5fa', backgroundColor: '#60a5fa22', tension: 0.3, yAxisID: 'y' }
+                    { label: 'Độ ẩm đất (%)', data: [], borderColor: '#34d399', backgroundColor: '#34d39922', tension: 0.3, borderWidth: 2 },
+                    { label: 'Ánh sáng (%)', data: [], borderColor: '#facc15', backgroundColor: '#facc1522', tension: 0.3, borderWidth: 2 },
+                    { label: 'Nhiệt độ (°C)', data: [], borderColor: '#fbbf24', backgroundColor: '#fbbf2422', tension: 0.3, borderWidth: 2 },
+                    { label: 'Mực nước bồn (%)', data: [], borderColor: '#60a5fa', backgroundColor: '#60a5fa22', tension: 0.3, borderWidth: 2 }
                 ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: true, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                    x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', maxTicksLimit: 8 } }
+                    y: { beginAtZero: true, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                    x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 }, maxTicksLimit: 8 } }
                 },
-                plugins: { legend: { labels: { color: '#f8fafc', font: { size: 10 } } } }
+                plugins: { 
+                    legend: { labels: { color: '#f8fafc', font: { size: 11 }, boxWidth: 12 } } 
+                }
             }
         });
 
@@ -241,14 +286,18 @@
             isConnected = status;
             const btn = document.getElementById('connectBtn');
             const indicator = document.getElementById('connStatus');
+            const indicatorMobile = document.getElementById('connStatusMobile');
+            
             if (status) {
                 btn.textContent = "Ngắt kết nối";
-                btn.className = "bg-rose-600 hover:bg-rose-500 text-white px-3 py-1 rounded font-medium text-xs transition";
-                indicator.className = "inline-block w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]";
+                btn.className = "bg-rose-600 hover:bg-rose-500 text-white px-3 py-1 rounded font-medium text-xs transition shadow";
+                indicator.className = "hidden md:inline-block w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]";
+                indicatorMobile.className = "inline-block w-3 h-3 rounded-full bg-emerald-500 md:hidden shadow-[0_0_10px_#10b981]";
             } else {
                 btn.textContent = "Kết nối";
-                btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded font-medium text-xs transition";
-                indicator.className = "inline-block w-3 h-3 rounded-full bg-rose-500";
+                btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded font-medium text-xs transition shadow";
+                indicator.className = "hidden md:inline-block w-3 h-3 rounded-full bg-rose-500";
+                indicatorMobile.className = "inline-block w-3 h-3 rounded-full bg-rose-500 md:hidden";
             }
         }
 
@@ -267,60 +316,78 @@
             // 1. Soil
             document.getElementById('valSoil').textContent = d.soil_moisture + "%";
             let soilBadge = document.getElementById('badgeSoil');
-            if (d.soil_moisture <= 30) { soilBadge.textContent = "KHÔ (DRY)"; soilBadge.className = "text-xs px-2 py-0.5 rounded bg-amber-900 text-amber-200"; }
-            else if (d.soil_moisture >= 45) { soilBadge.textContent = "ẨM (WET)"; soilBadge.className = "text-xs px-2 py-0.5 rounded bg-blue-900 text-blue-200"; }
-            else { soilBadge.textContent = "BÌNH THƯỜNG"; soilBadge.className = "text-xs px-2 py-0.5 rounded bg-emerald-900 text-emerald-200"; }
+            if (d.soil_moisture <= 30) { soilBadge.textContent = "KHÔ (DRY)"; soilBadge.className = "text-[10px] md:text-xs px-2 py-0.5 rounded bg-amber-900 text-amber-200"; }
+            else if (d.soil_moisture >= 45) { soilBadge.textContent = "ẨM (WET)"; soilBadge.className = "text-[10px] md:text-xs px-2 py-0.5 rounded bg-blue-900 text-blue-200"; }
+            else { soilBadge.textContent = "BÌNH THƯỜNG"; soilBadge.className = "text-[10px] md:text-xs px-2 py-0.5 rounded bg-emerald-900 text-emerald-200"; }
 
             // 2. DHT11
             document.getElementById('valTemp').textContent = d.temperature_c.toFixed(1) + "°C";
             document.getElementById('valHum').textContent = d.humidity_percent + "%";
             let dhtBadge = document.getElementById('badgeDht');
-            if (d.dht11_valid) { dhtBadge.textContent = "OK"; dhtBadge.className = "text-xs px-2 py-0.5 rounded bg-emerald-900 text-emerald-200"; }
-            else { dhtBadge.textContent = "ERR"; dhtBadge.className = "text-xs px-2 py-0.5 rounded bg-rose-900 text-rose-200"; }
+            if (d.dht11_valid) { dhtBadge.textContent = "OK"; dhtBadge.className = "text-[10px] md:text-xs px-1.5 py-0.5 rounded bg-emerald-900 text-emerald-200"; }
+            else { dhtBadge.textContent = "ERR"; dhtBadge.className = "text-[10px] md:text-xs px-1.5 py-0.5 rounded bg-rose-900 text-rose-200"; }
 
-            // 3. Tank Level
+            // 3. Light Sensor
+            document.getElementById('valLight').textContent = d.light_percent + "%";
+            let lightBadge = document.getElementById('badgeLight');
+            if (d.light_percent < 30) { lightBadge.textContent = "YẾU"; lightBadge.className = "text-[10px] md:text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300"; }
+            else if (d.light_percent > 70) { lightBadge.textContent = "NẮNG GẮT"; lightBadge.className = "text-[10px] md:text-xs px-2 py-0.5 rounded bg-amber-900 text-amber-200"; }
+            else { lightBadge.textContent = "VỪA PHẢI"; lightBadge.className = "text-[10px] md:text-xs px-2 py-0.5 rounded bg-emerald-900 text-emerald-200"; }
+
+            // 4. Tank Level
             document.getElementById('valTank').textContent = d.tank_percent + "%";
             document.getElementById('valTankDist').textContent = d.tank_distance_cm.toFixed(1) + " cm";
 
-            // 4. Light & Rain
-            document.getElementById('valLight').textContent = d.light_percent + "%";
+            // 5. Rain
             let rainEl = document.getElementById('valRain');
-            if (d.rain) { rainEl.textContent = "ĐANG MƯA"; rainEl.className = "text-xs px-2 py-1 rounded bg-blue-900 text-blue-200 font-bold"; }
-            else { rainEl.textContent = "KHÔ"; rainEl.className = "text-xs px-2 py-1 rounded bg-slate-700 text-slate-300 font-bold"; }
+            if (d.rain) { rainEl.textContent = "ĐANG MƯA 🌧️"; rainEl.className = "text-sm md:text-base px-3 py-1 rounded bg-blue-900 text-blue-200 font-bold animate-bounce"; }
+            else { rainEl.textContent = "KHÔ RỐI ☀️"; rainEl.className = "text-sm md:text-base px-3 py-1 rounded bg-slate-700 text-slate-300 font-bold"; }
 
-            // 5. Mode & Pumps status
+            // 6. Mode & Pumps Status
             let isManual = (d.mode === "manual");
             document.getElementById('lblMode').textContent = d.mode.toUpperCase();
-            document.getElementById('lblMode').className = isManual ? "text-xs px-2 py-1 rounded bg-amber-900 text-amber-200 uppercase font-bold" : "text-xs px-2 py-1 rounded bg-blue-900 text-blue-200 uppercase font-bold";
+            document.getElementById('lblMode').className = isManual ? "text-xs px-2.5 py-1 rounded-full bg-amber-900 text-amber-200 uppercase font-bold tracking-wider" : "text-xs px-2.5 py-1 rounded-full bg-blue-900 text-blue-200 uppercase font-bold tracking-wider";
+
+            // Update Mode Buttons active style
+            let btnAuto = document.getElementById('btnAuto');
+            let btnManual = document.getElementById('btnManual');
+            if(isManual) {
+                btnManual.className = "bg-amber-600 text-white py-2 rounded-md font-bold text-sm transition shadow";
+                btnAuto.className = "text-slate-400 hover:text-slate-200 py-2 rounded-md font-bold text-sm transition";
+            } else {
+                btnAuto.className = "bg-blue-600 text-white py-2 rounded-md font-bold text-sm transition shadow";
+                btnManual.className = "text-slate-400 hover:text-slate-200 py-2 rounded-md font-bold text-sm transition";
+            }
 
             // Enable/disable manual pump buttons based on mode
-            document.getElementById('btnPump1').disabled = !isManual;
-            document.getElementById('btnPump2').disabled = !isManual;
-
             let p1Btn = document.getElementById('btnPump1');
             let p2Btn = document.getElementById('btnPump2');
+            p1Btn.disabled = !isManual;
+            p2Btn.disabled = !isManual;
             
             if (d.pump1) {
                 document.getElementById('statusPump1').textContent = "Trạng thái: ĐANG CHẠY (ON)";
                 document.getElementById('statusPump1').className = "text-xs text-emerald-400 font-bold";
-                if(isManual) { p1Btn.textContent = "TẮT P1"; p1Btn.className = "bg-rose-600 hover:bg-rose-500 text-white px-4 py-1.5 rounded font-bold text-xs transition"; }
+                if(isManual) { p1Btn.textContent = "TẮT P1"; p1Btn.className = "bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-lg font-bold text-xs transition shadow cursor-pointer"; }
             } else {
                 document.getElementById('statusPump1').textContent = "Trạng thái: TẮT (OFF)";
                 document.getElementById('statusPump1').className = "text-xs text-slate-400";
-                if(isManual) { p1Btn.textContent = "BẬT P1"; p1Btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded font-bold text-xs transition"; }
+                if(isManual) { p1Btn.textContent = "BẬT P1"; p1Btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-xs transition shadow cursor-pointer"; }
+                else { p1Btn.className = "bg-slate-700 text-slate-500 px-4 py-2 rounded-lg font-bold text-xs transition"; }
             }
 
             if (d.pump2) {
                 document.getElementById('statusPump2').textContent = "Trạng thái: ĐANG CHẠY (ON)";
                 document.getElementById('statusPump2').className = "text-xs text-emerald-400 font-bold";
-                if(isManual) { p2Btn.textContent = "TẮT P2"; p2Btn.className = "bg-rose-600 hover:bg-rose-500 text-white px-4 py-1.5 rounded font-bold text-xs transition"; }
+                if(isManual) { p2Btn.textContent = "TẮT P2"; p2Btn.className = "bg-rose-600 hover:bg-rose-500 text-white px-4 py-2 rounded-lg font-bold text-xs transition shadow cursor-pointer"; }
             } else {
                 document.getElementById('statusPump2').textContent = "Trạng thái: TẮT (OFF)";
                 document.getElementById('statusPump2').className = "text-xs text-slate-400";
-                if(isManual) { p2Btn.textContent = "BẬT P2"; p2Btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded font-bold text-xs transition"; }
+                if(isManual) { p2Btn.textContent = "BẬT P2"; p2Btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-bold text-xs transition shadow cursor-pointer"; }
+                else { p2Btn.className = "bg-slate-700 text-slate-500 px-4 py-2 rounded-lg font-bold text-xs transition"; }
             }
 
-            // 6. Emergency & Timeouts banner check
+            // 7. Emergency & Timeouts banner check
             let emergencyBanner = document.getElementById('emergencyBanner');
             if (d.emergency || d.pump1_timeout || d.pump2_timeout) {
                 emergencyBanner.classList.remove('hidden');
@@ -331,21 +398,23 @@
             // Diagnostics info
             document.getElementById('diagTimeout1').innerHTML = `P1 Timeout: <span class="font-bold ${d.pump1_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump1_timeout ? 'LỖI' : 'OK'}</span>`;
             document.getElementById('diagTimeout2').innerHTML = `P2 Timeout: <span class="font-bold ${d.pump2_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump2_timeout ? 'LỖI' : 'OK'}</span>`;
-            document.getElementById('diagTank').innerHTML = `Cảm biến bồn: <span class="font-bold ${d.tank_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.tank_valid ? 'Hợp lệ' : 'Lỗi'}</span>`;
-            document.getElementById('diagDht').innerHTML = `Cảm biến DHT: <span class="font-bold ${d.dht11_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.dht11_valid ? 'Hợp lệ' : 'Lỗi'}</span>`;
+            document.getElementById('diagTank').innerHTML = `Cảm biến bồn: <span class="font-bold ${d.tank_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.tank_valid ? 'OK' : 'Lỗi'}</span>`;
+            document.getElementById('diagDht').innerHTML = `Cảm biến DHT: <span class="font-bold ${d.dht11_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.dht11_valid ? 'OK' : 'Lỗi'}</span>`;
 
             // Update Chart
             const timeNow = new Date().toLocaleTimeString();
             if (sensorChart.data.labels.length > 20) {
                 sensorChart.data.labels.shift();
-                sensorChart.data.datasets[0].data.shift();
-                sensorChart.data.datasets[1].data.shift();
-                sensorChart.data.datasets[2].data.shift();
+                sensorChart.data.datasets[0].data.shift(); // Soil
+                sensorChart.data.datasets[1].data.shift(); // Light
+                sensorChart.data.datasets[2].data.shift(); // Temp
+                sensorChart.data.datasets[3].data.shift(); // Tank
             }
             sensorChart.data.labels.push(timeNow);
             sensorChart.data.datasets[0].data.push(d.soil_moisture);
-            sensorChart.data.datasets[1].data.push(d.temperature_c);
-            sensorChart.data.datasets[2].data.push(d.tank_percent);
+            sensorChart.data.datasets[1].data.push(d.light_percent);
+            sensorChart.data.datasets[2].data.push(d.temperature_c);
+            sensorChart.data.datasets[3].data.push(d.tank_percent);
             sensorChart.update();
         }
 
@@ -359,7 +428,6 @@
 
         function togglePump(pumpNum) {
             if (!isConnected) { alert("Chưa kết nối MQTT!"); return; }
-            // Check current button label to determine action
             let btn = document.getElementById('btnPump' + pumpNum);
             let val = btn.textContent.includes("BẬT") ? "1" : "0";
             let message = new Paho.MQTT.Message(val);
@@ -372,6 +440,28 @@
             if (confirm("Bạn có chắc chắn muốn kích hoạt DỪNG KHẨN CẤP toàn hệ thống?")) {
                 let message = new Paho.MQTT.Message("STOP");
                 message.destinationName = baseTopic + "/control/emergency";
+                mqttClient.send(message);
+            }
+        }
+
+        function changePlantProfile() {
+            const select = document.getElementById('selectPlant');
+            const val = select.value;
+            
+            // Cập nhật giao diện xem trước ngưỡng
+            let startTh = 30, stopTh = 45;
+            if (val === "RAU AN LA") { startTh = 40; stopTh = 65; }
+            else if (val === "CA CHUA") { startTh = 35; stopTh = 60; }
+            else if (val === "DUA LEO") { startTh = 40; stopTh = 65; }
+            else if (val === "XUONG RONG") { startTh = 15; stopTh = 30; }
+
+            document.getElementById('infoStartTh').textContent = startTh + "%";
+            document.getElementById('infoStopTh').textContent = stopTh + "%";
+
+            // Nếu đã kết nối MQTT, gửi lệnh cập nhật plant profile tới ESP32
+            if (isConnected) {
+                let message = new Paho.MQTT.Message(val);
+                message.destinationName = baseTopic + "/control/plant";
                 mqttClient.send(message);
             }
         }
