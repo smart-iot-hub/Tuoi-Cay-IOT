@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Garden IoT Dashboard - Single Screen</title>
+    <title>Smart Garden IoT Dashboard - Adafruit IO</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -13,22 +13,23 @@
 </head>
 <body class="h-screen w-screen overflow-hidden bg-slate-900 text-slate-100 font-sans flex flex-col">
 
-    <!-- Header (Thu gọn tối ưu độ cao) -->
+    <!-- Header -->
     <header class="bg-slate-800 border-b border-slate-700 px-4 py-2 shadow-md shrink-0 z-50 w-full flex items-center justify-between">
         <div class="flex items-center space-x-3">
             <div class="bg-emerald-500 text-slate-900 p-1.5 rounded-lg font-bold text-lg shadow">🌱</div>
             <div>
                 <h1 class="text-sm md:text-base font-bold tracking-wide leading-tight">Smart Garden Controller</h1>
-                <p class="text-[10px] text-slate-400">ESP32 Edge Computing & MQTT Console</p>
+                <p class="text-[10px] text-slate-400">Adafruit IO Cloud MQTT Console</p>
             </div>
             <span id="connStatusMobile" class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500 md:hidden"></span>
         </div>
-        <!-- MQTT Connection Form -->
-        <div class="flex flex-wrap items-center justify-end gap-1.5 bg-slate-900 p-1.5 rounded-lg border border-slate-700 text-xs">
-            <input id="mqttHost" type="text" value="broker.hivemq.com" placeholder="Host" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-28 focus:outline-none focus:border-emerald-500">
-            <input id="mqttPort" type="number" value="8000" placeholder="Port" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-14 focus:outline-none focus:border-emerald-500">
-            <input id="mqttTopic" type="text" value="smartgarden" placeholder="Topic" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-20 focus:outline-none focus:border-emerald-500">
-            <button id="connectBtn" onclick="toggleMqttConnection()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded font-medium text-xs transition shadow">Kết nối</button>
+
+        <!-- Connection Status & Config Trigger -->
+        <div class="flex items-center gap-2">
+            <button onclick="openConfigModal()" class="bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded font-medium text-xs transition border border-slate-600 flex items-center gap-1">
+                <span>⚙️ Cấu hình AIO</span>
+            </button>
+            <button id="connectBtn" onclick="toggleMqttConnection()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded font-bold text-xs transition shadow">Kết nối</button>
             <span id="connStatus" class="hidden md:inline-block w-2.5 h-2.5 rounded-full bg-rose-500" title="Mất kết nối"></span>
         </div>
     </header>
@@ -38,12 +39,11 @@
         ⚠️ HỆ THỐNG ĐANG Ở TRẠNG THÁI DỪNG KHẨN CẤP (EMERGENCY STOP) HOẶC LỖI TIMEOUT BƠM!
     </div>
 
-    <!-- Main Container (Fit 100% không gian còn lại, không cuộn trang) -->
+    <!-- Main Container -->
     <main class="flex-1 min-h-0 p-3 flex flex-col gap-2.5 overflow-hidden">
 
-        <!-- Top Overview Cards (5 thẻ cảm biến nhỏ gọn) -->
+        <!-- Top Overview Cards -->
         <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 shrink-0">
-            
             <!-- 1. Soil Moisture -->
             <div class="bg-slate-800 p-2.5 rounded-lg border border-slate-700 shadow flex flex-col justify-between">
                 <div class="text-slate-400 text-[10px] uppercase font-semibold">Độ ẩm đất (Soil)</div>
@@ -96,13 +96,12 @@
                 </div>
                 <div class="text-[9px] text-slate-500">Cảm biến mưa Analog</div>
             </div>
-
         </div>
 
-        <!-- Control & Status Section (Chia 2 cột lấp đầy tuyệt đối chiều cao màn hình) -->
+        <!-- Control & Status Section -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 flex-1 min-h-0 items-stretch">
             
-            <!-- Cột Trái: Bảng điều khiển & Trung tâm cảnh báo (4/12 cột) -->
+            <!-- Cột Trái: Bảng điều khiển & Cảnh báo -->
             <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 shadow flex flex-col justify-between lg:col-span-4 h-full">
                 <div class="space-y-2.5 flex flex-col h-full min-h-0">
                     <h2 class="text-sm font-bold border-b border-slate-700 pb-1.5 flex justify-between items-center shrink-0">
@@ -142,7 +141,7 @@
                         </div>
                     </div>
 
-                    <!-- Integrated Alert Center (Tự động co giãn thanh cuộn nội bộ nếu nhiều log) -->
+                    <!-- Alert Center -->
                     <div class="pt-1 border-t border-slate-700 flex flex-col flex-1 min-h-0">
                         <div class="flex items-center justify-between mb-1 shrink-0">
                             <h3 class="text-[10px] uppercase text-slate-400 font-semibold">Trung tâm cảnh báo</h3>
@@ -162,14 +161,11 @@
                 </div>
             </div>
 
-            <!-- Cột Phải: Cấu hình Cây trồng & Biểu đồ Real-time (8/12 cột) -->
+            <!-- Cột Phải: Cấu hình Cây trồng & Biểu đồ -->
             <div class="bg-slate-800 p-3 rounded-xl border border-slate-700 shadow flex flex-col justify-between lg:col-span-8 h-full min-h-0">
                 <div class="space-y-2.5 flex flex-col h-full min-h-0">
                     <div class="flex items-center justify-between border-b border-slate-700 pb-1.5 shrink-0">
                         <h2 class="text-sm font-bold">Cấu hình Cây trồng & Ngưỡng tưới (Plant Profiles)</h2>
-                        <button onclick="openAddPlantModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-md font-bold text-[10px] shadow transition flex items-center gap-1">
-                            <span>+ Thêm cây mới</span>
-                        </button>
                     </div>
                     
                     <!-- Interactive Plant Select & Thresholds -->
@@ -212,94 +208,114 @@
                         <div id="diagRain" class="bg-slate-900 p-1.5 rounded border border-slate-700 text-center">Cảm biến mưa: <span class="font-bold text-emerald-400">OK</span></div>
                     </div>
 
-                    <!-- Real-time Chart Container (Tự động chiếm trọn phần không gian còn lại theo chiều dọc) -->
+                    <!-- Real-time Chart Container -->
                     <div class="bg-slate-900 p-2 rounded-xl border border-slate-700 flex-1 min-h-0 relative w-full">
                         <canvas id="sensorChart" class="w-full h-full"></canvas>
                     </div>
                 </div>
             </div>
-
         </div>
-
     </main>
 
-    <!-- Modal Thêm Loại Cây Mới -->
-    <div id="addPlantModal" class="hidden fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true">
+    <!-- Modal Cấu hình Adafruit IO -->
+    <div id="configModal" class="fixed inset-0 z-[130] bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true">
         <div class="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden p-5 space-y-3">
             <div class="flex items-center justify-between border-b border-slate-700 pb-2.5">
-                <h3 class="font-bold text-sm text-emerald-400">Thêm loại cây trồng mới</h3>
-                <button onclick="closeAddPlantModal()" class="text-slate-400 hover:text-white text-lg font-bold">×</button>
+                <h3 class="font-bold text-sm text-emerald-400">Cấu hình kết nối Adafruit IO</h3>
+                <button onclick="closeConfigModal()" class="text-slate-400 hover:text-white text-lg font-bold">×</button>
             </div>
             
-            <div class="space-y-2.5">
+            <div class="space-y-2.5 text-xs">
                 <div>
-                    <label for="newPlantName" class="block text-[10px] text-slate-400 mb-1">Tên cây (Viết hoa không dấu)</label>
-                    <input id="newPlantName" maxlength="23" type="text" placeholder="VD: OT CHUONG"
+                    <label class="block text-[10px] text-slate-400 mb-1">Adafruit IO Username</label>
+                    <input id="cfgUsername" type="text" placeholder="VD: luan_smart"
                       class="w-full bg-slate-900 px-3 py-1.5 rounded border border-slate-700 text-xs focus:outline-none focus:border-emerald-500">
                 </div>
                 <div>
-                    <label for="newPlantStart" class="block text-[10px] text-slate-400 mb-1">Bắt đầu tưới (%)</label>
-                    <input id="newPlantStart" type="number" min="0" max="95" value="35"
+                    <label class="block text-[10px] text-slate-400 mb-1">Adafruit IO Active Key (AIO Key)</label>
+                    <input id="cfgKey" type="password" placeholder="Dán AIO Key vào đây..."
                       class="w-full bg-slate-900 px-3 py-1.5 rounded border border-slate-700 text-xs focus:outline-none focus:border-emerald-500">
                 </div>
                 <div>
-                    <label for="newPlantStop" class="block text-[10px] text-slate-400 mb-1">Dừng tưới (%)</label>
-                    <input id="newPlantStop" type="number" min="5" max="100" value="60"
+                    <label class="block text-[10px] text-slate-400 mb-1">Feed Prefix (Hậu tố / Tên định danh)</label>
+                    <input id="cfgPrefix" type="text" value="smartgarden" placeholder="smartgarden"
                       class="w-full bg-slate-900 px-3 py-1.5 rounded border border-slate-700 text-xs focus:outline-none focus:border-emerald-500">
                 </div>
-                <p class="text-[10px] text-slate-400">Ngưỡng hợp lệ: 0 ≤ bắt đầu &lt; dừng ≤ 100.</p>
-                <div id="configSyncStatus" class="text-xs text-slate-400 min-h-[1rem]" role="status" aria-live="polite"></div>
+                <p class="text-[10px] text-slate-400 leading-relaxed">
+                    Hệ thống sẽ tự động kết nối qua WebSocket cổng <code>8000</code> hoặc <code>443</code> đến <code>io.adafruit.com</code> kèm thông tin xác thực bảo mật.
+                </p>
             </div>
 
             <div class="flex justify-end gap-2 pt-2 border-t border-slate-700">
-                <button onclick="closeAddPlantModal()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold">Hủy</button>
-                <button id="addPlantBtn" onclick="addPlantProfile()" class="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">
-                    Lưu cấu hình
+                <button onclick="closeConfigModal()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold">Hủy</button>
+                <button onclick="saveAndConnectConfig()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow">
+                    Lưu & Kết nối
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Critical alert modal -->
-    <div id="alertModal" class="hidden fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true">
-        <div class="w-full max-w-lg bg-slate-800 border border-rose-500/70 rounded-2xl shadow-2xl overflow-hidden">
-            <div id="alertModalHeader" class="bg-rose-700 px-4 py-3 flex items-start gap-3">
-                <span class="text-xl">⚠️</span>
-                <div class="flex-1">
-                    <h2 id="alertModalTitle" class="font-extrabold text-base">Cảnh báo hệ thống</h2>
-                    <p id="alertModalCode" class="text-[10px] text-rose-100 mt-0.5">--</p>
-                </div>
-                <button onclick="dismissAlertModal()" class="text-white/80 hover:text-white text-xl leading-none">×</button>
-            </div>
-            <div class="p-4 space-y-3">
-                <p id="alertModalMessage" class="text-xs text-slate-100">Đang chờ dữ liệu từ ESP32...</p>
-                <div class="bg-slate-900 border border-slate-700 rounded-lg p-3">
-                    <h3 class="font-bold text-xs mb-1.5">Hướng kiểm tra / khắc phục</h3>
-                    <ol id="alertModalActions" class="list-decimal pl-4 space-y-1 text-xs text-slate-300"></ol>
-                </div>
-                <div class="flex justify-between items-center">
-                    <p id="alertModalState" class="text-[10px] text-amber-300">Trạng thái do ESP32 xác nhận.</p>
-                    <div class="flex gap-2">
-                        <button onclick="dismissAlertModal()" class="bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold">Đã xem</button>
-                        <button onclick="acknowledgeAlert()" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg text-xs font-bold">Đã kiểm tra</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Toast Host -->
     <div id="toastHost" class="fixed right-4 top-16 z-[110] space-y-2 w-[min(22rem,calc(100vw-2rem))]" aria-live="polite"></div>
 
     <!-- JavaScript MQTT & UI Logic -->
     <script>
         let mqttClient = null;
         let isConnected = false;
-        let baseTopic = "smartgarden";
-        let plantProfiles = [];
+        let aioUsername = "";
+        let aioKey = "";
+        let feedPrefix = "smartgarden";
         let alertHistory = [];
-        let currentAlert = null;
-        let pendingConfig = false;
-        let lastStateVersion = -1;
-        let lastStatusAt = 0;
+
+        // Tự động nạp cấu hình từ localStorage khi tải trang
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('aio_username');
+            const savedKey = localStorage.getItem('aio_key');
+            const savedPrefix = localStorage.getItem('aio_prefix');
+
+            if (savedUser) document.getElementById('cfgUsername').value = savedUser;
+            if (savedKey) document.getElementById('cfgKey').value = savedKey;
+            if (savedPrefix) document.getElementById('cfgPrefix').value = savedPrefix;
+
+            if (savedUser && savedKey) {
+                // Đóng modal cấu hình nếu đã có thông tin sẵn
+                closeConfigModal();
+            } else {
+                openConfigModal();
+            }
+        });
+
+        function openConfigModal() {
+            document.getElementById("configModal").classList.remove("hidden");
+        }
+
+        function closeConfigModal() {
+            document.getElementById("configModal").classList.add("hidden");
+        }
+
+        function saveAndConnectConfig() {
+            aioUsername = document.getElementById('cfgUsername').value.trim();
+            aioKey = document.getElementById('cfgKey').value.trim();
+            feedPrefix = document.getElementById('cfgPrefix').value.trim() || "smartgarden";
+
+            if (!aioUsername || !aioKey) {
+                alert("Vui lòng điền đầy đủ Username và AIO Key!");
+                return;
+            }
+
+            // Lưu vào localStorage
+            localStorage.setItem('aio_username', aioUsername);
+            localStorage.setItem('aio_key', aioKey);
+            localStorage.setItem('aio_prefix', feedPrefix);
+
+            closeConfigModal();
+            
+            // Tự động thực hiện kết nối MQTT sau khi lưu
+            if (isConnected) {
+                mqttClient.disconnect();
+            }
+            initMqttConnection();
+        }
 
         // Chart.js Setup
         const ctx = document.getElementById('sensorChart').getContext('2d');
@@ -329,20 +345,41 @@
 
         function toggleMqttConnection() {
             if (isConnected) {
-                mqttClient.disconnect();
+                if (mqttClient) mqttClient.disconnect();
                 updateConnectionUI(false);
                 return;
             }
+            
+            aioUsername = localStorage.getItem('aio_username');
+            aioKey = localStorage.getItem('aio_key');
+            if (!aioUsername || !aioKey) {
+                openConfigModal();
+                return;
+            }
+            initMqttConnection();
+        }
 
-            const host = document.getElementById('mqttHost').value.trim();
-            const port = parseInt(document.getElementById('mqttPort').value.trim());
-            baseTopic = document.getElementById('mqttTopic').value.trim() || "smartgarden";
+        function initMqttConnection() {
+            aioUsername = localStorage.getItem('aio_username');
+            aioKey = localStorage.getItem('aio_key');
+            feedPrefix = localStorage.getItem('aio_prefix') || "smartgarden";
+
+            if (!aioUsername || !aioKey) {
+                openConfigModal();
+                return;
+            }
+
+            const host = "io.adafruit.com";
+            const port = 8883; // Cổng WSS (Secure WebSocket) của Adafruit IO thường dùng port 443 hoặc 8000/8443 tùy cấu hình, dùng 443 an toàn nhất qua HTTPS.
+            // Paho MQTT WebSocket dùng port 443 hoặc 80. Với Aio, dùng port 443 (hoặc 80 với ws).
+            const wsPort = 443; 
             const clientId = "web_client_" + Math.random().toString(16).substring(2, 8);
 
-            mqttClient = new Paho.MQTT.Client(host, port, clientId);
+            mqttClient = new Paho.MQTT.Client(host, wsPort, "/ws", clientId);
 
             mqttClient.onConnectionLost = (responseObject) => {
                 updateConnectionUI(false);
+                showToast("Mất kết nối MQTT với Adafruit IO.", "error");
             };
 
             mqttClient.onMessageArrived = (message) => {
@@ -350,18 +387,20 @@
             };
 
             mqttClient.connect({
+                userName: aioUsername,
+                password: aioKey,
                 onSuccess: () => {
                     updateConnectionUI(true);
-                    mqttClient.subscribe(baseTopic + "/sensor/status", {qos: 1});
-                    mqttClient.subscribe(baseTopic + "/plant/list", {qos: 1});
-                    mqttClient.subscribe(baseTopic + "/config/ack", {qos: 1});
-                    mqttClient.subscribe(baseTopic + "/alert", {qos: 1});
+                    showToast("Đã kết nối thành công tới Adafruit IO!", "success");
+                    
+                    // Subscribe các Feed chuẩn AIO: username/feeds/feed_name
+                    mqttClient.subscribe(`${aioUsername}/feeds/${feedPrefix}-status`, {qos: 1});
                 },
                 onFailure: (err) => {
-                    alert("Kết nối MQTT thất bại: " + err.errorMessage);
+                    alert("Kết nối AIO MQTT thất bại: " + err.errorMessage);
                     updateConnectionUI(false);
                 },
-                useSSL: host !== "localhost" && host !== "127.0.0.1"
+                useSSL: true
             });
         }
 
@@ -372,13 +411,13 @@
             const indicatorMobile = document.getElementById('connStatusMobile');
             
             if (status) {
-                btn.textContent = "Ngắt";
-                btn.className = "bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1 rounded font-medium text-xs transition shadow";
+                btn.textContent = "Ngắt kết nối";
+                btn.className = "bg-rose-600 hover:bg-rose-500 text-white px-3 py-1 rounded font-bold text-xs transition shadow";
                 indicator.className = "hidden md:inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]";
                 indicatorMobile.className = "inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 md:hidden shadow-[0_0_8px_#10b981]";
             } else {
                 btn.textContent = "Kết nối";
-                btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded font-medium text-xs transition shadow";
+                btn.className = "bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded font-bold text-xs transition shadow";
                 indicator.className = "hidden md:inline-block w-2.5 h-2.5 rounded-full bg-rose-500";
                 indicatorMobile.className = "inline-block w-2.5 h-2.5 rounded-full bg-rose-500 md:hidden";
             }
@@ -387,194 +426,15 @@
         function handleIncomingMessage(topic, payload) {
             try {
                 const data = JSON.parse(payload);
-                if (topic.endsWith("/sensor/status")) {
+                if (topic.includes(`${feedPrefix}-status`)) {
                     updateDashboardUI(data);
-                } else if (topic.endsWith("/plant/list")) {
-                    plantProfiles = Array.isArray(data) ? data : [];
-                    renderPlantOptions();
-                } else if (topic.endsWith("/config/ack")) {
-                    pendingConfig = false;
-                    const status = document.getElementById("configSyncStatus");
-                    status.textContent = data.ok ? `Đã lưu trên ESP32 · Phiên bản ${data.config_version}` : "ESP32 từ chối lưu cấu hình.";
-                    status.className = data.ok ? "text-xs text-emerald-400" : "text-xs text-rose-400";
-                    document.getElementById("addPlantBtn").disabled = false;
-                    if (data.ok) {
-                        showToast("Đã đồng bộ hồ sơ cây với ESP32.", "success");
-                        setTimeout(() => closeAddPlantModal(), 1500);
-                    }
-                } else if (topic.endsWith("/alert")) {
-                    handleAlertEvent(data);
                 }
             } catch(e) {
                 console.error("Lỗi parse JSON MQTT:", topic, e);
             }
         }
 
-        function openAddPlantModal() {
-            document.getElementById("addPlantModal").classList.remove("hidden");
-            document.getElementById("configSyncStatus").textContent = "";
-        }
-
-        function closeAddPlantModal() {
-            document.getElementById("addPlantModal").classList.add("hidden");
-        }
-
-        function renderPlantOptions() {
-            const select = document.getElementById("selectPlant");
-            if (!select || !plantProfiles.length) return;
-            const current = select.value;
-            select.innerHTML = "";
-            plantProfiles.forEach(p => {
-                const option = document.createElement("option");
-                option.value = p.name;
-                option.textContent = `${p.name} (${p.start_threshold}% - ${p.stop_threshold}%)`;
-                select.appendChild(option);
-            });
-            const active = window.lastPlantType || current;
-            if ([...select.options].some(o => o.value === active)) select.value = active;
-            changePlantPreviewOnly(select.value);
-        }
-
-        function changePlantPreviewOnly(val) {
-            const p = plantProfiles.find(item => item.name === val);
-            const defaults = {
-                "CUSTOM": [35, 60], "RAU AN LA": [40, 65],
-                "CA CHUA": [35, 60], "DUA LEO": [40, 65],
-                "XUONGRONG": [15, 30]
-            };
-            const start = p ? p.start_threshold : (defaults[val] || [35, 60])[0];
-            const stop = p ? p.stop_threshold : (defaults[val] || [35, 60])[1];
-            document.getElementById("infoStartTh").textContent = start + "%";
-            document.getElementById("infoStopTh").textContent = stop + "%";
-        }
-
-        function addPlantProfile() {
-            if (!isConnected || !mqttClient) {
-                showToast("Chưa kết nối MQTT.", "error");
-                return;
-            }
-            if (pendingConfig) return;
-            const name = document.getElementById("newPlantName").value.trim();
-            const start = Number(document.getElementById("newPlantStart").value);
-            const stop = Number(document.getElementById("newPlantStop").value);
-            if (!name || name.length > 23 || start < 0 || start > 95 || stop > 100 || stop <= start) {
-                showToast("Dữ liệu chưa hợp lệ (0 ≤ bắt đầu < dừng ≤ 100).", "error");
-                return;
-            }
-            const payload = {name, start_threshold: start, stop_threshold: stop};
-            const message = new Paho.MQTT.Message(JSON.stringify(payload));
-            message.destinationName = baseTopic + "/control/plant/add";
-            message.qos = 1;
-            pendingConfig = true;
-            document.getElementById("addPlantBtn").disabled = true;
-            document.getElementById("configSyncStatus").textContent = "Đang gửi cấu hình...";
-            mqttClient.send(message);
-        }
-
-        function getAlertActions(code) {
-            const guides = {
-                EMERGENCY_STOP: ["Kiểm tra khu vực, bơm và dây điện.", "Xác nhận nguyên nhân đã được xử lý."],
-                PUMP1_TIMEOUT: ["Kiểm tra bồn nước và bơm tưới, ống dẫn."],
-                PUMP2_TIMEOUT: ["Kiểm tra nguồn nước cấp và đường ống nạp bồn."],
-                WATER_LEVEL_LOW: ["Bổ sung nước vào bồn chứa."],
-                TANK_SENSOR_FAULT: ["Kiểm tra dây kết nối cảm biến siêu âm."],
-                SOIL_SENSOR_FAULT: ["Kiểm tra cảm biến độ ẩm đất."],
-                RAIN_SENSOR_FAULT: ["Kiểm tra cảm biến mưa."],
-                DHT_SENSOR_FAULT: ["Kiểm tra cảm biến DHT11."],
-                RAIN_DETECTED: ["Đang mưa, hệ thống tạm khóa bơm tưới."],
-                SOIL_TOO_WET: ["Độ ẩm đất cao hơn ngưỡng dừng."]
-            };
-            return guides[code] || ["Kiểm tra phần cứng liên quan."];
-        }
-
-        function handleAlertEvent(event) {
-            if (!event || !event.code || event.code === "NONE" || event.active === false) return;
-            currentAlert = { alert_code: event.code, alert_severity: event.severity || "WARNING", alert_message: event.message, active: true };
-            addAlertHistory(event);
-            showAlertModal(currentAlert);
-        }
-
-        function handleAlertFromStatus(d) {
-            if (!d.alert_active || !d.alert_code || d.alert_code === "NONE") {
-                if (currentAlert && currentAlert.active) {
-                    currentAlert.active = false;
-                    document.getElementById("alertModal").classList.add("hidden");
-                    currentAlert = null;
-                }
-                return;
-            }
-            currentAlert = {...d, active: true};
-            addAlertHistory(d);
-            showAlertModal(d);
-        }
-
-        function showAlertModal(d) {
-            const modal = document.getElementById("alertModal");
-            const severity = (d.alert_severity || "WARNING").toUpperCase();
-            document.getElementById("alertModalTitle").textContent = severity === "EMERGENCY" ? "DỪNG KHẨN CẤP" : "Cảnh báo hệ thống";
-            document.getElementById("alertModalCode").textContent = `${d.alert_code || "ALERT"} · ${severity}`;
-            document.getElementById("alertModalMessage").textContent = d.alert_message || "Phát hiện trạng thái cần kiểm tra.";
-            const list = document.getElementById("alertModalActions");
-            list.replaceChildren();
-            getAlertActions(d.alert_code).forEach(action => {
-                const li = document.createElement("li");
-                li.textContent = action;
-                list.appendChild(li);
-            });
-            modal.classList.remove("hidden");
-        }
-
-        function dismissAlertModal() { document.getElementById("alertModal").classList.add("hidden"); }
-        function acknowledgeAlert() { showToast("Đã xác nhận cảnh báo.", "warning"); dismissAlertModal(); }
-
-        function addAlertHistory(event) {
-            const item = {
-                code: event.code || event.alert_code || "ALERT",
-                severity: event.alert_severity || event.severity || "WARNING",
-                message: event.alert_message || event.message || "Sự kiện mới.",
-                time: new Date().toLocaleTimeString()
-            };
-            alertHistory.unshift(item);
-            alertHistory = alertHistory.slice(0, 6);
-            document.getElementById("alertCount").textContent = `${alertHistory.length} sự kiện`;
-            const host = document.getElementById("alertHistory");
-            host.replaceChildren();
-            alertHistory.forEach(a => {
-                const row = document.createElement("div");
-                row.className = "bg-slate-900 border border-slate-700 rounded p-1.5 space-y-0.5";
-                const topRow = document.createElement("div");
-                topRow.className = "flex justify-between items-center text-[10px]";
-                topRow.innerHTML = `<span class="font-bold text-amber-300">${a.code}</span><span class="text-slate-500">${a.time}</span>`;
-                const msg = document.createElement("div");
-                msg.className = "text-slate-300 text-[10px] truncate";
-                msg.textContent = a.message;
-                row.append(topRow, msg);
-                host.appendChild(row);
-            });
-        }
-
-        function showToast(message, type = "info") {
-            const host = document.getElementById("toastHost");
-            const el = document.createElement("div");
-            const color = type === "error" ? "border-rose-500" : type === "success" ? "border-emerald-500" : "border-amber-500";
-            el.className = `bg-slate-800 border-l-4 ${color} shadow-xl rounded-lg p-2.5 text-xs`;
-            el.textContent = message;
-            host.appendChild(el);
-            window.setTimeout(() => el.remove(), 4000);
-        }
-
         function updateDashboardUI(d) {
-            const incomingVersion = Number(d.state_version ?? 0);
-            if (incomingVersion && incomingVersion < lastStateVersion) return;
-            if (incomingVersion) lastStateVersion = incomingVersion;
-            lastStatusAt = Date.now();
-            handleAlertFromStatus(d);
-            window.lastPlantType = d.plant_type || window.lastPlantType;
-            if (d.plant_type && plantProfiles.length) {
-                const selectPlant = document.getElementById("selectPlant");
-                if ([...selectPlant.options].some(o => o.value === d.plant_type)) selectPlant.value = d.plant_type;
-                changePlantPreviewOnly(d.plant_type);
-            }
             // 1. Soil
             document.getElementById('valSoil').textContent = d.soil_moisture + "%";
             let soilBadge = document.getElementById('badgeSoil');
@@ -653,37 +513,44 @@
         }
 
         function setMode(mode) {
-            if (!isConnected) { alert("Chưa kết nối MQTT!"); return; }
-            let message = new Paho.MQTT.Message(mode);
-            message.destinationName = baseTopic + "/control/mode";
-            mqttClient.send(message);
+            publishAioCommand("mode", mode);
         }
 
         function togglePump(pumpNum) {
-            if (!isConnected) { alert("Chưa kết nối MQTT!"); return; }
             let btn = document.getElementById('btnPump' + pumpNum);
             let val = btn.textContent.includes("BẬT") ? "1" : "0";
-            let message = new Paho.MQTT.Message(val);
-            message.destinationName = baseTopic + "/control/pump" + pumpNum;
-            mqttClient.send(message);
+            publishAioCommand(`pump${pumpNum}`, val);
         }
 
         function sendEmergency() {
-            if (!isConnected) { alert("Chưa kết nối MQTT!"); return; }
             if (confirm("Kích hoạt DỪNG KHẨN CẤP toàn hệ thống?")) {
-                let message = new Paho.MQTT.Message("STOP");
-                message.destinationName = baseTopic + "/control/emergency";
-                mqttClient.send(message);
+                publishAioCommand("emergency", "STOP");
             }
         }
 
-        function changePlantProfile() {
-            const val = document.getElementById("selectPlant").value;
-            changePlantPreviewOnly(val);
-            if (!isConnected || !mqttClient) return;
-            const message = new Paho.MQTT.Message(val);
-            message.destinationName = baseTopic + "/control/plant";
+        function publishAioCommand(feedSuffix, value) {
+            if (!isConnected || !mqttClient) {
+                alert("Chưa kết nối MQTT với Adafruit IO!");
+                return;
+            }
+            aioUsername = localStorage.getItem('aio_username');
+            feedPrefix = localStorage.getItem('aio_prefix') || "smartgarden";
+            
+            const topic = `${aioUsername}/feeds/${feedPrefix}-${feedSuffix}`;
+            let message = new Paho.MQTT.Message(value);
+            message.destinationName = topic;
+            message.qos = 1;
             mqttClient.send(message);
+        }
+
+        function showToast(message, type = "info") {
+            const host = document.getElementById("toastHost");
+            const el = document.createElement("div");
+            const color = type === "error" ? "border-rose-500" : type === "success" ? "border-emerald-500" : "border-amber-500";
+            el.className = `bg-slate-800 border-l-4 ${color} shadow-xl rounded-lg p-2.5 text-xs text-slate-100`;
+            el.textContent = message;
+            host.appendChild(el);
+            window.setTimeout(() => el.remove(), 4000);
         }
     </script>
 </body>
