@@ -13,9 +13,9 @@
 </head>
 <body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
 
-    <!-- Header -->
-    <header class="bg-slate-800 border-b border-slate-700 p-4 shadow-md sticky top-0 z-50">
-        <div class="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+    <!-- Header (Đã tối ưu bung toàn màn hình) -->
+    <header class="bg-slate-800 border-b border-slate-700 px-4 sm:px-6 lg:px-8 py-3.5 shadow-md sticky top-0 z-50 w-full">
+        <div class="w-full flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-start">
                 <div class="flex items-center space-x-3">
                     <div class="bg-emerald-500 text-slate-900 p-2 rounded-lg font-bold text-xl shadow">🌱</div>
@@ -39,18 +39,18 @@
     </header>
 
     <!-- Emergency & Warning Banner -->
-    <div id="emergencyBanner" class="hidden bg-rose-600 text-white text-center py-2 px-4 font-bold text-sm tracking-wider animate-pulse shadow-lg">
+    <div id="emergencyBanner" class="hidden bg-rose-600 text-white text-center py-2 px-4 font-bold text-sm tracking-wider animate-pulse shadow-lg w-full">
         ⚠️ HỆ THỐNG ĐANG Ở TRẠNG THÁI DỪNG KHẨN CẤP (EMERGENCY STOP) HOẶC LỖI TIMEOUT BƠM!
     </div>
 
-    <!-- Main Container -->
-    <main class="container mx-auto p-4 space-y-6">
+    <!-- Main Container (Giãn rộng toàn màn hình linh hoạt) -->
+    <main class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-        <!-- Top Overview Cards (5 thẻ cảm biến linh hoạt) -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+        <!-- Top Overview Cards (5 thẻ cảm biến trải đều) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4 w-full">
             
             <!-- 1. Soil Moisture -->
-            <div class="bg-slate-800 p-3.5 md:p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
                 <div class="text-slate-400 text-[11px] uppercase font-semibold">Độ ẩm đất (Soil)</div>
                 <div class="flex items-baseline justify-between my-2">
                     <span id="valSoil" class="text-2xl md:text-3xl font-extrabold text-emerald-400">--%</span>
@@ -60,7 +60,7 @@
             </div>
 
             <!-- 2. Temperature & Humidity -->
-            <div class="bg-slate-800 p-3.5 md:p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
                 <div class="text-slate-400 text-[11px] uppercase font-semibold">Nhiệt độ / Độ ẩm</div>
                 <div class="flex items-baseline justify-between my-2">
                     <div>
@@ -73,7 +73,7 @@
             </div>
 
             <!-- 3. Light Sensor -->
-            <div class="bg-slate-800 p-3.5 md:p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
                 <div class="text-slate-400 text-[11px] uppercase font-semibold">Cường độ Ánh sáng</div>
                 <div class="flex items-baseline justify-between my-2">
                     <span id="valLight" class="text-2xl md:text-3xl font-extrabold text-yellow-400">--%</span>
@@ -83,7 +83,7 @@
             </div>
 
             <!-- 4. Water Tank Level -->
-            <div class="bg-slate-800 p-3.5 md:p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
                 <div class="text-slate-400 text-[11px] uppercase font-semibold">Mực nước bồn chứa</div>
                 <div class="flex items-baseline justify-between my-2">
                     <span id="valTank" class="text-2xl md:text-3xl font-extrabold text-blue-400">--%</span>
@@ -93,7 +93,7 @@
             </div>
 
             <!-- 5. Rain Sensor -->
-            <div class="bg-slate-800 p-3.5 md:p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition col-span-2 sm:col-span-1">
+            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition col-span-2 sm:col-span-1">
                 <div class="text-slate-400 text-[11px] uppercase font-semibold">Trạng thái Thời tiết</div>
                 <div class="flex items-baseline justify-between my-2">
                     <span id="valRain" class="text-sm md:text-base px-3 py-1 rounded bg-slate-700 font-bold text-slate-300">KHÔ RÁO</span>
@@ -104,11 +104,11 @@
 
         </div>
 
-        <!-- Control & Status Section -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Control & Status Section (Chia bố cục linh hoạt chiếm trọn chiều ngang) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
             
-            <!-- Controls & Integrated Alert Center Panel -->
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 flex flex-col justify-between">
+            <!-- Controls & Integrated Alert Center Panel (4/12 cột trên màn lớn) -->
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 flex flex-col justify-between lg:col-span-4 w-full">
                 <div class="space-y-4">
                     <h2 class="text-lg font-bold border-b border-slate-700 pb-2 flex justify-between items-center">
                         <span>Bảng điều khiển</span>
@@ -168,8 +168,8 @@
                 </div>
             </div>
 
-            <!-- Plant Profiles & Charts Section -->
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 lg:col-span-2 flex flex-col justify-between">
+            <!-- Plant Profiles & Charts Section (8/12 cột còn lại giãn rộng tối đa) -->
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 lg:col-span-8 flex flex-col justify-between w-full">
                 <div>
                     <div class="flex items-center justify-between border-b border-slate-700 pb-2 mb-4">
                         <h2 class="text-lg font-bold">Cấu hình Cây trồng & Ngưỡng tưới (Plant Profiles)</h2>
@@ -198,7 +198,7 @@
                                 <div class="text-xs text-slate-400">Ngưỡng Bắt đầu (Start)</div>
                                 <div id="infoStartTh" class="text-xl font-extrabold text-amber-400 mt-0.5">35%</div>
                             </div>
-                            <span class="text-xs text-slate-500">Tưới khi $\le$ %</span>
+                            <span class="text-xs text-slate-500">Tưới khi ≤ %</span>
                         </div>
 
                         <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
@@ -206,7 +206,7 @@
                                 <div class="text-xs text-slate-400">Ngưỡng Dừng (Stop)</div>
                                 <div id="infoStopTh" class="text-xl font-extrabold text-cyan-400 mt-0.5">60%</div>
                             </div>
-                            <span class="text-xs text-slate-500">Ngắt khi $\ge$ %</span>
+                            <span class="text-xs text-slate-500">Ngắt khi ≥ %</span>
                         </div>
 
                     </div>
@@ -222,9 +222,9 @@
                     </div>
                 </div>
 
-                <!-- Real-time Chart Container (Có đường Ánh sáng) -->
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 h-64 md:h-72 mt-4 relative">
-                    <canvas id="sensorChart"></canvas>
+                <!-- Real-time Chart Container (Tự động kéo giãn bề ngang biểu đồ theo màn hình) -->
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 h-72 md:h-80 mt-4 relative w-full">
+                    <canvas id="sensorChart" class="w-full h-full"></canvas>
                 </div>
             </div>
 
@@ -256,7 +256,7 @@
                     <input id="newPlantStop" type="number" min="5" max="100" value="60"
                       class="w-full bg-slate-900 px-3 py-2 rounded border border-slate-700 text-sm focus:outline-none focus:border-emerald-500">
                 </div>
-                <p class="text-[11px] text-slate-400">Ngưỡng hợp lệ: 0 ≤ bắt đầu < dừng ≤ 100. Hồ sơ sẽ được lưu trực tiếp vào ESP32 qua MQTT.</p>
+                <p class="text-[11px] text-slate-400">Ngưỡng hợp lệ: 0 ≤ bắt đầu &lt; dừng ≤ 100. Hồ sơ sẽ được lưu trực tiếp vào ESP32 qua MQTT.</p>
                 <div id="configSyncStatus" class="text-xs text-slate-400 min-h-[1rem]" role="status" aria-live="polite"></div>
             </div>
 
@@ -329,7 +329,7 @@
                 maintainAspectRatio: false,
                 scales: {
                     y: { beginAtZero: true, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
-                    x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 }, maxTicksLimit: 8 } }
+                    x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 10 }, maxTicksLimit: 12 } }
                 },
                 plugins: { 
                     legend: { labels: { color: '#f8fafc', font: { size: 11 }, boxWidth: 12 } } 
@@ -588,7 +588,7 @@
                 active: event.active !== false
             };
             alertHistory.unshift(item);
-            alertHistory = alertHistory.slice(0, 8); // Giữ tối đa 8 sự kiện gần nhất cho gọn panel
+            alertHistory = alertHistory.slice(0, 8);
             document.getElementById("alertCount").textContent = `${alertHistory.length} sự kiện`;
             const host = document.getElementById("alertHistory");
             host.replaceChildren();
@@ -725,7 +725,7 @@
 
             // Update Chart
             const timeNow = new Date().toLocaleTimeString();
-            if (sensorChart.data.labels.length > 20) {
+            if (sensorChart.data.labels.length > 25) {
                 sensorChart.data.labels.shift();
                 sensorChart.data.datasets[0].data.shift();
                 sensorChart.data.datasets[1].data.shift();
