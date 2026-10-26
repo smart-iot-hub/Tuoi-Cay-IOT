@@ -11,226 +11,231 @@
     <!-- Paho MQTT WebSocket CDN -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans min-h-screen">
+<body class="bg-slate-900 text-slate-100 font-sans min-h-screen flex flex-col justify-between">
 
-    <!-- Header (Đã tối ưu bung toàn màn hình) -->
-    <header class="bg-slate-800 border-b border-slate-700 px-4 sm:px-6 lg:px-8 py-3.5 shadow-md sticky top-0 z-50 w-full">
-        <div class="w-full flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-start">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-emerald-500 text-slate-900 p-2 rounded-lg font-bold text-xl shadow">🌱</div>
-                    <div>
-                        <h1 class="text-lg md:text-xl font-bold tracking-wide">Smart Garden Controller</h1>
-                        <p class="text-xs text-slate-400">ESP32 Edge Computing & MQTT Console</p>
+    <div>
+        <!-- Header -->
+        <header class="bg-slate-800 border-b border-slate-700 px-4 sm:px-6 lg:px-8 py-3.5 shadow-md sticky top-0 z-50 w-full">
+            <div class="w-full flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-start">
+                    <div class="flex items-center space-x-3">
+                        <div class="bg-emerald-500 text-slate-900 p-2 rounded-lg font-bold text-xl shadow">🌱</div>
+                        <div>
+                            <h1 class="text-lg md:text-xl font-bold tracking-wide">Smart Garden Controller</h1>
+                            <p class="text-xs text-slate-400">ESP32 Edge Computing & MQTT Console</p>
+                        </div>
+                    </div>
+                    <!-- Status Dot Mobile -->
+                    <span id="connStatusMobile" class="inline-block w-3 h-3 rounded-full bg-rose-500 md:hidden"></span>
+                </div>
+                <!-- MQTT Connection Form -->
+                <div class="flex flex-wrap items-center justify-end gap-2 bg-slate-900 p-2 rounded-lg border border-slate-700 text-sm w-full md:w-auto">
+                    <input id="mqttHost" type="text" value="broker.hivemq.com" placeholder="Broker Host" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-28 sm:w-36 focus:outline-none focus:border-emerald-500">
+                    <input id="mqttPort" type="number" value="8000" placeholder="WS Port" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-16 focus:outline-none focus:border-emerald-500">
+                    <input id="mqttTopic" type="text" value="smartgarden" placeholder="Base Topic" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-24 focus:outline-none focus:border-emerald-500">
+                    <button id="connectBtn" onclick="toggleMqttConnection()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded font-medium text-xs transition shadow">Kết nối</button>
+                    <span id="connStatus" class="hidden md:inline-block w-3 h-3 rounded-full bg-rose-500" title="Mất kết nối"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Emergency & Warning Banner -->
+        <div id="emergencyBanner" class="hidden bg-rose-600 text-white text-center py-2 px-4 font-bold text-sm tracking-wider animate-pulse shadow-lg w-full">
+            ⚠️ HỆ THỐNG ĐANG Ở TRẠNG THÁI DỪNG KHẨN CẤP (EMERGENCY STOP) HOẶC LỖI TIMEOUT BƠM!
+        </div>
+
+        <!-- Main Container -->
+        <main class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+            <!-- Top Overview Cards (5 thẻ cảm biến trải đều) -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4 w-full">
+                
+                <!-- 1. Soil Moisture -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+                    <div class="text-slate-400 text-[11px] uppercase font-semibold">Độ ẩm đất (Soil)</div>
+                    <div class="flex items-baseline justify-between my-2">
+                        <span id="valSoil" class="text-2xl md:text-3xl font-extrabold text-emerald-400">--%</span>
+                        <span id="badgeSoil" class="text-[10px] md:text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">--</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500">ADC6 (GPIO34)</div>
+                </div>
+
+                <!-- 2. Temperature & Humidity -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+                    <div class="text-slate-400 text-[11px] uppercase font-semibold">Nhiệt độ / Độ ẩm</div>
+                    <div class="flex items-baseline justify-between my-2">
+                        <div>
+                            <span id="valTemp" class="text-xl md:text-2xl font-extrabold text-amber-400">--°C</span>
+                            <span id="valHum" class="text-sm md:text-lg font-bold text-cyan-400 ml-1">--%</span>
+                        </div>
+                        <span id="badgeDht" class="text-[10px] md:text-xs px-1.5 py-0.5 rounded bg-rose-900 text-rose-200">ERR</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500">Cảm biến DHT11</div>
+                </div>
+
+                <!-- 3. Light Sensor -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+                    <div class="text-slate-400 text-[11px] uppercase font-semibold">Cường độ Ánh sáng</div>
+                    <div class="flex items-baseline justify-between my-2">
+                        <span id="valLight" class="text-2xl md:text-3xl font-extrabold text-yellow-400">--%</span>
+                        <span id="badgeLight" class="text-[10px] md:text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">--</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500">ADC0 (GPIO36)</div>
+                </div>
+
+                <!-- 4. Water Tank Level -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
+                    <div class="text-slate-400 text-[11px] uppercase font-semibold">Mực nước bồn chứa</div>
+                    <div class="flex items-baseline justify-between my-2">
+                        <span id="valTank" class="text-2xl md:text-3xl font-extrabold text-blue-400">--%</span>
+                        <span id="valTankDist" class="text-[10px] md:text-xs text-slate-400">-- cm</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500">HC-SR04 (GPIO4/16)</div>
+                </div>
+
+                <!-- 5. Rain Sensor -->
+                <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition col-span-2 sm:col-span-1">
+                    <div class="text-slate-400 text-[11px] uppercase font-semibold">Trạng thái Thời tiết</div>
+                    <div class="flex items-baseline justify-between my-2">
+                        <span id="valRain" class="text-sm md:text-base px-3 py-1 rounded bg-slate-700 font-bold text-slate-300">KHÔ RÁO</span>
+                        <span id="badgeRain" class="text-[10px] md:text-xs text-slate-400">ADC7</span>
+                    </div>
+                    <div class="text-[10px] text-slate-500">Cảm biến mưa Analog</div>
+                </div>
+
+            </div>
+
+            <!-- Control & Status Section (Sử dụng items-stretch để ép 2 cột cao bằng nhau tuyệt đối) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full items-stretch">
+                
+                <!-- Controls & Integrated Alert Center Panel (4/12 cột) -->
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow flex flex-col justify-between lg:col-span-4 w-full h-full space-y-4">
+                    <div class="space-y-4">
+                        <h2 class="text-lg font-bold border-b border-slate-700 pb-2 flex justify-between items-center">
+                            <span>Bảng điều khiển</span>
+                            <span id="lblMode" class="text-xs px-2.5 py-1 rounded-full bg-blue-900 text-blue-200 uppercase font-bold tracking-wider">AUTO</span>
+                        </h2>
+
+                        <!-- Mode Selector -->
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-2">Chế độ vận hành hệ thống</label>
+                            <div class="grid grid-cols-2 gap-2 p-1 bg-slate-900 rounded-lg border border-slate-700">
+                                <button onclick="setMode('auto')" id="btnAuto" class="bg-blue-600 text-white py-2 rounded-md font-bold text-sm transition shadow">AUTO</button>
+                                <button onclick="setMode('manual')" id="btnManual" class="text-slate-400 hover:text-slate-200 py-2 rounded-md font-bold text-sm transition">MANUAL</button>
+                            </div>
+                        </div>
+
+                        <!-- Manual Pumps Control -->
+                        <div class="space-y-3 pt-2 border-t border-slate-700">
+                            <label class="block text-xs text-slate-400">Điều khiển máy bơm thủ công (Chế độ MANUAL)</label>
+                            
+                            <!-- Pump 1 -->
+                            <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700">
+                                <div>
+                                    <div class="font-semibold text-sm">Bơm 1 (Tưới cây)</div>
+                                    <div id="statusPump1" class="text-xs text-slate-400 mt-0.5">Trạng thái: TẮT</div>
+                                </div>
+                                <button onclick="togglePump(1)" id="btnPump1" disabled class="bg-slate-700 text-slate-500 px-4 py-2 rounded-lg font-bold text-xs transition">BẬT P1</button>
+                            </div>
+
+                            <!-- Pump 2 -->
+                            <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700">
+                                <div>
+                                    <div class="font-semibold text-sm">Bơm 2 (Nạp bồn)</div>
+                                    <div id="statusPump2" class="text-xs text-slate-400 mt-0.5">Trạng thái: TẮT</div>
+                                </div>
+                                <button onclick="togglePump(2)" id="btnPump2" disabled class="bg-slate-700 text-slate-500 px-4 py-2 rounded-lg font-bold text-xs transition">BẬT P2</button>
+                            </div>
+                        </div>
+
+                        <!-- Integrated Alert Center inside Control Panel (Giãn nở tự động lấp đầy phần trống) -->
+                        <div class="pt-2 border-t border-slate-700 flex flex-col flex-1">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xs uppercase text-slate-400 font-semibold">Trung tâm cảnh báo</h3>
+                                <span id="alertCount" class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-300">0 sự kiện</span>
+                            </div>
+                            <div id="alertHistory" class="space-y-1.5 flex-1 min-h-[160px] max-h-72 overflow-y-auto text-xs pr-1 bg-slate-900/50 p-2 rounded-lg border border-slate-700/50">
+                                <p class="text-slate-500 text-[11px] italic">Chưa có cảnh báo nào ghi nhận.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Stop Button -->
+                    <div class="pt-4 border-t border-slate-700">
+                        <button onclick="sendEmergency()" class="w-full bg-rose-700 hover:bg-rose-600 text-white font-extrabold py-3.5 rounded-lg shadow-lg tracking-wider transition flex items-center justify-center space-x-2 active:scale-95">
+                            <span class="text-base">🛑 DỪNG KHẨN CẤP (EMERGENCY)</span>
+                        </button>
+                        <p class="text-[10px] text-slate-400 text-center mt-1.5">Ngắt ngay lập tức toàn bộ rơ-le bơm để bảo vệ nông trại.</p>
                     </div>
                 </div>
-                <!-- Status Dot Mobile -->
-                <span id="connStatusMobile" class="inline-block w-3 h-3 rounded-full bg-rose-500 md:hidden"></span>
-            </div>
-            <!-- MQTT Connection Form -->
-            <div class="flex flex-wrap items-center justify-end gap-2 bg-slate-900 p-2 rounded-lg border border-slate-700 text-sm w-full md:w-auto">
-                <input id="mqttHost" type="text" value="broker.hivemq.com" placeholder="Broker Host" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-28 sm:w-36 focus:outline-none focus:border-emerald-500">
-                <input id="mqttPort" type="number" value="8000" placeholder="WS Port" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-16 focus:outline-none focus:border-emerald-500">
-                <input id="mqttTopic" type="text" value="smartgarden" placeholder="Base Topic" class="bg-slate-800 px-2 py-1 rounded border border-slate-600 text-xs w-24 focus:outline-none focus:border-emerald-500">
-                <button id="connectBtn" onclick="toggleMqttConnection()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 rounded font-medium text-xs transition shadow">Kết nối</button>
-                <span id="connStatus" class="hidden md:inline-block w-3 h-3 rounded-full bg-rose-500" title="Mất kết nối"></span>
-            </div>
-        </div>
-    </header>
 
-    <!-- Emergency & Warning Banner -->
-    <div id="emergencyBanner" class="hidden bg-rose-600 text-white text-center py-2 px-4 font-bold text-sm tracking-wider animate-pulse shadow-lg w-full">
-        ⚠️ HỆ THỐNG ĐANG Ở TRẠNG THÁI DỪNG KHẨN CẤP (EMERGENCY STOP) HOẶC LỖI TIMEOUT BƠM!
+                <!-- Plant Profiles & Charts Section (8/12 cột, biểu đồ tự bung hết cỡ chiều cao) -->
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 lg:col-span-8 flex flex-col justify-between w-full h-full">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                            <h2 class="text-lg font-bold">Cấu hình Cây trồng & Ngưỡng tưới (Plant Profiles)</h2>
+                            <!-- Nút mở Modal Thêm Cây Mới -->
+                            <button onclick="openAddPlantModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow transition flex items-center gap-1">
+                                <span>+ Thêm loại cây mới</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Interactive Plant Select -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 sm:col-span-1">
+                                <label class="block text-xs text-slate-400 mb-1">Lựa chọn loại cây</label>
+                                <select id="selectPlant" onchange="changePlantProfile()" class="w-full bg-slate-800 text-emerald-400 font-bold text-sm p-2 rounded border border-slate-600 focus:outline-none focus:border-emerald-500">
+                                    <option value="CUSTOM">CUSTOM (Tùy chỉnh)</option>
+                                    <option value="RAU AN LA">RAU ĂN LÁ (40% - 65%)</option>
+                                    <option value="CA CHUA">CÀ CHUA (35% - 60%)</option>
+                                    <option value="DUA LEO">DƯA LEO (40% - 65%)</option>
+                                    <option value="XUONG RONG">XƯƠNG RỒNG (15% - 30%)</option>
+                                </select>
+                            </div>
+
+                            <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
+                                <div>
+                                    <div class="text-xs text-slate-400">Ngưỡng Bắt đầu (Start)</div>
+                                    <div id="infoStartTh" class="text-xl font-extrabold text-amber-400 mt-0.5">35%</div>
+                                </div>
+                                <span class="text-xs text-slate-500">Tưới khi ≤ %</span>
+                            </div>
+
+                            <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
+                                <div>
+                                    <div class="text-xs text-slate-400">Ngưỡng Dừng (Stop)</div>
+                                    <div id="infoStopTh" class="text-xl font-extrabold text-cyan-400 mt-0.5">60%</div>
+                                </div>
+                                <span class="text-xs text-slate-500">Ngắt khi ≥ %</span>
+                            </div>
+                        </div>
+
+                        <!-- System Diagnostics -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
+                            <div id="diagTimeout1" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">P1 Timeout: <span class="font-bold text-emerald-400">OK</span></div>
+                            <div id="diagTimeout2" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">P2 Timeout: <span class="font-bold text-emerald-400">OK</span></div>
+                            <div id="diagTank" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến bồn: <span class="font-bold text-emerald-400">OK</span></div>
+                            <div id="diagDht" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến DHT: <span class="font-bold text-emerald-400">OK</span></div>
+                            <div id="diagSoil" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến đất: <span class="font-bold text-emerald-400">OK</span></div>
+                            <div id="diagRain" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến mưa: <span class="font-bold text-emerald-400">OK</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Real-time Chart Container (Dùng flex-1 để biểu đồ tự động co giãn tối đa phần trống màn hình 16:9) -->
+                    <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 flex-1 min-h-[320px] relative w-full mt-4">
+                        <canvas id="sensorChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
     </div>
 
-    <!-- Main Container (Giãn rộng toàn màn hình linh hoạt) -->
-    <main class="w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-
-        <!-- Top Overview Cards (5 thẻ cảm biến trải đều) -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4 w-full">
-            
-            <!-- 1. Soil Moisture -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
-                <div class="text-slate-400 text-[11px] uppercase font-semibold">Độ ẩm đất (Soil)</div>
-                <div class="flex items-baseline justify-between my-2">
-                    <span id="valSoil" class="text-2xl md:text-3xl font-extrabold text-emerald-400">--%</span>
-                    <span id="badgeSoil" class="text-[10px] md:text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">--</span>
-                </div>
-                <div class="text-[10px] text-slate-500">ADC6 (GPIO34)</div>
-            </div>
-
-            <!-- 2. Temperature & Humidity -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
-                <div class="text-slate-400 text-[11px] uppercase font-semibold">Nhiệt độ / Độ ẩm</div>
-                <div class="flex items-baseline justify-between my-2">
-                    <div>
-                        <span id="valTemp" class="text-xl md:text-2xl font-extrabold text-amber-400">--°C</span>
-                        <span id="valHum" class="text-sm md:text-lg font-bold text-cyan-400 ml-1">--%</span>
-                    </div>
-                    <span id="badgeDht" class="text-[10px] md:text-xs px-1.5 py-0.5 rounded bg-rose-900 text-rose-200">ERR</span>
-                </div>
-                <div class="text-[10px] text-slate-500">Cảm biến DHT11</div>
-            </div>
-
-            <!-- 3. Light Sensor -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
-                <div class="text-slate-400 text-[11px] uppercase font-semibold">Cường độ Ánh sáng</div>
-                <div class="flex items-baseline justify-between my-2">
-                    <span id="valLight" class="text-2xl md:text-3xl font-extrabold text-yellow-400">--%</span>
-                    <span id="badgeLight" class="text-[10px] md:text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">--</span>
-                </div>
-                <div class="text-[10px] text-slate-500">ADC0 (GPIO36)</div>
-            </div>
-
-            <!-- 4. Water Tank Level -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition">
-                <div class="text-slate-400 text-[11px] uppercase font-semibold">Mực nước bồn chứa</div>
-                <div class="flex items-baseline justify-between my-2">
-                    <span id="valTank" class="text-2xl md:text-3xl font-extrabold text-blue-400">--%</span>
-                    <span id="valTankDist" class="text-[10px] md:text-xs text-slate-400">-- cm</span>
-                </div>
-                <div class="text-[10px] text-slate-500">HC-SR04 (GPIO4/16)</div>
-            </div>
-
-            <!-- 5. Rain Sensor -->
-            <div class="bg-slate-800 p-4 rounded-xl border border-slate-700 shadow flex flex-col justify-between hover:border-slate-600 transition col-span-2 sm:col-span-1">
-                <div class="text-slate-400 text-[11px] uppercase font-semibold">Trạng thái Thời tiết</div>
-                <div class="flex items-baseline justify-between my-2">
-                    <span id="valRain" class="text-sm md:text-base px-3 py-1 rounded bg-slate-700 font-bold text-slate-300">KHÔ RÁO</span>
-                    <span id="badgeRain" class="text-[10px] md:text-xs text-slate-400">ADC7</span>
-                </div>
-                <div class="text-[10px] text-slate-500">Cảm biến mưa Analog</div>
-            </div>
-
-        </div>
-
-        <!-- Control & Status Section (Chia bố cục linh hoạt chiếm trọn chiều ngang) -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full">
-            
-            <!-- Controls & Integrated Alert Center Panel (4/12 cột trên màn lớn) -->
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 flex flex-col justify-between lg:col-span-4 w-full">
-                <div class="space-y-4">
-                    <h2 class="text-lg font-bold border-b border-slate-700 pb-2 flex justify-between items-center">
-                        <span>Bảng điều khiển</span>
-                        <span id="lblMode" class="text-xs px-2.5 py-1 rounded-full bg-blue-900 text-blue-200 uppercase font-bold tracking-wider">AUTO</span>
-                    </h2>
-
-                    <!-- Mode Selector -->
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-2">Chế độ vận hành hệ thống</label>
-                        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-900 rounded-lg border border-slate-700">
-                            <button onclick="setMode('auto')" id="btnAuto" class="bg-blue-600 text-white py-2 rounded-md font-bold text-sm transition shadow">AUTO</button>
-                            <button onclick="setMode('manual')" id="btnManual" class="text-slate-400 hover:text-slate-200 py-2 rounded-md font-bold text-sm transition">MANUAL</button>
-                        </div>
-                    </div>
-
-                    <!-- Manual Pumps Control -->
-                    <div class="space-y-3 pt-2 border-t border-slate-700">
-                        <label class="block text-xs text-slate-400">Điều khiển máy bơm thủ công (Chế độ MANUAL)</label>
-                        
-                        <!-- Pump 1 -->
-                        <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700">
-                            <div>
-                                <div class="font-semibold text-sm">Bơm 1 (Tưới cây)</div>
-                                <div id="statusPump1" class="text-xs text-slate-400 mt-0.5">Trạng thái: TẮT</div>
-                            </div>
-                            <button onclick="togglePump(1)" id="btnPump1" disabled class="bg-slate-700 text-slate-500 px-4 py-2 rounded-lg font-bold text-xs transition">BẬT P1</button>
-                        </div>
-
-                        <!-- Pump 2 -->
-                        <div class="flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-700">
-                            <div>
-                                <div class="font-semibold text-sm">Bơm 2 (Nạp bồn)</div>
-                                <div id="statusPump2" class="text-xs text-slate-400 mt-0.5">Trạng thái: TẮT</div>
-                            </div>
-                            <button onclick="togglePump(2)" id="btnPump2" disabled class="bg-slate-700 text-slate-500 px-4 py-2 rounded-lg font-bold text-xs transition">BẬT P2</button>
-                        </div>
-                    </div>
-
-                    <!-- Integrated Alert Center inside Control Panel -->
-                    <div class="pt-2 border-t border-slate-700 space-y-2">
-                        <div class="flex items-center justify-between">
-                            <h3 class="text-xs uppercase text-slate-400 font-semibold">Trung tâm cảnh báo</h3>
-                            <span id="alertCount" class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-300">0 sự kiện</span>
-                        </div>
-                        <div id="alertHistory" class="space-y-1.5 max-h-36 overflow-y-auto text-xs pr-1">
-                            <p class="text-slate-500 text-[11px] italic">Chưa có cảnh báo nào ghi nhận.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Emergency Stop Button -->
-                <div class="pt-4 border-t border-slate-700">
-                    <button onclick="sendEmergency()" class="w-full bg-rose-700 hover:bg-rose-600 text-white font-extrabold py-3.5 rounded-lg shadow-lg tracking-wider transition flex items-center justify-center space-x-2 active:scale-95">
-                        <span class="text-base">🛑 DỪNG KHẨN CẤP (EMERGENCY)</span>
-                    </button>
-                    <p class="text-[10px] text-slate-400 text-center mt-1.5">Ngắt ngay lập tức toàn bộ rơ-le bơm để bảo vệ nông trại.</p>
-                </div>
-            </div>
-
-            <!-- Plant Profiles & Charts Section (8/12 cột còn lại giãn rộng tối đa) -->
-            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 lg:col-span-8 flex flex-col justify-between w-full">
-                <div>
-                    <div class="flex items-center justify-between border-b border-slate-700 pb-2 mb-4">
-                        <h2 class="text-lg font-bold">Cấu hình Cây trồng & Ngưỡng tưới (Plant Profiles)</h2>
-                        <!-- Nút mở Modal Thêm Cây Mới -->
-                        <button onclick="openAddPlantModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow transition flex items-center gap-1">
-                            <span>+ Thêm loại cây mới</span>
-                        </button>
-                    </div>
-                    
-                    <!-- Interactive Plant Select -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                        
-                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 sm:col-span-1">
-                            <label class="block text-xs text-slate-400 mb-1">Lựa chọn loại cây</label>
-                            <select id="selectPlant" onchange="changePlantProfile()" class="w-full bg-slate-800 text-emerald-400 font-bold text-sm p-2 rounded border border-slate-600 focus:outline-none focus:border-emerald-500">
-                                <option value="CUSTOM">CUSTOM (Tùy chỉnh)</option>
-                                <option value="RAU AN LA">RAU ĂN LÁ (40% - 65%)</option>
-                                <option value="CA CHUA">CÀ CHUA (35% - 60%)</option>
-                                <option value="DUA LEO">DƯA LEO (40% - 65%)</option>
-                                <option value="XUONG RONG">XƯƠNG RỒNG (15% - 30%)</option>
-                            </select>
-                        </div>
-
-                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
-                            <div>
-                                <div class="text-xs text-slate-400">Ngưỡng Bắt đầu (Start)</div>
-                                <div id="infoStartTh" class="text-xl font-extrabold text-amber-400 mt-0.5">35%</div>
-                            </div>
-                            <span class="text-xs text-slate-500">Tưới khi ≤ %</span>
-                        </div>
-
-                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 flex justify-between items-center">
-                            <div>
-                                <div class="text-xs text-slate-400">Ngưỡng Dừng (Stop)</div>
-                                <div id="infoStopTh" class="text-xl font-extrabold text-cyan-400 mt-0.5">60%</div>
-                            </div>
-                            <span class="text-xs text-slate-500">Ngắt khi ≥ %</span>
-                        </div>
-
-                    </div>
-
-                    <!-- System Diagnostics -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 text-xs">
-                        <div id="diagTimeout1" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">P1 Timeout: <span class="font-bold text-emerald-400">OK</span></div>
-                        <div id="diagTimeout2" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">P2 Timeout: <span class="font-bold text-emerald-400">OK</span></div>
-                        <div id="diagTank" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến bồn: <span class="font-bold text-emerald-400">OK</span></div>
-                        <div id="diagDht" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến DHT: <span class="font-bold text-emerald-400">OK</span></div>
-                        <div id="diagSoil" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến đất: <span class="font-bold text-emerald-400">OK</span></div>
-                        <div id="diagRain" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến mưa: <span class="font-bold text-emerald-400">OK</span></div>
-                    </div>
-                </div>
-
-                <!-- Real-time Chart Container (Tự động kéo giãn bề ngang biểu đồ theo màn hình) -->
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 h-72 md:h-80 mt-4 relative w-full">
-                    <canvas id="sensorChart" class="w-full h-full"></canvas>
-                </div>
-            </div>
-
-        </div>
-
-    </main>
+    <!-- Footer hoặc khoảng cách đáy nhỏ -->
+    <footer class="py-4 text-center text-xs text-slate-500">
+        Smart Garden IoT Dashboard &copy; 2026 - ESP32 MQTT Web Console
+    </footer>
 
     <!-- Modal Thêm Loại Cây Mới -->
     <div id="addPlantModal" class="hidden fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true">
@@ -311,7 +316,7 @@
         let lastStateVersion = -1;
         let lastStatusAt = 0;
 
-        // Chart.js Setup (Thêm đường Ánh sáng màu vàng)
+        // Chart.js Setup
         const ctx = document.getElementById('sensorChart').getContext('2d');
         const sensorChart = new Chart(ctx, {
             type: 'line',
@@ -588,7 +593,7 @@
                 active: event.active !== false
             };
             alertHistory.unshift(item);
-            alertHistory = alertHistory.slice(0, 8);
+            alertHistory = alertHistory.slice(0, 10);
             document.getElementById("alertCount").textContent = `${alertHistory.length} sự kiện`;
             const host = document.getElementById("alertHistory");
             host.replaceChildren();
@@ -725,7 +730,7 @@
 
             // Update Chart
             const timeNow = new Date().toLocaleTimeString();
-            if (sensorChart.data.labels.length > 25) {
+            if (sensorChart.data.labels.length > 30) {
                 sensorChart.data.labels.shift();
                 sensorChart.data.datasets[0].data.shift();
                 sensorChart.data.datasets[1].data.shift();
