@@ -168,17 +168,23 @@
                         <h2 class="text-sm font-bold">Cấu hình Cây trồng & Ngưỡng tưới (Plant Profiles)</h2>
                     </div>
                     
-                    <!-- Interactive Plant Select & Thresholds -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 shrink-0">
-                        <div class="bg-slate-900 p-2 rounded-md border border-slate-700 sm:col-span-1">
-                            <label class="block text-[10px] text-slate-400 mb-0.5">Lựa chọn loại cây</label>
-                            <select id="selectPlant" onchange="changePlantProfile()" class="w-full bg-slate-800 text-emerald-400 font-bold text-xs p-1.5 rounded border border-slate-600 focus:outline-none focus:border-emerald-500">
+                    <!-- Chọn loại cây bên trái, nút thêm loại cây bên phải -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 shrink-0">
+                        <div class="bg-slate-900 p-2 rounded-md border border-slate-700 min-w-0">
+                            <label class="block text-[10px] text-slate-400 mb-1">Lựa chọn loại cây</label>
+                            <select id="selectPlant" onchange="changePlantProfile()" class="w-full bg-slate-800 text-emerald-400 font-bold text-xs p-2 rounded border border-slate-600 focus:outline-none focus:border-emerald-500">
                                 <option value="CUSTOM">CUSTOM (Tùy chỉnh)</option>
                                 <option value="RAU AN LA">RAU ĂN LÁ (40% - 65%)</option>
                                 <option value="CA CHUA">CÀ CHUA (35% - 60%)</option>
                                 <option value="DUA LEO">DƯA LEO (40% - 65%)</option>
                                 <option value="XUONGRONG">XƯƠNG RỒNG (15% - 30%)</option>
                             </select>
+                        </div>
+                        <div class="bg-slate-900 p-2 rounded-md border border-slate-700 flex items-center">
+                            <button type="button" onclick="openAddPlantModal()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs p-2 rounded-md transition shadow flex items-center justify-center gap-2">
+                                <span class="text-base leading-none">＋</span>
+                                <span>Thêm loại cây mới</span>
+                            </button>
                         </div>
 
                         <div class="bg-slate-900 p-2 rounded-md border border-slate-700 flex justify-between items-center">
@@ -255,6 +261,38 @@
         </div>
     </div>
 
+    <!-- Modal thêm hồ sơ cây trồng -->
+    <div id="addPlantModal" class="hidden fixed inset-0 z-[140] bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="addPlantTitle">
+        <div class="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                <h3 id="addPlantTitle" class="font-bold text-sm text-emerald-400">Thêm loại cây mới</h3>
+                <button type="button" onclick="closeAddPlantModal()" class="text-slate-400 hover:text-white text-xl font-bold" aria-label="Đóng">×</button>
+            </div>
+            <div>
+                <label for="newPlantName" class="block text-xs text-slate-300 mb-1">Tên loại cây</label>
+                <input id="newPlantName" type="text" maxlength="32" placeholder="Ví dụ: Hoa hồng"
+                    class="w-full bg-slate-900 px-3 py-2 rounded border border-slate-700 text-sm focus:outline-none focus:border-emerald-500">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label for="newPlantStart" class="block text-xs text-slate-300 mb-1">Ngưỡng bật bơm (%)</label>
+                    <input id="newPlantStart" type="number" min="0" max="99" value="30"
+                        class="w-full bg-slate-900 px-3 py-2 rounded border border-slate-700 text-sm">
+                </div>
+                <div>
+                    <label for="newPlantStop" class="block text-xs text-slate-300 mb-1">Ngưỡng tắt bơm (%)</label>
+                    <input id="newPlantStop" type="number" min="1" max="100" value="45"
+                        class="w-full bg-slate-900 px-3 py-2 rounded border border-slate-700 text-sm">
+                </div>
+            </div>
+            <p class="text-[10px] text-slate-400 leading-relaxed">Ngưỡng tắt phải lớn hơn ngưỡng bật. Hồ sơ mới được lưu trên trình duyệt này.</p>
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-700">
+                <button type="button" onclick="closeAddPlantModal()" class="bg-slate-700 hover:bg-slate-600 px-3 py-2 rounded text-xs font-semibold">Hủy</button>
+                <button type="button" onclick="addPlantProfile()" class="bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded text-xs font-bold">Lưu loại cây</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Host -->
     <div id="toastHost" class="fixed right-4 top-16 z-[110] space-y-2 w-[min(22rem,calc(100vw-2rem))]" aria-live="polite"></div>
 
@@ -267,8 +305,130 @@
         let feedPrefix = "smartgarden";
         let alertHistory = [];
 
+        // Hồ sơ cây có sẵn trên dashboard; hồ sơ do người dùng thêm được lưu riêng trên trình duyệt.
+        const BUILTIN_PLANTS = [
+            { value: "CUSTOM", label: "CUSTOM (Tùy chỉnh)", start: 35, stop: 60 },
+            { value: "RAU AN LA", label: "RAU ĂN LÁ (40% - 65%)", start: 40, stop: 65 },
+            { value: "CA CHUA", label: "CÀ CHUA (35% - 60%)", start: 35, stop: 60 },
+            { value: "DUA LEO", label: "DƯA LEO (40% - 65%)", start: 40, stop: 65 },
+            { value: "XUONGRONG", label: "XƯƠNG RỒNG (15% - 30%)", start: 15, stop: 30 }
+        ];
+        let customPlantProfiles = [];
+
+        function loadCustomPlantProfiles() {
+            try {
+                const saved = JSON.parse(localStorage.getItem("smartgarden_custom_plants") || "[]");
+                customPlantProfiles = Array.isArray(saved) ? saved.filter(p =>
+                    p && typeof p.name === "string" &&
+                    Number.isFinite(Number(p.start)) && Number.isFinite(Number(p.stop)) &&
+                    Number(p.start) >= 0 && Number(p.stop) <= 100 && Number(p.stop) > Number(p.start)
+                ) : [];
+            } catch (_) {
+                customPlantProfiles = [];
+            }
+        }
+
+        function populatePlantSelect(selectedValue) {
+            const select = document.getElementById("selectPlant");
+            if (!select) return;
+            select.innerHTML = "";
+            BUILTIN_PLANTS.forEach(p => {
+                const option = document.createElement("option");
+                option.value = p.value;
+                option.textContent = p.label;
+                select.appendChild(option);
+            });
+            customPlantProfiles.forEach((p, i) => {
+                const option = document.createElement("option");
+                option.value = "CUSTOM_PLANT_" + i;
+                option.textContent = `${p.name} (${p.start}% - ${p.stop}%)`;
+                select.appendChild(option);
+            });
+            if (selectedValue && Array.from(select.options).some(o => o.value === selectedValue)) {
+                select.value = selectedValue;
+            }
+        }
+
+        function getSelectedPlantProfile() {
+            const value = document.getElementById("selectPlant").value;
+            const builtin = BUILTIN_PLANTS.find(p => p.value === value);
+            if (builtin) return { ...builtin, custom: false };
+            if (value.startsWith("CUSTOM_PLANT_")) {
+                const index = Number(value.substring("CUSTOM_PLANT_".length));
+                const p = customPlantProfiles[index];
+                if (p) return { value: p.name, label: p.name, start: Number(p.start), stop: Number(p.stop), custom: true };
+            }
+            return BUILTIN_PLANTS[0];
+        }
+
+        function changePlantProfile() {
+            const p = getSelectedPlantProfile();
+            document.getElementById("infoStartTh").textContent = p.start + "%";
+            document.getElementById("infoStopTh").textContent = p.stop + "%";
+            // Gửi lựa chọn qua MQTT. Firmware phải nhận diện profile này để áp dụng trên ESP32.
+            if (isConnected) {
+                publishAioCommand("plant", p.value);
+                if (p.custom) {
+                    showToast("Đã gửi tên cây mới. Cần firmware hỗ trợ hồ sơ tùy chỉnh để ESP32 áp dụng ngưỡng này.", "info");
+                }
+            }
+        }
+
+        function openAddPlantModal() {
+            document.getElementById("newPlantName").value = "";
+            document.getElementById("newPlantStart").value = "30";
+            document.getElementById("newPlantStop").value = "45";
+            document.getElementById("addPlantModal").classList.remove("hidden");
+            document.getElementById("newPlantName").focus();
+        }
+
+        function closeAddPlantModal() {
+            document.getElementById("addPlantModal").classList.add("hidden");
+        }
+
+        function addPlantProfile() {
+            const name = document.getElementById("newPlantName").value.trim();
+            const start = Number(document.getElementById("newPlantStart").value);
+            const stop = Number(document.getElementById("newPlantStop").value);
+
+            if (!name) {
+                alert("Vui lòng nhập tên loại cây.");
+                return;
+            }
+            if (!Number.isInteger(start) || !Number.isInteger(stop) ||
+                start < 0 || stop > 100 || stop <= start) {
+                alert("Ngưỡng phải là số nguyên từ 0–100 và ngưỡng tắt phải lớn hơn ngưỡng bật.");
+                return;
+            }
+
+            const duplicate = [...BUILTIN_PLANTS.map(p => p.label.split(" (")[0].toLowerCase()),
+                ...customPlantProfiles.map(p => p.name.toLowerCase())]
+                .includes(name.toLowerCase());
+            if (duplicate) {
+                alert("Tên loại cây này đã tồn tại. Vui lòng chọn tên khác.");
+                return;
+            }
+
+            customPlantProfiles.push({ name, start, stop });
+            localStorage.setItem("smartgarden_custom_plants", JSON.stringify(customPlantProfiles));
+            const value = "CUSTOM_PLANT_" + (customPlantProfiles.length - 1);
+            populatePlantSelect(value);
+            document.getElementById("infoStartTh").textContent = start + "%";
+            document.getElementById("infoStopTh").textContent = stop + "%";
+            closeAddPlantModal();
+            showToast("Đã thêm và lưu hồ sơ cây trên trình duyệt.", "success");
+            if (isConnected) {
+                publishAioCommand("plant", name);
+                showToast("Đã gửi tên cây qua MQTT; cần firmware hỗ trợ hồ sơ tùy chỉnh để áp dụng ngưỡng trên ESP32.", "info");
+            }
+        }
+
+
         // Tự động nạp cấu hình từ localStorage khi tải trang
         window.addEventListener('DOMContentLoaded', () => {
+            loadCustomPlantProfiles();
+            populatePlantSelect();
+            changePlantProfile();
             const savedUser = localStorage.getItem('aio_username');
             const savedKey = localStorage.getItem('aio_key');
             const savedPrefix = localStorage.getItem('aio_prefix');
