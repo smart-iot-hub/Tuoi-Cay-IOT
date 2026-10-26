@@ -107,7 +107,7 @@
         <!-- Control & Status Section -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- Controls Panel -->
+            <!-- Controls & Integrated Alert Center Panel -->
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 flex flex-col justify-between">
                 <div class="space-y-4">
                     <h2 class="text-lg font-bold border-b border-slate-700 pb-2 flex justify-between items-center">
@@ -146,6 +146,17 @@
                             <button onclick="togglePump(2)" id="btnPump2" disabled class="bg-slate-700 text-slate-500 px-4 py-2 rounded-lg font-bold text-xs transition">BẬT P2</button>
                         </div>
                     </div>
+
+                    <!-- Integrated Alert Center inside Control Panel -->
+                    <div class="pt-2 border-t border-slate-700 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs uppercase text-slate-400 font-semibold">Trung tâm cảnh báo</h3>
+                            <span id="alertCount" class="text-[10px] bg-slate-700 px-2 py-0.5 rounded text-slate-300">0 sự kiện</span>
+                        </div>
+                        <div id="alertHistory" class="space-y-1.5 max-h-36 overflow-y-auto text-xs pr-1">
+                            <p class="text-slate-500 text-[11px] italic">Chưa có cảnh báo nào ghi nhận.</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Emergency Stop Button -->
@@ -160,7 +171,13 @@
             <!-- Plant Profiles & Charts Section -->
             <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow space-y-4 lg:col-span-2 flex flex-col justify-between">
                 <div>
-                    <h2 class="text-lg font-bold border-b border-slate-700 pb-2 mb-4">Cấu hình Cây trồng & Ngưỡng tưới (Plant Profiles)</h2>
+                    <div class="flex items-center justify-between border-b border-slate-700 pb-2 mb-4">
+                        <h2 class="text-lg font-bold">Cấu hình Cây trồng & Ngưỡng tưới (Plant Profiles)</h2>
+                        <!-- Nút mở Modal Thêm Cây Mới -->
+                        <button onclick="openAddPlantModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg font-bold text-xs shadow transition flex items-center gap-1">
+                            <span>+ Thêm loại cây mới</span>
+                        </button>
+                    </div>
                     
                     <!-- Interactive Plant Select -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
@@ -203,38 +220,6 @@
                         <div id="diagSoil" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến đất: <span class="font-bold text-emerald-400">OK</span></div>
                         <div id="diagRain" class="bg-slate-900 p-2 rounded border border-slate-700 text-center">Cảm biến mưa: <span class="font-bold text-emerald-400">OK</span></div>
                     </div>
-
-                    <!-- Plant profile manager: add profiles from web only -->
-                    <div class="mt-4 bg-slate-900 p-4 rounded-xl border border-slate-700 space-y-3">
-                        <div class="flex items-center justify-between gap-2">
-                            <h3 class="font-bold text-sm">Thêm loại cây mới</h3>
-                            <span class="text-[10px] text-slate-400">Lưu trên ESP32 qua MQTT</span>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                                <label for="newPlantName" class="block text-xs text-slate-400 mb-1">Tên cây</label>
-                                <input id="newPlantName" maxlength="23" type="text" placeholder="VD: ỚT CHUÔNG"
-                                  class="w-full bg-slate-800 px-3 py-2 rounded border border-slate-600 text-sm focus:outline-none focus:border-emerald-500">
-                            </div>
-                            <div>
-                                <label for="newPlantStart" class="block text-xs text-slate-400 mb-1">Bắt đầu tưới (%)</label>
-                                <input id="newPlantStart" type="number" min="0" max="95" value="35"
-                                  class="w-full bg-slate-800 px-3 py-2 rounded border border-slate-600 text-sm focus:outline-none focus:border-emerald-500">
-                            </div>
-                            <div>
-                                <label for="newPlantStop" class="block text-xs text-slate-400 mb-1">Dừng tưới (%)</label>
-                                <input id="newPlantStop" type="number" min="5" max="100" value="60"
-                                  class="w-full bg-slate-800 px-3 py-2 rounded border border-slate-600 text-sm focus:outline-none focus:border-emerald-500">
-                            </div>
-                        </div>
-                        <div class="flex flex-col sm:flex-row gap-2 sm:items-center sm:justify-between">
-                            <p class="text-[11px] text-slate-400">Ngưỡng phải thỏa mãn: 0 ≤ bắt đầu < dừng ≤ 100. Hồ sơ chỉ được xác nhận khi ESP32 lưu thành công.</p>
-                            <button id="addPlantBtn" onclick="addPlantProfile()" class="shrink-0 bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 disabled:text-slate-400 text-white px-4 py-2 rounded-lg font-bold text-xs">
-                                + Thêm / cập nhật cây
-                            </button>
-                        </div>
-                        <div id="configSyncStatus" class="text-xs text-slate-400" role="status" aria-live="polite">Chưa gửi cấu hình.</div>
-                    </div>
                 </div>
 
                 <!-- Real-time Chart Container (Có đường Ánh sáng) -->
@@ -247,18 +232,42 @@
 
     </main>
 
-    <!-- Alert history -->
-    <section class="container mx-auto px-4 pb-6">
-        <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
-            <div class="flex items-center justify-between gap-3 mb-3">
-                <h2 class="font-bold">Trung tâm cảnh báo</h2>
-                <span id="alertCount" class="text-xs text-slate-400">0 sự kiện</span>
+    <!-- Modal Thêm Loại Cây Mới -->
+    <div id="addPlantModal" class="hidden fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true">
+        <div class="w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden p-6 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700 pb-3">
+                <h3 class="font-bold text-base text-emerald-400">Thêm loại cây trồng mới</h3>
+                <button onclick="closeAddPlantModal()" class="text-slate-400 hover:text-white text-xl font-bold">×</button>
             </div>
-            <div id="alertHistory" class="space-y-2 text-sm">
-                <p class="text-slate-500 text-xs">Chưa có cảnh báo nhận được trong phiên này.</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <label for="newPlantName" class="block text-xs text-slate-400 mb-1">Tên cây (Viết hoa không dấu)</label>
+                    <input id="newPlantName" maxlength="23" type="text" placeholder="VD: OT CHUONG"
+                      class="w-full bg-slate-900 px-3 py-2 rounded border border-slate-700 text-sm focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label for="newPlantStart" class="block text-xs text-slate-400 mb-1">Bắt đầu tưới (%)</label>
+                    <input id="newPlantStart" type="number" min="0" max="95" value="35"
+                      class="w-full bg-slate-900 px-3 py-2 rounded border border-slate-700 text-sm focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label for="newPlantStop" class="block text-xs text-slate-400 mb-1">Dừng tưới (%)</label>
+                    <input id="newPlantStop" type="number" min="5" max="100" value="60"
+                      class="w-full bg-slate-900 px-3 py-2 rounded border border-slate-700 text-sm focus:outline-none focus:border-emerald-500">
+                </div>
+                <p class="text-[11px] text-slate-400">Ngưỡng hợp lệ: 0 ≤ bắt đầu < dừng ≤ 100. Hồ sơ sẽ được lưu trực tiếp vào ESP32 qua MQTT.</p>
+                <div id="configSyncStatus" class="text-xs text-slate-400 min-h-[1rem]" role="status" aria-live="polite"></div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-2 border-t border-slate-700">
+                <button onclick="closeAddPlantModal()" class="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg text-xs font-semibold">Hủy</button>
+                <button id="addPlantBtn" onclick="addPlantProfile()" class="bg-emerald-600 hover:bg-emerald-500 disabled:bg-slate-700 text-white px-4 py-2 rounded-lg text-xs font-bold shadow">
+                    Lưu cấu hình
+                </button>
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- Critical alert modal -->
     <div id="alertModal" class="hidden fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm p-4 flex items-center justify-center" role="dialog" aria-modal="true" aria-labelledby="alertModalTitle">
@@ -399,17 +408,29 @@
                     pendingConfig = false;
                     const status = document.getElementById("configSyncStatus");
                     status.textContent = data.ok
-                        ? `Đã lưu trên ESP32 · phiên bản cấu hình ${data.config_version}`
-                        : "ESP32 từ chối lưu cấu hình. Kiểm tra tên cây, ngưỡng hoặc dung lượng hồ sơ.";
+                        ? `Đã lưu trên ESP32 · Phiên bản ${data.config_version}`
+                        : "ESP32 từ chối lưu cấu hình. Kiểm tra tên cây hoặc thông số.";
                     status.className = data.ok ? "text-xs text-emerald-400" : "text-xs text-rose-400";
                     document.getElementById("addPlantBtn").disabled = false;
-                    if (data.ok) showToast("Đã đồng bộ hồ sơ cây với ESP32.", "success");
+                    if (data.ok) {
+                        showToast("Đã đồng bộ hồ sơ cây với ESP32.", "success");
+                        setTimeout(() => closeAddPlantModal(), 1500);
+                    }
                 } else if (topic.endsWith("/alert")) {
                     handleAlertEvent(data);
                 }
             } catch(e) {
                 console.error("Lỗi parse JSON MQTT:", topic, e);
             }
+        }
+
+        function openAddPlantModal() {
+            document.getElementById("addPlantModal").classList.remove("hidden");
+            document.getElementById("configSyncStatus").textContent = "";
+        }
+
+        function closeAddPlantModal() {
+            document.getElementById("addPlantModal").classList.add("hidden");
         }
 
         function renderPlantOptions() {
@@ -455,7 +476,7 @@
             const stop = Number(document.getElementById("newPlantStop").value);
             if (!name || name.length > 23 || !Number.isInteger(start) || !Number.isInteger(stop) ||
                 start < 0 || start > 95 || stop > 100 || stop <= start) {
-                showToast("Dữ liệu chưa hợp lệ. Nhập tên và bảo đảm 0 ≤ bắt đầu < dừng ≤ 100.", "error");
+                showToast("Dữ liệu chưa hợp lệ. Bảo đảm 0 ≤ bắt đầu < dừng ≤ 100.", "error");
                 return;
             }
             const payload = {name, start_threshold: start, stop_threshold: stop};
@@ -467,32 +488,29 @@
             document.getElementById("configSyncStatus").textContent = "Đang gửi cấu hình và chờ ESP32 lưu...";
             document.getElementById("configSyncStatus").className = "text-xs text-amber-300";
             mqttClient.send(message);
-            // Timeout only affects UI status; it does not imply the ESP32 failed to save.
             window.setTimeout(() => {
                 if (pendingConfig) {
                     pendingConfig = false;
                     document.getElementById("addPlantBtn").disabled = false;
-                    document.getElementById("configSyncStatus").textContent =
-                        "Chưa nhận xác nhận. Kiểm tra kết nối MQTT và trạng thái ESP32 trước khi gửi lại.";
-                    document.getElementById("configSyncStatus").className = "text-xs text-amber-300";
+                    document.getElementById("configSyncStatus").textContent = "Chưa nhận phản hồi từ ESP32.";
                 }
             }, 5000);
         }
 
         function getAlertActions(code) {
             const guides = {
-                EMERGENCY_STOP: ["Kiểm tra khu vực, bơm và dây điện trước khi phục hồi.", "Xác nhận nguyên nhân đã được xử lý.", "Chỉ nhả EMC bằng thao tác phục hồi được thiết kế tại trạm; không dùng nút đóng cửa sổ để mở khóa."],
-                PUMP1_TIMEOUT: ["Kiểm tra bồn nước và nguồn cấp.", "Kiểm tra bơm tưới, ống dẫn, rò rỉ hoặc tắc nghẽn.", "Để ESP32 xác nhận điều kiện an toàn trước khi cho phép chạy lại."],
-                PUMP2_TIMEOUT: ["Kiểm tra nguồn nước cấp và đường ống nạp bồn.", "Kiểm tra bơm nạp và cảm biến siêu âm.", "Không cưỡng ép chạy lại nếu chưa tìm được nguyên nhân."],
-                WATER_LEVEL_LOW: ["Bổ sung nước vào bồn.", "So sánh mực nước thực tế với số đo cảm biến siêu âm.", "Chờ ESP32 xác nhận mực nước an toàn; không bỏ qua khóa bơm."],
-                TANK_SENSOR_FAULT: ["Kiểm tra dây TRIG/ECHO và nguồn cảm biến.", "Đảm bảo cảm biến đặt chắc chắn, không bị ngập hoặc cản trở.", "Đợi nhiều phép đo hợp lệ trước khi cho phép tưới."],
-                SOIL_SENSOR_FAULT: ["Kiểm tra dây và nguồn cảm biến độ ẩm đất.", "Kiểm tra đầu dò có tiếp xúc tốt với giá thể không.", "Không tăng tưới theo số đo lỗi; thay cảm biến nếu lỗi vẫn tiếp diễn."],
-                RAIN_SENSOR_FAULT: ["Kiểm tra nguồn, dây và đầu ra analog của cảm biến mưa.", "Làm sạch, để khô và kiểm tra giá trị ADC.", "Giữ khóa tưới cho đến khi cảm biến hợp lệ."],
-                DHT_SENSOR_FAULT: ["Kiểm tra chân DATA, nguồn và điện trở kéo lên nếu cần.", "Kiểm tra dây nối và đọc lại sau chu kỳ tiếp theo.", "Nhiệt độ/độ ẩm không khí có thể tạm thời không khả dụng."],
-                RAIN_DETECTED: ["Kiểm tra tình trạng mưa thực tế.", "Giữ nguyên khóa tưới trong lúc cảm biến báo mưa.", "Khi hết mưa, chờ bộ lọc xác nhận trạng thái khô."],
-                SOIL_TOO_WET: ["Tạm ngừng tưới và kiểm tra thoát nước.", "Kiểm tra vị trí cảm biến và độ ẩm thực tế của giá thể.", "Chỉ tưới lại khi độ ẩm về vùng phù hợp với hồ sơ cây."]
+                EMERGENCY_STOP: ["Kiểm tra khu vực, bơm và dây điện trước khi phục hồi.", "Xác nhận nguyên nhân đã được xử lý."],
+                PUMP1_TIMEOUT: ["Kiểm tra bồn nước và nguồn cấp.", "Kiểm tra bơm tưới, ống dẫn, tránh rò rỉ hoặc tắc nghẽn."],
+                PUMP2_TIMEOUT: ["Kiểm tra nguồn nước cấp và đường ống nạp bồn."],
+                WATER_LEVEL_LOW: ["Bổ sung nước vào bồn.", "So sánh mực nước thực tế với cảm biến siêu âm."],
+                TANK_SENSOR_FAULT: ["Kiểm tra dây TRIG/ECHO và nguồn cảm biến siêu âm."],
+                SOIL_SENSOR_FAULT: ["Kiểm tra dây và nguồn cảm biến độ ẩm đất."],
+                RAIN_SENSOR_FAULT: ["Kiểm tra nguồn và đầu ra analog của cảm biến mưa."],
+                DHT_SENSOR_FAULT: ["Kiểm tra chân DATA, nguồn và điện trở kéo lên DHT11."],
+                RAIN_DETECTED: ["Đang mưa, hệ thống tạm khóa bơm tưới cây tự động."],
+                SOIL_TOO_WET: ["Độ ẩm đất cao hơn ngưỡng dừng, tạm ngừng tưới."]
             };
-            return guides[code] || ["Đọc mã lỗi và kiểm tra cảm biến/thiết bị liên quan.", "Không bỏ qua khóa an toàn.", "Nếu lỗi vẫn còn, kiểm tra log ESP32 và đấu nối phần cứng."];
+            return guides[code] || ["Kiểm tra phần cứng và kết nối cảm biến liên quan."];
         }
 
         function handleAlertEvent(event) {
@@ -514,9 +532,6 @@
             if (!d.alert_active || !d.alert_code || d.alert_code === "NONE") {
                 if (currentAlert && currentAlert.active) {
                     currentAlert.active = false;
-                    const state = document.getElementById("alertModalState");
-                    if (state) state.textContent = "ESP32 báo đã phục hồi điều kiện cảnh báo.";
-                    showToast("ESP32 báo đã phục hồi điều kiện cảnh báo.", "success");
                     document.getElementById("alertModal").classList.add("hidden");
                     currentAlert = null;
                 }
@@ -541,7 +556,7 @@
                 severity === "EMERGENCY" ? "DỪNG KHẨN CẤP" : (critical ? "Cảnh báo nghiêm trọng" : "Cảnh báo hệ thống");
             document.getElementById("alertModalCode").textContent = `${d.alert_code || "ALERT"} · ${severity}`;
             document.getElementById("alertModalMessage").textContent = d.alert_message || "ESP32 phát hiện trạng thái cần kiểm tra.";
-            document.getElementById("alertModalState").textContent = "Trạng thái do ESP32 xác nhận. Đóng cửa sổ không xóa lỗi.";
+            document.getElementById("alertModalState").textContent = "Trạng thái do ESP32 xác nhận.";
             const list = document.getElementById("alertModalActions");
             list.replaceChildren();
             getAlertActions(d.alert_code).forEach(action => {
@@ -557,12 +572,10 @@
 
         function dismissAlertModal() {
             document.getElementById("alertModal").classList.add("hidden");
-            // The event remains active and visible in the alert history.
         }
 
         function acknowledgeAlert() {
-            // Acknowledgement is UI-only for now; it never clears an ESP32 safety latch.
-            showToast("Đã ghi nhận bạn đã xem. ESP32 vẫn giữ khóa cho đến khi xác nhận an toàn.", "warning");
+            showToast("Đã xác nhận cảnh báo.", "warning");
             dismissAlertModal();
         }
 
@@ -575,30 +588,27 @@
                 active: event.active !== false
             };
             alertHistory.unshift(item);
-            alertHistory = alertHistory.slice(0, 12);
+            alertHistory = alertHistory.slice(0, 8); // Giữ tối đa 8 sự kiện gần nhất cho gọn panel
             document.getElementById("alertCount").textContent = `${alertHistory.length} sự kiện`;
             const host = document.getElementById("alertHistory");
             host.replaceChildren();
             alertHistory.forEach(a => {
                 const row = document.createElement("div");
-                row.className = "flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 bg-slate-900 border border-slate-700 rounded-lg p-3";
-                const level = document.createElement("span");
-                level.className = a.severity === "CRITICAL" || a.severity === "EMERGENCY"
-                    ? "text-rose-400 font-bold text-xs" : "text-amber-300 font-bold text-xs";
-                level.textContent = a.severity;
-                const content = document.createElement("div");
-                content.className = "flex-1 min-w-0";
-                const title = document.createElement("div");
-                title.className = "font-semibold text-sm";
-                title.textContent = a.code;
+                row.className = "bg-slate-900 border border-slate-700 rounded p-2 space-y-0.5";
+                const topRow = document.createElement("div");
+                topRow.className = "flex justify-between items-center";
+                const codeSpan = document.createElement("span");
+                codeSpan.className = a.severity === "CRITICAL" || a.severity === "EMERGENCY"
+                    ? "text-rose-400 font-bold text-[11px]" : "text-amber-300 font-bold text-[11px]";
+                codeSpan.textContent = a.code;
+                const timeSpan = document.createElement("span");
+                timeSpan.className = "text-slate-500 text-[10px]";
+                timeSpan.textContent = a.time;
+                topRow.append(codeSpan, timeSpan);
                 const msg = document.createElement("div");
-                msg.className = "text-slate-400 text-xs mt-0.5";
+                msg.className = "text-slate-300 text-[11px] truncate";
                 msg.textContent = a.message;
-                content.append(title, msg);
-                const time = document.createElement("span");
-                time.className = "text-slate-500 text-[11px]";
-                time.textContent = a.time;
-                row.append(level, content, time);
+                row.append(topRow, msg);
                 host.appendChild(row);
             });
         }
@@ -660,7 +670,6 @@
             document.getElementById('lblMode').textContent = d.mode.toUpperCase();
             document.getElementById('lblMode').className = isManual ? "text-xs px-2.5 py-1 rounded-full bg-amber-900 text-amber-200 uppercase font-bold tracking-wider" : "text-xs px-2.5 py-1 rounded-full bg-blue-900 text-blue-200 uppercase font-bold tracking-wider";
 
-            // Update Mode Buttons active style
             let btnAuto = document.getElementById('btnAuto');
             let btnManual = document.getElementById('btnManual');
             if(isManual) {
@@ -671,7 +680,6 @@
                 btnManual.className = "text-slate-400 hover:text-slate-200 py-2 rounded-md font-bold text-sm transition";
             }
 
-            // Enable/disable manual pump buttons based on mode
             let p1Btn = document.getElementById('btnPump1');
             let p2Btn = document.getElementById('btnPump2');
             p1Btn.disabled = !isManual;
@@ -699,7 +707,6 @@
                 else { p2Btn.className = "bg-slate-700 text-slate-500 px-4 py-2 rounded-lg font-bold text-xs transition"; }
             }
 
-            // 7. Emergency & Timeouts banner check
             let emergencyBanner = document.getElementById('emergencyBanner');
             if (d.emergency === true || d.emergency === 1 || d.pump1_timeout === true || d.pump1_timeout === 1 || d.pump2_timeout === true || d.pump2_timeout === 1) {
                 emergencyBanner.classList.remove('hidden');
@@ -707,7 +714,6 @@
                 emergencyBanner.classList.add('hidden');
             }
 
-            // Diagnostics info
             document.getElementById('diagTimeout1').innerHTML = `P1 Timeout: <span class="font-bold ${d.pump1_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump1_timeout ? 'LỖI' : 'OK'}</span>`;
             document.getElementById('diagTimeout2').innerHTML = `P2 Timeout: <span class="font-bold ${d.pump2_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump2_timeout ? 'LỖI' : 'OK'}</span>`;
             document.getElementById('diagTank').innerHTML = `Cảm biến bồn: <span class="font-bold ${(d.tank_valid === true || d.tank_valid === 1) ? 'text-emerald-400' : 'text-rose-500'}">${(d.tank_valid === true || d.tank_valid === 1) ? 'OK' : 'Lỗi'}</span>`;
@@ -721,10 +727,10 @@
             const timeNow = new Date().toLocaleTimeString();
             if (sensorChart.data.labels.length > 20) {
                 sensorChart.data.labels.shift();
-                sensorChart.data.datasets[0].data.shift(); // Soil
-                sensorChart.data.datasets[1].data.shift(); // Light
-                sensorChart.data.datasets[2].data.shift(); // Temp
-                sensorChart.data.datasets[3].data.shift(); // Tank
+                sensorChart.data.datasets[0].data.shift();
+                sensorChart.data.datasets[1].data.shift();
+                sensorChart.data.datasets[2].data.shift();
+                sensorChart.data.datasets[3].data.shift();
             }
             sensorChart.data.labels.push(timeNow);
             sensorChart.data.datasets[0].data.push(d.soil_moisture);
@@ -734,7 +740,6 @@
             sensorChart.update();
         }
 
-        // Mark telemetry stale if the ESP32 status stream stops unexpectedly.
         window.setInterval(() => {
             if (isConnected && lastStatusAt && Date.now() - lastStatusAt > 4000) {
                 document.getElementById("emergencyBanner").classList.remove("hidden");
@@ -742,7 +747,6 @@
             }
         }, 1000);
 
-        // MQTT Publishers
         function setMode(mode) {
             if (!isConnected) { alert("Chưa kết nối MQTT!"); return; }
             let message = new Paho.MQTT.Message(mode);
@@ -779,10 +783,7 @@
             message.destinationName = baseTopic + "/control/plant";
             message.qos = 1;
             mqttClient.send(message);
-            document.getElementById("configSyncStatus").textContent = "Đang yêu cầu ESP32 áp dụng hồ sơ " + val + "...";
-            document.getElementById("configSyncStatus").className = "text-xs text-amber-300";
         }
-
     </script>
 </body>
 </html>
