@@ -367,10 +367,8 @@
             document.getElementById("infoStopTh").textContent = p.stop + "%";
             // Gửi lựa chọn qua MQTT. Firmware phải nhận diện profile này để áp dụng trên ESP32.
             if (isConnected) {
-                publishAioCommand("plant", p.value);
-                if (p.custom) {
-                    showToast("Đã gửi tên cây mới. Cần firmware hỗ trợ hồ sơ tùy chỉnh để ESP32 áp dụng ngưỡng này.", "info");
-                }
+                const firmwareName = p.value === "XUONGRONG" ? "XUONG RONG" : p.value;
+                publishAioCommand("plant-config", `SELECT|${firmwareName}|${p.start}|${p.stop}`);
             }
         }
 
@@ -416,10 +414,13 @@
             document.getElementById("infoStartTh").textContent = start + "%";
             document.getElementById("infoStopTh").textContent = stop + "%";
             closeAddPlantModal();
-            showToast("Đã thêm và lưu hồ sơ cây trên trình duyệt.", "success");
+            showToast("Đã lưu hồ sơ cây trên trình duyệt.", "success");
             if (isConnected) {
-                publishAioCommand("plant", name);
-                showToast("Đã gửi tên cây qua MQTT; cần firmware hỗ trợ hồ sơ tùy chỉnh để áp dụng ngưỡng trên ESP32.", "info");
+                const safeName = name.replace(/[|\\r\\n]/g, " ").trim().slice(0, 23);
+                publishAioCommand("plant-config", `ADD|${safeName}|${start}|${stop}`);
+                showToast("Đã gửi tên cây và ngưỡng tưới xuống ESP32 qua MQTT.", "success");
+            } else {
+                showToast("Cây đã lưu trên trình duyệt; hãy kết nối MQTT để gửi cấu hình xuống ESP32.", "info");
             }
         }
 
