@@ -76,6 +76,88 @@ button{transition:filter .15s ease,transform .15s ease,background-color .15s eas
 @media(max-width:640px){main{padding:8px!important}header{padding:10px!important;gap:8px;flex-wrap:wrap}header>div:last-child{flex-wrap:wrap}main>.grid:first-child{grid-template-columns:repeat(2,minmax(0,1fr))!important}main>.grid:first-child>div{min-height:105px!important;padding:10px!important}main>.grid:last-child>div{padding:10px!important}#visualMonitorScene .sg-scene-layout{grid-template-columns:1fr;gap:8px}.sg-scene-card{padding:10px}#visualMonitorScene{min-height:auto;background-position:center!important}#visualMonitorScene .sg-scene-hero{display:flex;min-height:100px}.sg-plant-art{transform:scale(.72);margin:-18px 0}.sg-tank-art{transform:scale(.78);margin:-15px 0}.sg-scene-foot{flex-wrap:wrap}#sensorChart{min-height:240px}}
 </style>
 
+<style id="reference-layout-fix">
+/* Layout pass 2: arrange the dashboard like the approved reference */
+html,body{min-height:100%;background:#071426!important;color:#e8f1ff!important}
+body{height:100vh!important;min-height:720px!important;overflow:auto!important;background:radial-gradient(ellipse at 72% 0%,#183653 0,#0a1729 48%,#071426 100%)!important}
+header{min-height:68px!important;padding:10px 18px!important;background:rgba(7,20,38,.97)!important;border-color:#263e5c!important}
+header h1{font-size:clamp(18px,1.6vw,25px)!important;letter-spacing:.02em}
+main{display:grid!important;grid-template-columns:minmax(300px,28%) minmax(0,72%)!important;grid-template-rows:auto minmax(0,1fr)!important;align-items:stretch!important;gap:12px!important;padding:12px!important;overflow:visible!important;min-height:calc(100vh - 68px)!important}
+main>.grid:first-child{grid-column:2!important;grid-row:1!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:9px!important;align-self:start!important}
+main>.grid:first-child>div{min-width:0!important;min-height:112px!important;padding:12px!important;border-radius:13px!important;background:linear-gradient(145deg,#172a42,#0e1e32)!important;border:1px solid #2b4666!important;box-shadow:0 8px 22px #0003!important}
+main>.grid:first-child>div>div:first-child{font-size:10px!important;letter-spacing:.04em}
+main>.grid:first-child>div span[id^="val"]{font-size:clamp(22px,1.8vw,30px)!important}
+main>.grid:last-child{display:contents!important}
+main>.grid:last-child>div:first-child{grid-column:1!important;grid-row:1 / span 2!important;width:auto!important;max-width:none!important;min-width:0!important;min-height:0!important;height:auto!important;align-self:stretch!important;flex:none!important;gap:11px!important;justify-content:flex-start!important;padding:14px!important;background:linear-gradient(160deg,rgba(17,37,60,.98),rgba(8,23,40,.98))!important;border:1px solid #2a4665!important;border-radius:16px!important;box-shadow:0 12px 30px #0004!important}
+main>.grid:last-child>div:last-child{grid-column:2!important;grid-row:2!important;min-width:0!important;min-height:650px!important;height:auto!important;align-self:stretch!important;display:flex!important;flex-direction:column!important;gap:10px!important;padding:12px!important;background:linear-gradient(160deg,rgba(17,34,55,.98),rgba(8,21,37,.98))!important;border:1px solid #2a4665!important;border-radius:16px!important;box-shadow:0 12px 30px #0004!important}
+main>.grid:last-child>div:last-child>div:first-child{flex:1!important;min-height:0!important}
+#visualMonitorScene{min-height:clamp(350px,44vh,510px)!important;background-size:cover!important;background-position:center 52%!important;border:1px solid #3d7189!important;border-radius:15px!important;box-shadow:inset 0 0 0 1px #ffffff0b,0 10px 24px #0004!important}
+#visualMonitorScene .sg-scene-layout{grid-template-columns:minmax(190px,1fr) minmax(130px,.52fr) minmax(190px,1fr)!important;min-height:clamp(265px,33vh,365px)!important;gap:12px!important}
+#visualMonitorScene .sg-scene-card{background:linear-gradient(145deg,rgba(7,21,38,.95),rgba(8,29,48,.93))!important;border:1px solid #72b7d1!important;border-radius:14px!important;box-shadow:0 12px 28px #0007!important;backdrop-filter:blur(7px)!important}
+#visualMonitorScene .sg-scene-hero{min-height:290px!important;align-self:stretch!important}
+#visualMonitorScene .sg-plant-art{transform:scale(1.08);transform-origin:center bottom}
+#visualMonitorScene .sg-tank-art{height:170px!important;min-width:76px!important}
+#visualMonitorScene .sg-scene-foot{font-size:11px!important}
+#sensorChart{min-height:250px!important}
+/* clear sensor diagnostic strip */
+main>.grid:last-child>div:last-child>div:nth-child(3){gap:7px!important}
+main>.grid:last-child>div:last-child>div:nth-child(3)>div{padding:8px 5px!important;border-radius:9px!important;background:#0b1a2c!important;border-color:#2c4562!important}
+/* Avoid squeezing controls; keep emergency button visible */
+#alertHistory{min-height:95px!important;max-height:220px!important}
+@media(max-width:1180px){body{height:auto!important;min-height:100vh!important}main{display:flex!important;flex-direction:column!important;min-height:0!important}main>.grid:first-child{order:1!important;grid-template-columns:repeat(3,minmax(0,1fr))!important}main>.grid:last-child{display:grid!important;grid-template-columns:minmax(0,1fr)!important;order:2!important}main>.grid:last-child>div:first-child,main>.grid:last-child>div:last-child{grid-column:auto!important;grid-row:auto!important;min-height:auto!important;height:auto!important}main>.grid:last-child>div:first-child{order:1!important}main>.grid:last-child>div:last-child{order:2!important}#visualMonitorScene{min-height:390px!important}}
+@media(max-width:680px){header{flex-wrap:wrap!important}main{padding:8px!important;gap:9px!important}main>.grid:first-child{grid-template-columns:repeat(2,minmax(0,1fr))!important}main>.grid:last-child>div:first-child,main>.grid:last-child>div:last-child{padding:10px!important}#visualMonitorScene .sg-scene-layout{grid-template-columns:1fr!important;gap:9px!important;min-height:0!important}#visualMonitorScene .sg-scene-hero{grid-column:auto!important;min-height:100px!important;order:3!important}#visualMonitorScene .sg-scene-card{padding:10px!important}#visualMonitorScene{min-height:0!important;background-position:center!important}#sensorChart{min-height:260px!important}}
+</style>
+
+<style id="sg-reference-layout-final">
+:root{color-scheme:dark}
+html,body{width:100%;min-height:100%;margin:0;background:#071225!important;color:#e7f1ff}
+body{height:100vh!important;min-height:0!important;overflow:hidden!important;display:flex;flex-direction:column}
+header{flex:0 0 auto!important;min-height:58px!important}
+main{flex:1 1 auto!important;min-height:0!important;height:calc(100vh - 58px)!important;padding:10px!important;overflow:hidden!important;display:block!important}
+.sg-reference-layout{height:100%;min-height:0;display:grid;grid-template-columns:minmax(260px, 24%) minmax(0,1fr);gap:10px}
+.sg-reference-sidebar,.sg-reference-main{min-width:0;min-height:0;overflow:hidden}
+.sg-reference-sidebar>div{height:100%!important;min-height:0!important;max-height:100%;padding:12px!important;gap:9px!important;overflow:auto!important}
+.sg-reference-main{display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px}
+.sg-reference-main>div:first-child{display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px!important;min-width:0}
+.sg-reference-main>div:first-child>div{min-width:0;min-height:90px!important;padding:10px!important}
+.sg-reference-main>div:last-child{min-height:0!important;height:100%!important;max-height:100%;padding:12px!important;overflow:hidden!important}
+.sg-reference-main>div:last-child>div{min-height:0!important;height:100%!important}
+#visualMonitorScene{height:clamp(300px,47vh,470px)!important;min-height:300px!important;flex:0 0 auto!important;background-position:center 52%!important;background-size:cover!important;border-color:#315878!important}
+.sg-scene-layout{display:grid;grid-template-columns:minmax(210px,1fr) minmax(160px,.75fr) minmax(210px,1fr);gap:10px;align-items:center}
+.sg-scene-card{min-width:0;background:rgba(7,21,37,.94);border:1px solid #56b7d8;border-radius:13px;padding:13px;box-shadow:0 12px 32px #0005;backdrop-filter:blur(5px)}
+.sg-scene-hero{display:flex;align-items:center;justify-content:center;gap:8px;min-width:0}
+.sg-pump{border:1px solid #38bdf8;background:#082c46;color:#67e8f9;padding:9px 10px;border-radius:9px;text-align:center;font-size:12px;font-weight:800;white-space:nowrap}
+.sg-pipe{height:8px;flex:1;min-width:15px;background:linear-gradient(#a5f3fc,#0284c7);border-radius:10px;box-shadow:0 0 8px #38bdf8}
+.sg-plant-art{width:92px;height:130px;flex:0 0 92px;position:relative}
+.sg-plant-art .rose{position:absolute;left:35px;top:0;font-size:32px;z-index:2}
+.sg-plant-art .stem{position:absolute;left:47px;top:28px;width:5px;height:60px;background:#3fb477;border-radius:5px}
+.sg-plant-art .leaf{position:absolute;width:30px;height:15px;background:linear-gradient(135deg,#86efac,#16a34a);border:1px solid #bbf7d0;border-radius:100% 0 100% 0}
+.sg-plant-art .l1{left:12px;top:48px;transform:rotate(18deg)}.sg-plant-art .l2{left:48px;top:55px;transform:rotate(80deg)}.sg-plant-art .l3{left:10px;top:75px;transform:rotate(-12deg)}.sg-plant-art .l4{left:48px;top:30px;transform:rotate(80deg)}
+.sg-plant-art .pot{position:absolute;left:20px;bottom:0;width:54px;height:43px;background:linear-gradient(90deg,#b9b8a2,#eee8ca,#aaa88f);clip-path:polygon(0 0,100% 0,82% 100%,18% 100%)}
+.sg-tank-art{position:relative;width:82px;height:130px;flex:0 0 82px;border:3px solid #9be8ff;border-radius:22px;background:linear-gradient(90deg,#dffaff33,#0e749033 45%,#dffaff55);overflow:hidden;box-shadow:inset 0 0 15px #7dd3fc55}
+.tank-water{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,#38bdf8cc,#0284c7ee);border-top:2px solid #bae6fd;transition:height .35s}
+.tank-glint{position:absolute;left:13px;top:10px;bottom:10px;width:5px;background:#e0f2fe55;border-radius:5px}
+.tank-scale{position:absolute;inset:8px 10px;border-right:1px dashed #e0f2fe99}
+.sg-chart-grid{height:clamp(150px,24vh,225px);min-height:150px;display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:0 0 auto}
+.sg-chart-card{position:relative;min-width:0;min-height:0;overflow:hidden;background:#0a172a;border:1px solid #2a4263;border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:5px}
+.sg-chart-card h3{font-size:12px;font-weight:800;color:#d7efff;flex:0 0 auto}
+.sg-chart-card canvas{width:100%!important;height:calc(100% - 22px)!important;min-height:0}
+@media(max-width:1050px){
+ body{height:auto!important;min-height:100vh!important;overflow:auto!important}
+ main{height:auto!important;overflow:visible!important}
+ .sg-reference-layout{height:auto;grid-template-columns:1fr}
+ .sg-reference-sidebar>div{height:auto!important;max-height:none}
+ .sg-reference-main{display:flex;flex-direction:column}
+ .sg-reference-main>div:first-child{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .sg-reference-main>div:last-child{height:auto!important;max-height:none;overflow:visible!important}
+ #visualMonitorScene{height:auto!important;min-height:330px!important}
+ .sg-scene-layout{grid-template-columns:1fr}
+ .sg-scene-hero{min-height:70px}
+ .sg-chart-grid{height:360px}
+}
+@media(max-width:600px){.sg-reference-main>div:first-child{grid-template-columns:1fr 1fr}.sg-chart-grid{grid-template-columns:1fr;height:480px}.sg-scene-card{padding:9px}.sg-plant-art{width:65px;flex-basis:65px}}
+</style>
+
 </head>
 <body class="h-screen w-screen overflow-hidden bg-slate-900 text-slate-100 font-sans flex flex-col">
 
@@ -292,8 +374,9 @@ button{transition:filter .15s ease,transform .15s ease,background-color .15s eas
                     </div>
 
                     <!-- Real-time Chart Container -->
-                    <div class="bg-slate-900 p-2 rounded-xl border border-slate-700 flex-1 min-h-0 relative w-full">
-                        <canvas id="sensorChart" class="w-full h-full"></canvas>
+                    <div class="sg-chart-grid">
+                        <div class="sg-chart-card"><h3>🌱 Biểu đồ độ ẩm đất (%)</h3><canvas id="soilChart"></canvas></div>
+                        <div class="sg-chart-card"><h3>💧 Biểu đồ mực nước bồn (%)</h3><canvas id="tankChart"></canvas></div>
                     </div>
                 </div>
             </div>
@@ -672,30 +755,55 @@ button{transition:filter .15s ease,transform .15s ease,background-color .15s eas
             initMqttConnection();
         }
 
-        // Chart.js Setup
-        const ctx = document.getElementById('sensorChart').getContext('2d');
-        const sensorChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: [],
-                datasets: [
-                    { label: 'Độ ẩm đất (%)', data: [], borderColor: '#34d399', backgroundColor: '#34d39922', tension: 0.3, borderWidth: 2 },
-                    { label: 'Ánh sáng (%)', data: [], borderColor: '#facc15', backgroundColor: '#facc1522', tension: 0.3, borderWidth: 2 },
-                    { label: 'Nhiệt độ (°C)', data: [], borderColor: '#fbbf24', backgroundColor: '#fbbf2422', tension: 0.3, borderWidth: 2 },
-                    { label: 'Mực nước bồn (%)', data: [], borderColor: '#60a5fa', backgroundColor: '#60a5fa22', tension: 0.3, borderWidth: 2 }
-                ]
+        // Tái bố trí DOM thành sidebar trái + khu giám sát phải, giữ nguyên ID và các handler MQTT.
+        (() => {
+            const main = document.querySelector('main');
+            if (!main || main.dataset.referenceLayout === '1') return;
+            const overview = main.children[0];
+            const contentGrid = main.children[1];
+            if (!overview || !contentGrid || contentGrid.children.length < 2) return;
+            const controls = contentGrid.children[0];
+            const monitor = contentGrid.children[1];
+            const layout = document.createElement('div');
+            layout.className = 'sg-reference-layout';
+            const side = document.createElement('aside');
+            side.className = 'sg-reference-sidebar';
+            const right = document.createElement('section');
+            right.className = 'sg-reference-main';
+            side.appendChild(controls);
+            right.appendChild(overview);
+            right.appendChild(monitor);
+            layout.appendChild(side);
+            layout.appendChild(right);
+            main.replaceChildren(layout);
+            main.dataset.referenceLayout = '1';
+        })();
+
+        // Hai biểu đồ riêng giống bố cục hình mẫu
+        const chartCommonOptions = {
+            responsive: true, maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            scales: {
+                y: { beginAtZero: true, max: 100, grid: { color: '#2a3e59' }, ticks: { color: '#a8bbd3', font: { size: 10 } } },
+                x: { grid: { color: '#243750' }, ticks: { color: '#a8bbd3', font: { size: 9 }, maxTicksLimit: 8 } }
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { beginAtZero: true, max: 100, grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 9 } } },
-                    x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8', font: { size: 9 }, maxTicksLimit: 10 } }
-                },
-                plugins: { 
-                    legend: { labels: { color: '#f8fafc', font: { size: 10 }, boxWidth: 10 } } 
-                }
-            }
+            plugins: { legend: { labels: { color: '#e7f1ff', font: { size: 10 }, boxWidth: 10 } } }
+        };
+        const soilChart = new Chart(document.getElementById('soilChart').getContext('2d'), {
+            type: 'line',
+            data: { labels: [], datasets: [
+                { label: 'Độ ẩm đất', data: [], borderColor: '#34d399', backgroundColor: '#34d39922', tension: .32, borderWidth: 2, pointRadius: 2, fill: true },
+                { label: 'Ngưỡng bắt đầu tưới', data: [], borderColor: '#facc15', borderDash: [6,4], backgroundColor: 'transparent', tension: 0, borderWidth: 1.5, pointRadius: 0 },
+                { label: 'Ngưỡng dừng tưới', data: [], borderColor: '#22d3ee', borderDash: [6,4], backgroundColor: 'transparent', tension: 0, borderWidth: 1.5, pointRadius: 0 }
+            ]},
+            options: chartCommonOptions
+        });
+        const tankChart = new Chart(document.getElementById('tankChart').getContext('2d'), {
+            type: 'line',
+            data: { labels: [], datasets: [
+                { label: 'Mực nước bồn', data: [], borderColor: '#38bdf8', backgroundColor: '#38bdf822', tension: .3, borderWidth: 2, pointRadius: 2, fill: true }
+            ]},
+            options: chartCommonOptions
         });
 
         function toggleMqttConnection() {
@@ -886,18 +994,25 @@ button{transition:filter .15s ease,transform .15s ease,background-color .15s eas
             document.getElementById('diagSoil').innerHTML = `Đất: <span class="font-bold ${isSoilValid ? 'text-emerald-400' : 'text-rose-500'}">${isSoilValid ? 'OK' : 'Lỗi'}</span>`;
             document.getElementById('diagRain').innerHTML = `Mưa: <span class="font-bold ${isRainValid ? 'text-emerald-400' : 'text-rose-500'}">${isRainValid ? 'OK' : 'Lỗi'}</span>`;
 
-            // Update Chart
+            // Cập nhật hai biểu đồ độc lập; ngưỡng lấy từ hồ sơ cây đang chọn
             const timeNow = new Date().toLocaleTimeString();
-            if (sensorChart.data.labels.length > 20) {
-                sensorChart.data.labels.shift();
-                sensorChart.data.datasets.forEach(dataset => dataset.data.shift());
+            const profile = (typeof getSelectedPlantProfile === 'function') ? getSelectedPlantProfile() : {start: 35, stop: 60};
+            if (soilChart.data.labels.length >= 20) {
+                soilChart.data.labels.shift();
+                soilChart.data.datasets.forEach(dataset => dataset.data.shift());
             }
-            sensorChart.data.labels.push(timeNow);
-            sensorChart.data.datasets[0].data.push(d.soil_moisture);
-            sensorChart.data.datasets[1].data.push(d.light_percent);
-            sensorChart.data.datasets[2].data.push(d.temperature_c);
-            sensorChart.data.datasets[3].data.push(d.tank_percent);
-            sensorChart.update();
+            soilChart.data.labels.push(timeNow);
+            soilChart.data.datasets[0].data.push(Number.isFinite(Number(d.soil_moisture)) ? Number(d.soil_moisture) : null);
+            soilChart.data.datasets[1].data.push(Number(profile.start));
+            soilChart.data.datasets[2].data.push(Number(profile.stop));
+            soilChart.update();
+            if (tankChart.data.labels.length >= 20) {
+                tankChart.data.labels.shift();
+                tankChart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+            tankChart.data.labels.push(timeNow);
+            tankChart.data.datasets[0].data.push(Number.isFinite(Number(d.tank_percent)) ? Number(d.tank_percent) : null);
+            tankChart.update();
         }
 
         function setMode(mode) {
