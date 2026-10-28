@@ -681,6 +681,51 @@ header select#selectPlant { min-width: 145px; }
     width: 31% !important;
   }
 }
+.sg-env-overlay {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 440px;
+    padding: 8px 10px;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+}
+
+.sg-env-overlay .grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100%;
+}
+
+.sg-env-overlay .grid > div {
+    min-width: 0;
+    padding: 4px !important;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+}
+
+.sg-env-overlay #visualTempValue,
+.sg-env-overlay #visualHumValue,
+.sg-env-overlay #visualLuxValue {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    font-size: clamp(15px, 1.2vw, 22px) !important;
+    line-height: 1.25;
+    text-shadow: 0 2px 4px #00101c, 0 0 6px #00101c;
+}
+
+.sg-env-overlay span,
+.sg-env-overlay .grid > div > div {
+    text-shadow: 0 1px 4px #00101c;
+}
 </style>
 
 </head>
@@ -706,7 +751,7 @@ header select#selectPlant { min-width: 145px; }
                     <option value="RAU AN LA">RAU ĂN LÁ (40% - 65%)</option>
                     <option value="CA CHUA">CÀ CHUA (35% - 60%)</option>
                     <option value="DUA LEO">DƯA LEO (40% - 65%)</option>
-                    <option value="XUONGRONG">XƯƠNG RỒNG (15% - 30%)</option>
+                    <option value="XUONG RONG">XƯƠNG RỒNG (15% - 30%)</option>
                 </select>
             </div>
             <button onclick="sendEmergency()" class="bg-rose-700 hover:bg-rose-600 text-white px-3 py-2 rounded-lg font-extrabold text-xs transition shadow whitespace-nowrap">🛑 EMC</button>
@@ -790,116 +835,134 @@ header select#selectPlant { min-width: 145px; }
                 <div class="space-y-2.5 flex flex-col h-full min-h-0">
                     <!-- Giám sát trực quan: các giá trị lấy trực tiếp từ MQTT -->
                     <section id="visualMonitorScene" class="rounded-xl border border-sky-800/70 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/50 p-3 shrink-0">
-                        <div class="flex items-center justify-between gap-2 border-b border-slate-700 pb-2 mb-3">
-                            <h3 class="text-sm font-extrabold text-cyan-300">🌿 SMART GARDEN · GIÁM SÁT TRỰC QUAN</h3>
-                            <span class="text-[9px] text-slate-400">Dữ liệu thời gian thực · MQTT</span>
-                        </div>
+                        <div class="sg-env-overlay flex flex-col gap-2"></div>
                         <div class="sg-scene-layout sg-scene-layout-fixed">
                             <!--div class="sg-scene-card"-->
 
                             <!-- Khung chứa chính: Mobile xếp dọc (1 cột), Desktop chia thành 12 cột -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
 
-    <!-- CỘT 1: Trái (Môi trường & Độ ẩm đất) -->
-    <div class="flex flex-col gap-4">
-        <!-- Nhiệt độ / Ánh sáng -->
-        <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col justify-between gap-2 shadow-md">
-            <div class="flex flex-col gap-1">
-                <span class="text-xs font-bold text-amber-200">🌡️ Môi trường không khí & Ánh sáng</span>
-                <span id="visualEnvState" class="text-[10px] text-slate-300">Chờ dữ liệu</span>
-            </div>
-            <div class="grid grid-cols-3 gap-1.5 my-1 text-center">
-                <div class="bg-slate-800/80 p-1.5 rounded-lg border border-slate-700">
-                    <div class="text-[9px] text-slate-400">Nhiệt độ</div>
-                    <div id="visualTempValue" class="text-base font-black text-amber-300">--°C</div>
-                </div>
-                <div class="bg-slate-800/80 p-1.5 rounded-lg border border-slate-700">
-                    <div class="text-[9px] text-slate-400">Độ ẩm KK</div>
-                    <div id="visualHumValue" class="text-base font-black text-sky-300">--%</div>
-                </div>
-                <div class="bg-slate-800/80 p-1.5 rounded-lg border border-slate-700">
-                    <div class="text-[9px] text-slate-400">Ánh sáng</div>
-                    <div id="visualLuxValue" class="text-base font-black text-yellow-300">-- Lux</div>
-                </div>
-            </div>
-            <div class="text-[10px] text-slate-400">DHT22 & BH1750 · GPIO22</div>
-        </div>
+                            <!-- CỘT 1: Trái (Môi trường & Độ ẩm đất) -->
+                            <div class="flex flex-col gap-4">
+                                <!-- Nhiệt độ / Ánh sáng -->
+                               
+                            <div class="sg-env-overlay flex flex-col gap-2">
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-xs font-bold text-amber-200">
+                                        🌡️ Môi trường không khí & Ánh sáng
+                                    </span>
+                                    <span id="visualEnvState" class="text-[10px] text-white/90">
+                                        Chờ dữ liệu
+                                    </span>
+                                </div>
 
-        <!-- Độ ẩm đất -->
-        <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col justify-between gap-2 shadow-md">
-            <div class="flex flex-col gap-1">
-                <span class="text-xs font-bold text-emerald-200">🌱 Độ ẩm đất</span>
-                <span id="valSoil" class="text-[10px] text-slate-300">Chờ dữ liệu</span>
-            </div>
-            <div id="visualSoilValue" class="text-3xl font-black text-emerald-300 my-1">--%</div>
-            <div class="w-full">
-                <div class="text-[10px] text-slate-400 mb-1">Analog · GPIO34</div>
-                <div class="h-2 rounded-full bg-slate-700 overflow-hidden">
-                    <div id="visualSoilBar" class="h-full bg-emerald-400" style="width: 0%"></div>
-                </div>
-            </div>
-            <div class="text-[10px] text-slate-400 mt-1">
-                Bật ≤ <b id="visualStartTh" class="text-amber-300">--%</b> · Dừng ≥ <b id="visualStopTh" class="text-cyan-300">--%</b>
-            </div>
-        </div>
-    </div>
+                                <div class="grid grid-cols-3 gap-2 my-1 text-center">
+                                    <div class="p-1.5">
+                                        <div class="text-[10px] text-white/80">Nhiệt độ</div>
+                                        <div id="visualTempValue"
+                                            class="text-base font-black text-amber-300">
+                                            --°C
+                                        </div>
+                                    </div>
 
+                                    <div class="p-1.5">
+                                        <div class="text-[10px] text-white/80">Độ ẩm KK</div>
+                                        <div id="visualHumValue"
+                                            class="text-base font-black text-sky-300">
+                                            --%
+                                        </div>
+                                    </div>
 
-    <!-- CỘT 2: Giữa (Cảm biến mưa & Bơm 1) -->
-    <div class="flex flex-col gap-4">
-        <!-- Cảm biến mưa -->
-        <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col items-center justify-center text-center gap-3 shadow-md flex-1">
-            <span class="text-xs font-bold text-blue-200">🌧️ Cảm biến mưa</span>
-            <div id="visualRainStatus" class="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-800 text-blue-300 border border-blue-800/50">
-                Không mưa
-            </div>
-            <div id="visualRainVal" class="text-[10px] text-slate-400">Analog/Digital · Giá trị: --</div>
-        </div>
+                                    <div class="p-1.5">
+                                        <div class="text-[10px] text-white/80">Ánh sáng</div>
+                                        <div id="visualLuxValue"
+                                            class="text-base font-black text-yellow-300">
+                                            -- Lux
+                                        </div>
+                                    </div>
+                                </div>
 
-        <!-- Bơm 1 -->
-        <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col items-center justify-center text-center gap-3 shadow-md flex-1">
-            <span class="text-xs font-bold text-emerald-300">💦 Bơm 1 (Tưới cây)</span>
-            <div id="visualPump1" class="sg-pump px-6 py-2 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 shadow">
-                TẮT
-            </div>
-            <span class="text-[10px] text-slate-400">Tự động theo độ ẩm đất</span>
-        </div>
-    </div>
+                                <div class="text-[10px] text-white/80">
+                                    DHT22 & BH1750 · GPIO22
+                                </div>
+                            </div>
 
 
-    <!-- CỘT 3: Phải (Đo mực nước bồn & Bơm 2) -->
-    <div class="flex flex-col gap-4">
-        <!-- Đo mực nước bồn -->
-        <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col justify-between gap-2 shadow-md">
-            <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-sky-200">💧 Đo mực nước bồn</span>
-                <span id="visualTankState" class="text-[10px] text-slate-300">Chờ dữ liệu</span>
-            </div>
-            <div class="flex items-center gap-3 my-1">
-                <div id="visualTankValue" class="text-3xl font-black text-sky-300">--%</div>
-                <div class="text-[11px] text-slate-300">Khoảng cách: <b id="visualTankDist" class="text-white">-- cm</b></div>
-            </div>
-            <div class="w-full">
-                <div class="h-2 rounded-full bg-slate-700 overflow-hidden">
-                    <div id="visualTankBar" class="h-full bg-sky-400" style="width: 0%"></div>
-                </div>
-                <div class="text-[9px] text-slate-400 mt-1">HC-SR04 · GPIO4/16</div>
-            </div>
-        </div>
+                                <!-- Độ ẩm đất -->
+                                <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col justify-between gap-2 shadow-md">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-xs font-bold text-emerald-200">🌱 Độ ẩm đất</span>
+                                        <span id="visualSoilState" class="text-[10px] text-slate-300">Chờ dữ liệu</span>
+                                    </div>
+                                    <div id="visualSoilValue" class="text-3xl font-black text-emerald-300 my-1">--%</div>
+                                    <div class="w-full">
+                                        <div class="text-[10px] text-slate-400 mb-1">Analog · GPIO34</div>
+                                        <div class="h-2 rounded-full bg-slate-700 overflow-hidden">
+                                            <div id="visualSoilBar" class="h-full bg-emerald-400" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                    <div class="text-[10px] text-slate-400 mt-1">
+                                        Bật ≤ <b id="visualStartTh" class="text-amber-300">--%</b> · Dừng ≥ <b id="visualStopTh" class="text-cyan-300">--%</b>
+                                    </div>
+                                </div>
+                            </div>
 
-        <!-- Bơm 2 -->
-        <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col items-center justify-center text-center gap-2.5 shadow-md flex-1">
-            <span class="text-xs font-bold text-sky-300">🚰 Bơm 2 (Nạp bồn)</span>
-            <div id="visualPump2" class="sg-pump px-6 py-2 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 shadow">
-                TẮT
-            </div>
-            <div class="text-[10px] text-slate-300">
-                Mức nước bồn: <b id="visualPump2TankSub" class="text-sky-300">--%</b>
-            </div>
-        </div>
-    </div>
 
-</div>
+                            <!-- CỘT 2: Giữa (Cảm biến mưa & Bơm 1) -->
+                            <div class="flex flex-col gap-4">
+                                <!-- Cảm biến mưa -->
+                                <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col items-center justify-center text-center gap-3 shadow-md flex-1">
+                                    <span class="text-xs font-bold text-blue-200">🌧️ Cảm biến mưa</span>
+                                    <div id="visualRainStatus" class="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-800 text-blue-300 border border-blue-800/50">
+                                        Không mưa
+                                    </div>
+                                    <div id="visualRainVal" class="text-[10px] text-slate-400">Analog/Digital · Giá trị: --</div>
+                                </div>
+
+                                <!-- Bơm 1 -->
+                                <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col items-center justify-center text-center gap-3 shadow-md flex-1">
+                                    <span class="text-xs font-bold text-emerald-300">💦 Bơm 1 (Tưới cây)</span>
+                                    <div id="visualPump1" class="sg-pump px-6 py-2 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 shadow">
+                                        TẮT
+                                    </div>
+                                    <span class="text-[10px] text-slate-400">Tự động theo độ ẩm đất</span>
+                                </div>
+                            </div>
+
+
+                            <!-- CỘT 3: Phải (Đo mực nước bồn & Bơm 2) -->
+                            <div class="flex flex-col gap-4">
+                                <!-- Đo mực nước bồn -->
+                                <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col justify-between gap-2 shadow-md">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs font-bold text-sky-200">💧 Đo mực nước bồn</span>
+                                        <span id="visualTankState" class="text-[10px] text-slate-300">Chờ dữ liệu</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 my-1">
+                                        <div id="visualTankValue" class="text-3xl font-black text-sky-300">--%</div>
+                                        <div class="text-[11px] text-slate-300">Khoảng cách: <b id="visualTankDist" class="text-white">-- cm</b></div>
+                                    </div>
+                                    <div class="w-full">
+                                        <div class="h-2 rounded-full bg-slate-700 overflow-hidden">
+                                            <div id="visualTankBar" class="h-full bg-sky-400" style="width: 0%"></div>
+                                        </div>
+                                        <div class="text-[9px] text-slate-400 mt-1">HC-SR04 · GPIO4/16</div>
+                                    </div>
+                                </div>
+
+                                <!-- Bơm 2 -->
+                                <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col items-center justify-center text-center gap-2.5 shadow-md flex-1">
+                                    <span class="text-xs font-bold text-sky-300">🚰 Bơm 2 (Nạp bồn)</span>
+                                    <div id="visualPump2" class="sg-pump px-6 py-2 rounded-full text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 shadow">
+                                        TẮT
+                                    </div>
+                                    <div class="text-[10px] text-slate-300">
+                                        Mức nước bồn: <b id="visualPump2TankSub" class="text-sky-300">--%</b>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
                                 <!--div class="flex flex-col gap-1">
                                     <span class="text-xs font-bold text-emerald-200">🌱 Độ ẩm đất</span>
                                     <span id="visualSoilState" class="text-[10px] text-slate-300">Chờ dữ liệu</span>
@@ -989,7 +1052,7 @@ header select#selectPlant { min-width: 145px; }
             <div class="space-y-2.5 text-xs">
                 <div>
                     <label class="block text-[10px] text-slate-400 mb-1">Adafruit IO Username</label>
-                    <input id="cfgUsername" type="text" placeholder="VD: luan_smart"
+                    <input id="cfgUsername" type="text" value="ZenoAdmin" placeholder="ZenoAdmin"
                       class="w-full bg-slate-900 px-3 py-1.5 rounded border border-slate-700 text-xs focus:outline-none focus:border-emerald-500">
                 </div>
                 <div>
@@ -1483,13 +1546,44 @@ header select#selectPlant { min-width: 145px; }
 
         function handleIncomingMessage(topic, payload) {
             try {
-                const data = JSON.parse(payload);
-                if (topic.includes(`${feedPrefix}-status`)) {
-                    updateDashboardUI(data);
-                    syncPlantFromEsp32(data);
-                }
+                // ESP32 publish_status() gửi JSON lên: <username>/feeds/smartgarden-status
+                const statusTopic = `${aioUsername}/feeds/${feedPrefix}-status`;
+                if (topic !== statusTopic) return;
+                const raw = JSON.parse(payload);
+                if (!raw || typeof raw !== "object" || Array.isArray(raw)) return;
+
+                // Chuẩn hóa kiểu dữ liệu vì ESP32 gửi các cờ trạng thái dưới dạng 0/1.
+                const num = (v, fallback = NaN) => {
+                    const n = Number(v);
+                    return Number.isFinite(n) ? n : fallback;
+                };
+                const flag = v => v === true || v === 1 || v === "1" || String(v).toLowerCase() === "true";
+                const data = {
+                    ...raw,
+                    mode: String(raw.mode || "auto").toLowerCase(),
+                    soil_moisture: num(raw.soil_moisture, 0),
+                    light_percent: num(raw.light_percent, 0),
+                    temperature_c: num(raw.temperature_c, 0),
+                    humidity_percent: num(raw.humidity_percent, 0),
+                    tank_percent: num(raw.tank_percent, 0),
+                    tank_distance_cm: num(raw.tank_distance_cm, NaN),
+                    fuzzy_pwm: num(raw.fuzzy_pwm, 0),
+                    dht11_valid: flag(raw.dht11_valid),
+                    light_valid: flag(raw.light_valid),
+                    tank_valid: flag(raw.tank_valid),
+                    rain: flag(raw.rain),
+                    pump1: flag(raw.pump1),
+                    pump2: flag(raw.pump2),
+                    emergency: flag(raw.emergency),
+                    pump1_timeout: flag(raw.pump1_timeout),
+                    pump2_timeout: flag(raw.pump2_timeout)
+                };
+                updateDashboardUI(data);
+                syncPlantFromEsp32(data);
+                const receivedAt = document.getElementById('lastUpdateTime');
+                if (receivedAt) receivedAt.textContent = 'Cập nhật: ' + new Date().toLocaleTimeString('vi-VN');
             } catch(e) {
-                console.error("Lỗi parse JSON MQTT:", topic, e);
+                console.error("Lỗi parse JSON MQTT:", topic, e, payload);
             }
         }
 
@@ -1502,7 +1596,7 @@ header select#selectPlant { min-width: 145px; }
             else { soilBadge.textContent = "OK"; soilBadge.className = "text-[9px] px-1 rounded bg-emerald-900 text-emerald-200"; }
 
             // 2. DHT11
-            document.getElementById('valTemp').textContent = d.temperature_c.toFixed(1) + "°C";
+            document.getElementById('valTemp').textContent = (Number.isFinite(Number(d.temperature_c)) ? Number(d.temperature_c).toFixed(1) : '--') + "°C";
             document.getElementById('valHum').textContent = d.humidity_percent + "%";
             let dhtBadge = document.getElementById('badgeDht');
             dhtBadge.textContent = (d.dht11_valid === true || d.dht11_valid === 1) ? "OK" : "ERR";
@@ -1515,7 +1609,7 @@ header select#selectPlant { min-width: 145px; }
 
             // 4. Tank
             document.getElementById('valTank').textContent = d.tank_percent + "%";
-            document.getElementById('valTankDist').textContent = d.tank_distance_cm.toFixed(1) + " cm";
+            document.getElementById('valTankDist').textContent = (Number.isFinite(Number(d.tank_distance_cm)) ? Number(d.tank_distance_cm).toFixed(1) : '--') + " cm";
 
             // Cập nhật minh họa trực quan bằng đúng dữ liệu ESP32 gửi qua MQTT.
             const soil = Number(d.soil_moisture);
@@ -2010,3 +2104,31 @@ main>.contents>div:first-child{display:flex!important;width:100%!important;max-w
  setTimeout(placeHcsr04,300);
 })();
 </script>
+
+<style id="sg-pump2-near-blue-pump-fix">
+/* Nhãn và nút Bơm 2 đặt ngay phía trên/bên phải mô-tơ xanh dương, tương tự cách đặt Bơm 1. */
+#visualMonitorScene .sg-scene-layout-fixed > .grid > div > div:has(#visualPump2) {
+  position: absolute !important;
+  left: 53% !important;
+  right: auto !important;
+  bottom: 10% !important;
+  width: 20% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  transform: none !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  text-align: center !important;
+}
+@media (max-width: 760px) {
+  #visualMonitorScene .sg-scene-layout-fixed > .grid > div > div:has(#visualPump2) {
+    left: 48% !important;
+    right: auto !important;
+    bottom: 8% !important;
+    width: 30% !important;
+  }
+}
+</style>
