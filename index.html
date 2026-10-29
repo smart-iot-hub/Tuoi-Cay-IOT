@@ -1622,96 +1622,96 @@ header select#selectPlant { min-width: 145px; }
         }
         function updateDashboardUI(d) {
             // 1. Soil
-            document.getElementById('valSoil').textContent = d.soil_moisture + "%";
-            let soilBadge = document.getElementById('badgeSoil');
+            safeDashboardElement('valSoil').textContent = d.soil_moisture + "%";
+            let soilBadge = safeDashboardElement('badgeSoil');
             if (d.soil_moisture <= 30) { soilBadge.textContent = "KHÔ"; soilBadge.className = "text-[9px] px-1 rounded bg-amber-900 text-amber-200"; }
             else if (d.soil_moisture >= 45) { soilBadge.textContent = "ẨM"; soilBadge.className = "text-[9px] px-1 rounded bg-blue-900 text-blue-200"; }
             else { soilBadge.textContent = "OK"; soilBadge.className = "text-[9px] px-1 rounded bg-emerald-900 text-emerald-200"; }
 
             // 2. DHT11
-            document.getElementById('valTemp').textContent = (Number.isFinite(Number(d.temperature_c)) ? Number(d.temperature_c).toFixed(1) : '--') + "°C";
-            document.getElementById('valHum').textContent = d.humidity_percent + "%";
-            let dhtBadge = document.getElementById('badgeDht');
+            safeDashboardElement('valTemp').textContent = (Number.isFinite(Number(d.temperature_c)) ? Number(d.temperature_c).toFixed(1) : '--') + "°C";
+            safeDashboardElement('valHum').textContent = d.humidity_percent + "%";
+            let dhtBadge = safeDashboardElement('badgeDht');
             dhtBadge.textContent = (d.dht11_valid === true || d.dht11_valid === 1) ? "OK" : "ERR";
             dhtBadge.className = (d.dht11_valid === true || d.dht11_valid === 1) ? "text-[9px] px-1 rounded bg-emerald-900 text-emerald-200" : "text-[9px] px-1 rounded bg-rose-900 text-rose-200";
 
             // 3. Light
-            document.getElementById('valLight').textContent = d.light_percent + "%";
-            let lightBadge = document.getElementById('badgeLight');
+            safeDashboardElement('valLight').textContent = d.light_percent + "%";
+            let lightBadge = safeDashboardElement('badgeLight');
             lightBadge.textContent = d.light_percent < 30 ? "YẾU" : (d.light_percent > 70 ? "NẮNG" : "VỪA");
 
             // 4. Tank
-            document.getElementById('valTank').textContent = d.tank_percent + "%";
-            document.getElementById('valTankDist').textContent = (Number.isFinite(Number(d.tank_distance_cm)) ? Number(d.tank_distance_cm).toFixed(1) : '--') + " cm";
+            safeDashboardElement('valTank').textContent = d.tank_percent + "%";
+            safeDashboardElement('valTankDist').textContent = (Number.isFinite(Number(d.tank_distance_cm)) ? Number(d.tank_distance_cm).toFixed(1) : '--') + " cm";
 
             // Cập nhật minh họa trực quan bằng đúng dữ liệu ESP32 gửi qua MQTT.
             const soil = Number(d.soil_moisture);
             const tank = Number(d.tank_percent);
             const activeProfile = getSelectedPlantProfile();
-            document.getElementById('visualStartTh').textContent = activeProfile.start + '%';
-            document.getElementById('visualStopTh').textContent = activeProfile.stop + '%';
-            const wateringHint = document.getElementById('visualWateringHint'); if (wateringHint) wateringHint.textContent = `Ngưỡng ${activeProfile.start}%–${activeProfile.stop}% · ${activeProfile.label || activeProfile.name || activeProfile.value}`;
+            safeDashboardElement('visualStartTh').textContent = activeProfile.start + '%';
+            safeDashboardElement('visualStopTh').textContent = activeProfile.stop + '%';
+            const wateringHint = safeDashboardElement('visualWateringHint'); if (wateringHint) wateringHint.textContent = `Ngưỡng ${activeProfile.start}%–${activeProfile.stop}% · ${activeProfile.label || activeProfile.name || activeProfile.value}`;
             if (Number.isFinite(soil)) {
                 const soilPct = Math.max(0, Math.min(100, soil));
-                document.getElementById('visualSoilValue').textContent = soilPct + "%";
-                document.getElementById('visualSoilBar').style.width = soilPct + "%";
-                const soilFill = document.getElementById('visualSoilFill'); if (soilFill) soilFill.style.width = soilPct + "%";
-                document.getElementById('visualSoilState').textContent = soilPct <= Number(getSelectedPlantProfile().start) ? "Cần tưới" : (soilPct >= Number(getSelectedPlantProfile().stop) ? "Đủ ẩm" : "Đang ổn định");
-                const soilAdc = document.getElementById('visualSoilAdc'); if (soilAdc) soilAdc.textContent = Number.isFinite(Number(d.soil_adc)) ? d.soil_adc : (Number.isFinite(Number(d.soil_raw)) ? d.soil_raw : "Chưa gửi");
+                safeDashboardElement('visualSoilValue').textContent = soilPct + "%";
+                safeDashboardElement('visualSoilBar').style.width = soilPct + "%";
+                const soilFill = safeDashboardElement('visualSoilFill'); if (soilFill) soilFill.style.width = soilPct + "%";
+                safeDashboardElement('visualSoilState').textContent = soilPct <= Number(getSelectedPlantProfile().start) ? "Cần tưới" : (soilPct >= Number(getSelectedPlantProfile().stop) ? "Đủ ẩm" : "Đang ổn định");
+                const soilAdc = safeDashboardElement('visualSoilAdc'); if (soilAdc) soilAdc.textContent = Number.isFinite(Number(d.soil_adc)) ? d.soil_adc : (Number.isFinite(Number(d.soil_raw)) ? d.soil_raw : "Chưa gửi");
             }
             if (Number.isFinite(tank)) {
                 const tankPct = Math.max(0, Math.min(100, tank));
-                document.getElementById('visualTankValue').textContent = tankPct + "%";
-                document.getElementById('visualTankBar').style.width = tankPct + "%";
-                const tankFill = document.getElementById('visualTankFill'); if (tankFill) tankFill.style.height = tankPct + "%";
-                document.getElementById('visualTankState').textContent = tankPct <= 20 ? "Nước thấp" : (tankPct >= 90 ? "Gần đầy" : "Mức nước ổn định");
+                safeDashboardElement('visualTankValue').textContent = tankPct + "%";
+                safeDashboardElement('visualTankBar').style.width = tankPct + "%";
+                const tankFill = safeDashboardElement('visualTankFill'); if (tankFill) tankFill.style.height = tankPct + "%";
+                safeDashboardElement('visualTankState').textContent = tankPct <= 20 ? "Nước thấp" : (tankPct >= 90 ? "Gần đầy" : "Mức nước ổn định");
             }
-            document.getElementById('visualTankDist').textContent = Number.isFinite(Number(d.tank_distance_cm)) ? Number(d.tank_distance_cm).toFixed(1) + " cm" : "-- cm";
-            document.getElementById('visualPump1').textContent = d.pump1 ? "Bơm 1 · ĐANG CHẠY" : "Bơm 1 · TẮT";
-            document.getElementById('visualPump1').style.borderColor = d.pump1 ? '#34d399' : '#38bdf8';
-            document.getElementById('visualPump2').textContent = d.pump2 ? "Bơm 2 · ĐANG CHẠY" : "Bơm 2 · TẮT";
-            document.getElementById('visualPump2').style.borderColor = d.pump2 ? '#34d399' : '#38bdf8';
-            const pump1Status = document.getElementById('visualPump1Status'); if (pump1Status) pump1Status.textContent = d.pump1 ? "ĐANG CHẠY" : "TẮT";
+            safeDashboardElement('visualTankDist').textContent = Number.isFinite(Number(d.tank_distance_cm)) ? Number(d.tank_distance_cm).toFixed(1) + " cm" : "-- cm";
+            safeDashboardElement('visualPump1').textContent = d.pump1 ? "Bơm 1 · ĐANG CHẠY" : "Bơm 1 · TẮT";
+            safeDashboardElement('visualPump1').style.borderColor = d.pump1 ? '#34d399' : '#38bdf8';
+            safeDashboardElement('visualPump2').textContent = d.pump2 ? "Bơm 2 · ĐANG CHẠY" : "Bơm 2 · TẮT";
+            safeDashboardElement('visualPump2').style.borderColor = d.pump2 ? '#34d399' : '#38bdf8';
+            const pump1Status = safeDashboardElement('visualPump1Status'); if (pump1Status) pump1Status.textContent = d.pump1 ? "ĐANG CHẠY" : "TẮT";
 
             // Đồng bộ các nhãn cảm biến trong khu vực giám sát trực quan.
-            const envState = document.getElementById('visualEnvState');
+            const envState = safeDashboardElement('visualEnvState');
             if (envState) envState.textContent = (d.dht11_valid === true || d.dht11_valid === 1) ? 'Cảm biến không khí hoạt động' : 'Kiểm tra cảm biến DHT';
-            const tempView = document.getElementById('visualTempValue'); if (tempView && Number.isFinite(Number(d.temperature_c))) tempView.textContent = Number(d.temperature_c).toFixed(1) + '°C';
-            const humView = document.getElementById('visualHumValue'); if (humView && Number.isFinite(Number(d.humidity_percent))) humView.textContent = Number(d.humidity_percent) + '%';
-            const luxView = document.getElementById('visualLuxValue'); if (luxView && Number.isFinite(Number(d.light_lux))) luxView.textContent = Number(d.light_lux).toFixed(0) + ' Lux';
-            const rainView = document.getElementById('visualRainStatus');
-            const rainValue = document.getElementById('visualRainVal');
+            const tempView = safeDashboardElement('visualTempValue'); if (tempView && Number.isFinite(Number(d.temperature_c))) tempView.textContent = Number(d.temperature_c).toFixed(1) + '°C';
+            const humView = safeDashboardElement('visualHumValue'); if (humView && Number.isFinite(Number(d.humidity_percent))) humView.textContent = Number(d.humidity_percent) + '%';
+            const luxView = safeDashboardElement('visualLuxValue'); if (luxView && Number.isFinite(Number(d.light_lux))) luxView.textContent = Number(d.light_lux).toFixed(0) + ' Lux';
+            const rainView = safeDashboardElement('visualRainStatus');
+            const rainValue = safeDashboardElement('visualRainVal');
             const isRaining = d.rain === true || d.rain === 1 || d.rain === '1';
             if (rainView) { rainView.textContent = isRaining ? 'ĐANG MƯA 🌧️' : 'KHÔ RÁO ☀️'; rainView.className = 'px-4 py-1.5 rounded-full text-xs font-bold border ' + (isRaining ? 'bg-blue-950 text-blue-200 border-blue-500' : 'bg-slate-800 text-blue-300 border-blue-800/50'); }
             if (rainValue) rainValue.textContent = 'Giá trị: ' + (d.rain_value ?? d.rain_adc ?? d.rain_digital ?? '--');
-            const pump2Sub = document.getElementById('visualPump2TankSub'); if (pump2Sub && Number.isFinite(tank)) pump2Sub.textContent = Math.max(0, Math.min(100, tank)) + '%';
+            const pump2Sub = safeDashboardElement('visualPump2TankSub'); if (pump2Sub && Number.isFinite(tank)) pump2Sub.textContent = Math.max(0, Math.min(100, tank)) + '%';
 
             // 5. Rain
-            let rainEl = document.getElementById('valRain');
+            let rainEl = safeDashboardElement('valRain');
             if (rainEl) rainEl.textContent = isRaining ? 'ĐANG MƯA 🌧️' : 'KHÔ RÁO ☀️';
 
             // Mode & Pumps
-            let isManual = (d.mode === "manual");
-            document.getElementById('lblMode').textContent = d.mode.toUpperCase();
-            document.getElementById('btnAuto').className = isManual ? "text-slate-400 py-1.5 rounded font-bold text-xs transition" : "bg-blue-600 text-white py-1.5 rounded font-bold text-xs transition shadow";
-            document.getElementById('btnManual').className = isManual ? "bg-amber-600 text-white py-1.5 rounded font-bold text-xs transition shadow" : "text-slate-400 py-1.5 rounded font-bold text-xs transition";
+            let isManual = (String(d.mode || "auto").toLowerCase() === "manual");
+            safeDashboardElement('lblMode').textContent = d.mode.toUpperCase();
+            safeDashboardElement('btnAuto').className = isManual ? "text-slate-400 py-1.5 rounded font-bold text-xs transition" : "bg-blue-600 text-white py-1.5 rounded font-bold text-xs transition shadow";
+            safeDashboardElement('btnManual').className = isManual ? "bg-amber-600 text-white py-1.5 rounded font-bold text-xs transition shadow" : "text-slate-400 py-1.5 rounded font-bold text-xs transition";
 
-            let p1Btn = document.getElementById('btnPump1');
-            let p2Btn = document.getElementById('btnPump2');
+            let p1Btn = safeDashboardElement('btnPump1');
+            let p2Btn = safeDashboardElement('btnPump2');
             p1Btn.disabled = !isManual;
             p2Btn.disabled = !isManual;
             
-            document.getElementById('statusPump1').textContent = d.pump1 ? "Trạng thái: CHẠY (ON)" : "Trạng thái: TẮT (OFF)";
-            document.getElementById('statusPump1').className = d.pump1 ? "text-[10px] text-emerald-400 font-bold" : "text-[10px] text-slate-400";
+            safeDashboardElement('statusPump1').textContent = d.pump1 ? "Trạng thái: CHẠY (ON)" : "Trạng thái: TẮT (OFF)";
+            safeDashboardElement('statusPump1').className = d.pump1 ? "text-[10px] text-emerald-400 font-bold" : "text-[10px] text-slate-400";
             p1Btn.textContent = d.pump1 ? "TẮT P1" : "BẬT P1";
             p1Btn.className = isManual ? (d.pump1 ? "bg-rose-600 text-white px-3 py-1 rounded font-bold text-[10px]" : "bg-emerald-600 text-white px-3 py-1 rounded font-bold text-[10px]") : "bg-slate-700 text-slate-500 px-3 py-1 rounded font-bold text-[10px]";
 
-            document.getElementById('statusPump2').textContent = d.pump2 ? "Trạng thái: CHẠY (ON)" : "Trạng thái: TẮT (OFF)";
-            document.getElementById('statusPump2').className = d.pump2 ? "text-[10px] text-emerald-400 font-bold" : "text-[10px] text-slate-400";
+            safeDashboardElement('statusPump2').textContent = d.pump2 ? "Trạng thái: CHẠY (ON)" : "Trạng thái: TẮT (OFF)";
+            safeDashboardElement('statusPump2').className = d.pump2 ? "text-[10px] text-emerald-400 font-bold" : "text-[10px] text-slate-400";
             p2Btn.textContent = d.pump2 ? "TẮT P2" : "BẬT P2";
             p2Btn.className = isManual ? (d.pump2 ? "bg-rose-600 text-white px-3 py-1 rounded font-bold text-[10px]" : "bg-emerald-600 text-white px-3 py-1 rounded font-bold text-[10px]") : "bg-slate-700 text-slate-500 px-3 py-1 rounded font-bold text-[10px]";
 
-            let emergencyBanner = document.getElementById('emergencyBanner');
+            let emergencyBanner = safeDashboardElement('emergencyBanner');
             if (d.emergency || d.pump1_timeout || d.pump2_timeout) {
                 emergencyBanner.classList.remove('hidden');
             } else {
@@ -1722,16 +1722,17 @@ header select#selectPlant { min-width: 145px; }
             const isSoilValid = d.soil_moisture >= 0 && d.soil_moisture <= 100;
             const isRainValid = (d.rain === 0 || d.rain === 1 || d.rain === true || d.rain === false);
             
-            document.getElementById('diagTimeout1').innerHTML = `P1 Timeout: <span class="font-bold ${d.pump1_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump1_timeout ? 'LỖI' : 'OK'}</span>`;
-            document.getElementById('diagTimeout2').innerHTML = `P2 Timeout: <span class="font-bold ${d.pump2_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump2_timeout ? 'LỖI' : 'OK'}</span>`;
-            document.getElementById('diagTank').innerHTML = `Bồn: <span class="font-bold ${d.tank_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.tank_valid ? 'OK' : 'Lỗi'}</span>`;
-            document.getElementById('diagDht').innerHTML = `DHT: <span class="font-bold ${d.dht11_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.dht11_valid ? 'OK' : 'Lỗi'}</span>`;
-            document.getElementById('diagSoil').innerHTML = `Đất: <span class="font-bold ${isSoilValid ? 'text-emerald-400' : 'text-rose-500'}">${isSoilValid ? 'OK' : 'Lỗi'}</span>`;
-            document.getElementById('diagRain').innerHTML = `Mưa: <span class="font-bold ${isRainValid ? 'text-emerald-400' : 'text-rose-500'}">${isRainValid ? 'OK' : 'Lỗi'}</span>`;
+            safeDashboardElement('diagTimeout1').innerHTML = `P1 Timeout: <span class="font-bold ${d.pump1_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump1_timeout ? 'LỖI' : 'OK'}</span>`;
+            safeDashboardElement('diagTimeout2').innerHTML = `P2 Timeout: <span class="font-bold ${d.pump2_timeout ? 'text-rose-500' : 'text-emerald-400'}">${d.pump2_timeout ? 'LỖI' : 'OK'}</span>`;
+            safeDashboardElement('diagTank').innerHTML = `Bồn: <span class="font-bold ${d.tank_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.tank_valid ? 'OK' : 'Lỗi'}</span>`;
+            safeDashboardElement('diagDht').innerHTML = `DHT: <span class="font-bold ${d.dht11_valid ? 'text-emerald-400' : 'text-rose-500'}">${d.dht11_valid ? 'OK' : 'Lỗi'}</span>`;
+            safeDashboardElement('diagSoil').innerHTML = `Đất: <span class="font-bold ${isSoilValid ? 'text-emerald-400' : 'text-rose-500'}">${isSoilValid ? 'OK' : 'Lỗi'}</span>`;
+            safeDashboardElement('diagRain').innerHTML = `Mưa: <span class="font-bold ${isRainValid ? 'text-emerald-400' : 'text-rose-500'}">${isRainValid ? 'OK' : 'Lỗi'}</span>`;
 
             // Cập nhật hai biểu đồ độc lập; ngưỡng lấy từ hồ sơ cây đang chọn
             const timeNow = new Date().toLocaleTimeString();
             const profile = (typeof getSelectedPlantProfile === 'function') ? getSelectedPlantProfile() : {start: 35, stop: 60};
+            if (typeof soilChart !== 'undefined' && soilChart && soilChart.data && soilChart.data.labels && soilChart.data.datasets) {
             if (soilChart.data.labels.length >= 20) {
                 soilChart.data.labels.shift();
                 soilChart.data.datasets.forEach(dataset => dataset.data.shift());
@@ -1741,6 +1742,8 @@ header select#selectPlant { min-width: 145px; }
             soilChart.data.datasets[1].data.push(Number(profile.start));
             soilChart.data.datasets[2].data.push(Number(profile.stop));
             soilChart.update();
+            }
+            if (typeof tankChart !== 'undefined' && tankChart && tankChart.data && tankChart.data.labels && tankChart.data.datasets) {
             if (tankChart.data.labels.length >= 20) {
                 tankChart.data.labels.shift();
                 tankChart.data.datasets.forEach(dataset => dataset.data.shift());
@@ -1748,6 +1751,7 @@ header select#selectPlant { min-width: 145px; }
             tankChart.data.labels.push(timeNow);
             tankChart.data.datasets[0].data.push(Number.isFinite(Number(d.tank_percent)) ? Number(d.tank_percent) : null);
             tankChart.update();
+            }
         }
 
         function setMode(mode) {
