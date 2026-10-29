@@ -67,6 +67,28 @@ main>.grid:last-child>div:last-child>div:first-child h2{font-size:16px!important
 .sg-scene-foot{display:flex;gap:10px;align-items:center;justify-content:center;padding-top:8px;color:#d1e7f2;font-size:11px}
 #visualSoilValue,#visualTankValue{font-size:30px!important}
 #visualSoilFill{border-radius:4px}
+/* Fix trạng thái đất bị cắt/hiện một phần dưới số độ ẩm */
+/* Fix: trạng thái đất bị cắt giữa tiêu đề và phần trăm */
+#visualMonitorScene #visualSoilState{
+    display: inline-flex !important; min-height: 20px; height: auto !important; line-height: 1.25 !important; overflow: visible !important; white-space: normal; align-items: center; padding-top: 2px; padding-bottom: 2px;
+  display:block!important; flex:0 0 auto!important; align-self:stretch!important;
+  box-sizing:border-box!important; width:100%!important; min-width:0!important;
+  height:auto!important; min-height:22px!important; max-height:none!important;
+  padding:3px 0!important; margin:0!important;
+  line-height:1.5!important; white-space:normal!important;
+  overflow:visible!important; text-overflow:clip!important; overflow-wrap:normal!important;
+  word-break:normal!important; font-size:11px!important; font-weight:600!important;
+  position:relative!important; z-index:5!important; transform:none!important;
+}
+#visualMonitorScene #valSoil{
+  display:block!important; flex:0 0 auto!important; height:auto!important; max-height:none!important;
+  line-height:1.15!important; overflow:visible!important; margin-top:2px!important; margin-bottom:3px!important;
+}
+#visualMonitorScene .p-3\.5.bg-slate-900\/70.rounded-xl.border-slate-700\/80{
+  min-height:0!important; height:auto!important; overflow:visible!important;
+  justify-content:flex-start!important; gap:7px!important;
+}
+#visualMonitorScene #valSoilAdc,#visualMonitorScene #visualStartTh,#visualMonitorScene #visualStopTh{line-height:1.5!important}
 #sensorChart{min-height:220px}
 #diagTimeout1,#diagTimeout2,#diagTank,#diagDht,#diagSoil,#diagRain{padding:8px 5px!important;border-radius:8px!important;background:#0b192c!important}
 button{transition:filter .15s ease,transform .15s ease,background-color .15s ease}button:not(:disabled):hover{filter:brightness(1.12)}button:not(:disabled):active{transform:translateY(1px)}button:disabled{opacity:.48;cursor:not-allowed}
@@ -728,6 +750,51 @@ header select#selectPlant { min-width: 145px; }
 }
 </style>
 
+<style>
+
+/* FIX v3: giữ trọn dòng trạng thái đất, không để chữ bị cắt ngang */
+#visualMonitorScene #visualSoilState,
+#visualMonitorScene span#visualSoilState {
+  display: block !important;
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 26px !important;
+  max-height: none !important;
+  padding: 4px 0 5px !important;
+  margin: 2px 0 4px !important;
+  line-height: 18px !important;
+  font-size: 11px !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  clip: auto !important;
+  clip-path: none !important;
+  text-overflow: clip !important;
+  z-index: 20 !important;
+}
+#visualMonitorScene #valSoil {
+  position: relative !important;
+  z-index: 1 !important;
+  margin-top: 3px !important;
+  margin-bottom: 5px !important;
+  line-height: 1.2 !important;
+}
+#visualMonitorScene .p-3\.5.bg-slate-900\/70.rounded-xl.border-slate-700\/80 {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  padding-top: 12px !important;
+  padding-bottom: 12px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: visible !important;
+}
+
+</style>
 </head>
 <body class="h-screen w-screen overflow-hidden bg-slate-900 text-slate-100 font-sans flex flex-col">
 
@@ -891,13 +958,13 @@ header select#selectPlant { min-width: 145px; }
                                 <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col justify-between gap-2 shadow-md">
                                     <div class="flex flex-col gap-1">
                                         <span class="text-xs font-bold text-emerald-200">🌱 Độ ẩm đất</span>
-                                        <span id="visualSoilState" class="text-[10px] text-slate-300">Chờ dữ liệu</span>
+                                        <span id="visualSoilState" class="inline-flex items-center min-h-[20px] leading-5 text-[11px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-200 whitespace-normal overflow-visible">Chờ dữ liệu</span>
                                     </div>
                                     <div id="valSoil" class="text-3xl font-black text-emerald-300 my-1">--%</div>
                                     <div class="w-full">
                                         <!--div class="text-[10px] text-slate-400 mb-1">Analog · GPIO34</div-->
                                         <div class="h-2 rounded-full bg-slate-700 overflow-hidden">
-                                            <div id="badgeSoil" class="h-full bg-emerald-400" style="width: 0%"></div>
+                                            <div id="soilProgressBar" class="h-full bg-emerald-400 transition-all duration-300" style="width: 0%"></div>
                                         </div>
                                     </div>
                                     <div class="text-[10px] text-slate-400 mt-1">
@@ -1211,14 +1278,18 @@ header select#selectPlant { min-width: 145px; }
             const title = document.getElementById("selectedPlantTitle");
             if (title) title.textContent = p.label || p.name || p.value;
             updateEditPlantButton();
-            if (sendCommand) {
-                if (isConnected) {
-                    // Firmware nhận định dạng ACTION|NAME|START|STOP.
-                    publishAioCommand("plant-config", `SELECT|${p.value}|${p.start}|${p.stop}`);
-                } else {
-                    showToast("Đã đổi lựa chọn trên web, nhưng chưa gửi ESP32 vì MQTT chưa kết nối.", "error");
-                }
+            if (!sendCommand) return;
+
+            if (!isConnected || !mqttClient) {
+                showToast("Đã đổi cây trên web nhưng CHƯA gửi ESP32: hãy kết nối MQTT trước.", "error");
+                return;
             }
+
+            // Dùng đúng tên profile mà firmware lưu, không gửi label có dấu hoặc ID option.
+            const firmwareName = String(p.name || p.value).trim().replace(/[|\r\n]/g, " ").slice(0, 23);
+            const payload = `SELECT|${firmwareName}|${Number(p.start)}|${Number(p.stop)}`;
+            console.info("[AIO plant select] topic=smartgarden-plant-config payload=", payload);
+            publishAioCommand("plant-config", payload);
         }
 
         function openAddPlantModal() {
@@ -1637,12 +1708,27 @@ header select#selectPlant { min-width: 145px; }
             const soilValid = Number.isFinite(Number(d.soil_moisture)) && Number(d.soil_moisture) >= 0 && Number(d.soil_moisture) <= 100;
             safeDashboardElement('valSoil').textContent = soilValid ? Number(d.soil_moisture) + "%" : "--%";
             const soilBadge = safeDashboardElement('badgeSoil');
-            if (!soilValid) { soilBadge.textContent = "CHƯA CÓ DỮ LIỆU"; soilBadge.className = "text-[9px] px-1 rounded bg-slate-700 text-slate-300"; }
-            else if (d.soil_moisture <= 30) { soilBadge.textContent = "KHÔ"; soilBadge.className = "text-[9px] px-1 rounded bg-amber-900 text-amber-200"; }
-            else if (d.soil_moisture >= 45) { soilBadge.textContent = "ẨM"; soilBadge.className = "text-[9px] px-1 rounded bg-blue-900 text-blue-200"; }
-            else { soilBadge.textContent = "OK"; soilBadge.className = "text-[9px] px-1 rounded bg-emerald-900 text-emerald-200"; }
+            if (soilBadge) {
+                if (!soilValid) { soilBadge.textContent = "CHƯA CÓ DỮ LIỆU"; soilBadge.className = "text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300"; }
+                else if (d.soil_moisture <= 30) { soilBadge.textContent = "KHÔ"; soilBadge.className = "text-[9px] px-1.5 py-0.5 rounded bg-amber-900 text-amber-200"; }
+                else if (d.soil_moisture >= 45) { soilBadge.textContent = "ẨM"; soilBadge.className = "text-[9px] px-1.5 py-0.5 rounded bg-blue-900 text-blue-200"; }
+                else { soilBadge.textContent = "OK"; soilBadge.className = "text-[9px] px-1.5 py-0.5 rounded bg-emerald-900 text-emerald-200"; }
+            }
+            const soilStateEl = safeDashboardElement('visualSoilState');
+            if (soilStateEl) {
+                const soilStateText = !soilValid ? "Chưa có dữ liệu" : (Number(d.soil_moisture) <= 30 ? "Đất khô · cần tưới" : (Number(d.soil_moisture) >= 45 ? "Đất ẩm" : "Độ ẩm ổn định"));
+                soilStateEl.textContent = soilStateText;
+                soilStateEl.style.minHeight = '20px';
+                soilStateEl.style.height = 'auto';
+                soilStateEl.style.lineHeight = '1.25';
+                soilStateEl.style.display = 'inline-flex';
+                soilStateEl.style.alignItems = 'center';
+                soilStateEl.style.overflow = 'visible';
+            }
+            const soilBar = safeDashboardElement('soilProgressBar');
+            if (soilBar) soilBar.style.width = soilValid ? `${Math.max(0, Math.min(100, Number(d.soil_moisture)))}%` : '0%';
             const soilAdcEl = safeDashboardElement('valSoilAdc');
-            if (soilAdcEl) soilAdcEl.textContent = Number.isFinite(d.soil_adc) ? String(d.soil_adc) : "Firmware chưa gửi";
+            if (soilAdcEl) soilAdcEl.textContent = Number.isFinite(d.soil_adc) && d.soil_adc >= 0 ? String(d.soil_adc) : "Chưa có dữ liệu";
 
             // 2. DHT11
             safeDashboardElement('valTemp').textContent = (Number.isFinite(Number(d.temperature_c)) ? Number(d.temperature_c).toFixed(1) : '--') + "°C";
@@ -1657,7 +1743,7 @@ header select#selectPlant { min-width: 145px; }
             const lightBadge = safeDashboardElement('badgeLight');
             lightBadge.textContent = !lightValid ? "Độ sáng: lỗi/chưa có dữ liệu" : (d.light_percent < 30 ? "Độ sáng: YẾU" : (d.light_percent > 70 ? "Độ sáng: MẠNH" : "Độ sáng: VỪA"));
             const luxEl = safeDashboardElement('valLux');
-            if (luxEl) luxEl.textContent = Number.isFinite(d.light_lux) ? "Ánh sáng: " + d.light_lux.toFixed(1) + " Lux" : "Ánh sáng: Chưa có dữ liệu Lux";
+            if (luxEl) luxEl.textContent = Number.isFinite(d.light_lux) && d.light_lux >= 0 ? "Ánh sáng: " + d.light_lux.toFixed(1) + " Lux (ước tính)" : "Ánh sáng: Chưa có dữ liệu Lux";
 
             // 4. Tank
             safeDashboardElement('valTank').textContent = d.tank_valid && Number.isFinite(d.tank_percent) ? d.tank_percent + "%" : "--%";
@@ -1676,7 +1762,7 @@ header select#selectPlant { min-width: 145px; }
                 safeDashboardElement('visualSoilBar').style.width = soilPct + "%";
                 const soilFill = safeDashboardElement('visualSoilFill'); if (soilFill) soilFill.style.width = soilPct + "%";
                 safeDashboardElement('visualSoilState').textContent = soilPct <= Number(getSelectedPlantProfile().start) ? "Cần tưới" : (soilPct >= Number(getSelectedPlantProfile().stop) ? "Đủ ẩm" : "Đang ổn định");
-                const soilAdc = safeDashboardElement('visualSoilAdc'); if (soilAdc) soilAdc.textContent = Number.isFinite(Number(d.soil_adc)) ? d.soil_adc : (Number.isFinite(Number(d.soil_raw)) ? d.soil_raw : "Chưa gửi");
+                const soilAdc = safeDashboardElement('visualSoilAdc'); if (soilAdc) soilAdc.textContent = (Number.isFinite(Number(d.soil_adc)) && Number(d.soil_adc) >= 0) ? d.soil_adc : ((Number.isFinite(Number(d.soil_raw)) && Number(d.soil_raw) >= 0) ? d.soil_raw : "Chưa có dữ liệu");
             }
             if (Number.isFinite(tank)) {
                 const tankPct = Math.max(0, Math.min(100, tank));
@@ -1686,10 +1772,12 @@ header select#selectPlant { min-width: 145px; }
                 safeDashboardElement('visualTankState').textContent = tankPct <= 20 ? "Nước thấp" : (tankPct >= 90 ? "Gần đầy" : "Mức nước ổn định");
             }
             safeDashboardElement('visualTankDist').textContent = Number.isFinite(Number(d.tank_distance_cm)) ? Number(d.tank_distance_cm).toFixed(1) + " cm" : "-- cm";
+            safeDashboardElement('visualPump1').dataset.pumpOn = d.pump1 ? '1' : '0';
             safeDashboardElement('visualPump1').textContent = d.pump1 ? "Bơm 1 · ĐANG CHẠY" : "Bơm 1 · TẮT";
             safeDashboardElement('visualPump1').style.borderColor = d.pump1 ? '#34d399' : '#fb7185';
             safeDashboardElement('visualPump1').style.color = d.pump1 ? '#34d399' : '#fb7185';
             safeDashboardElement('visualPump1').style.textShadow = d.pump1 ? '0 0 10px rgba(52,211,153,.55)' : '0 0 10px rgba(251,113,133,.45)';
+            safeDashboardElement('visualPump2').dataset.pumpOn = d.pump2 ? '1' : '0';
             safeDashboardElement('visualPump2').textContent = d.pump2 ? "Bơm 2 · ĐANG CHẠY" : "Bơm 2 · TẮT";
             safeDashboardElement('visualPump2').style.borderColor = d.pump2 ? '#34d399' : '#fb7185';
             safeDashboardElement('visualPump2').style.color = d.pump2 ? '#34d399' : '#fb7185';
@@ -1701,14 +1789,14 @@ header select#selectPlant { min-width: 145px; }
             if (envState) envState.textContent = (d.dht11_valid === true || d.dht11_valid === 1) ? 'Cảm biến không khí hoạt động' : 'Kiểm tra cảm biến DHT';
             const tempView = safeDashboardElement('visualTempValue'); if (tempView && Number.isFinite(Number(d.temperature_c))) tempView.textContent = Number(d.temperature_c).toFixed(1) + '°C';
             const humView = safeDashboardElement('visualHumValue'); if (humView && Number.isFinite(Number(d.humidity_percent))) humView.textContent = Number(d.humidity_percent) + '%';
-            const luxView = safeDashboardElement('visualLuxValue'); if (luxView && Number.isFinite(Number(d.light_lux))) luxView.textContent = Number(d.light_lux).toFixed(0) + ' Lux';
+            const luxView = safeDashboardElement('visualLuxValue'); if (luxView && Number.isFinite(Number(d.light_lux)) && Number(d.light_lux) >= 0) luxView.textContent = Number(d.light_lux).toFixed(0) + ' Lux (ước tính)';
             const rainView = safeDashboardElement('visualRainStatus');
             const rainValue = safeDashboardElement('visualRainVal');
             const isRaining = d.rain === true || d.rain === 1 || d.rain === '1';
             if (rainView) { rainView.textContent = isRaining ? 'ĐANG MƯA 🌧️' : 'KHÔ RÁO ☀️'; rainView.className = 'px-4 py-1.5 rounded-full text-xs font-bold border ' + (isRaining ? 'bg-blue-950 text-blue-200 border-blue-500' : 'bg-slate-800 text-blue-300 border-blue-800/50'); }
-            if (rainValue) rainValue.textContent = 'Giá trị: ' + (Number.isFinite(d.rain_value) ? d.rain_value : (Number.isFinite(d.rain_digital) ? d.rain_digital : '--'));
+            if (rainValue) rainValue.textContent = 'Giá trị: ' + ((Number.isFinite(d.rain_value) && d.rain_value >= 0) ? d.rain_value : ((Number.isFinite(d.rain_digital) && d.rain_digital >= 0) ? d.rain_digital : '--'));
             const rainRawEl = safeDashboardElement('valRainRaw');
-            if (rainRawEl) rainRawEl.textContent = 'Giá trị ADC: ' + (Number.isFinite(d.rain_value) ? d.rain_value : 'Firmware chưa gửi');
+            if (rainRawEl) rainRawEl.textContent = 'Giá trị ADC: ' + ((Number.isFinite(d.rain_value) && d.rain_value >= 0) ? d.rain_value : 'Chưa có dữ liệu');
             const pump2Sub = safeDashboardElement('visualPump2TankSub'); if (pump2Sub && Number.isFinite(tank)) pump2Sub.textContent = Math.max(0, Math.min(100, tank)) + '%';
 
             // 5. Rain
@@ -1716,7 +1804,7 @@ header select#selectPlant { min-width: 145px; }
             if (rainEl) rainEl.textContent = isRaining ? 'ĐANG MƯA 🌧️' : 'KHÔ RÁO ☀️';
 
             // Mode & Pumps
-            let isManual = (String(d.mode || "auto").toLowerCase() === "manual");
+            let isManual = (String(d.mode || "auto").toLowerCase() === "manual") || window.sgRequestedMode === "manual";
             safeDashboardElement('lblMode').textContent = d.mode.toUpperCase();
             safeDashboardElement('btnAuto').className = isManual ? "text-slate-400 py-1.5 rounded font-bold text-xs transition" : "bg-blue-600 text-white py-1.5 rounded font-bold text-xs transition shadow";
             safeDashboardElement('btnManual').className = isManual ? "bg-amber-600 text-white py-1.5 rounded font-bold text-xs transition shadow" : "text-slate-400 py-1.5 rounded font-bold text-xs transition";
@@ -1735,6 +1823,7 @@ header select#selectPlant { min-width: 145px; }
             safeDashboardElement('statusPump2').className = d.pump2 ? "text-[10px] text-emerald-400 font-bold" : "text-[10px] text-slate-400";
             p2Btn.textContent = d.pump2 ? "TẮT P2" : "BẬT P2";
             p2Btn.className = isManual ? (d.pump2 ? "bg-rose-600 text-white px-3 py-1 rounded font-bold text-[10px]" : "bg-emerald-600 text-white px-3 py-1 rounded font-bold text-[10px]") : "bg-slate-700 text-slate-500 px-3 py-1 rounded font-bold text-[10px]";
+            if (typeof window.sgSyncDashboardControls === 'function') window.sgSyncDashboardControls();
 
             let emergencyBanner = safeDashboardElement('emergencyBanner');
             if (d.emergency || d.pump1_timeout || d.pump2_timeout) {
@@ -1780,13 +1869,16 @@ header select#selectPlant { min-width: 145px; }
         }
 
         function setMode(mode) {
+            window.sgRequestedMode = mode;
             publishAioCommand("mode", mode);
+            if (typeof window.sgSyncDashboardControls === 'function') window.sgSyncDashboardControls();
         }
 
         function togglePump(pumpNum) {
             const btn = document.getElementById('btnPump' + pumpNum);
-            if (!btn || btn.disabled) {
-                showToast("Chỉ điều khiển bơm khi ESP32 xác nhận chế độ MANUAL.", "error");
+            const manualRequested = window.sgRequestedMode === "manual";
+            if (!btn || (btn.disabled && !manualRequested)) {
+                showToast("Hãy chuyển sang MANUAL để điều khiển bơm.", "error");
                 return;
             }
             const status = document.getElementById('statusPump' + pumpNum);
@@ -1821,7 +1913,11 @@ header select#selectPlant { min-width: 145px; }
                 message.qos = 1;
                 mqttClient.send(message);
                 console.info("[AIO MQTT] Đã gửi lệnh:", topic, String(value));
-                showToast("Đã gửi lệnh MQTT: " + feedSuffix + " (đang chờ ESP32 áp dụng).", "info");
+                if (feedSuffix === "plant-config" && String(value).startsWith("SELECT|")) {
+                    showToast("Đã gửi lựa chọn cây xuống feed MQTT; chờ ESP32 nhận và áp dụng.", "info");
+                } else {
+                    showToast("Đã gửi lệnh MQTT: " + feedSuffix + " (đang chờ ESP32 áp dụng).", "info");
+                }
             } catch (err) {
                 console.error("Không gửi được lệnh MQTT:", topic, err);
                 showToast("Gửi lệnh thất bại: " + (err.message || err), "error");
@@ -1964,54 +2060,90 @@ main>.contents>div:nth-child(2){display:none!important}
 </style>
 <script id="sg-header-dashboard-final-js">
 (function(){
+ let requestedMode = null;
  function setup(){
    const header=document.querySelector('header');
    if(!header)return;
-   // Remove the older header toolbar if this script is re-run.
    document.getElementById('sgHeaderControls')?.remove();
    const controls=document.createElement('div'); controls.id='sgHeaderControls';
    controls.innerHTML='<span class="sg-head-label">CHẾ ĐỘ</span><button type="button" id="sgHeadAuto" class="sg-active">AUTO</button><button type="button" id="sgHeadManual">MANUAL</button><span class="sg-divider"></span><button type="button" id="sgHeadEmergency" class="sg-emergency">🛑 EMC</button>';
    const connection=header.querySelector('#connectBtn')?.parentElement;
    if(connection) header.insertBefore(controls,connection); else header.appendChild(controls);
-   document.getElementById('sgHeadAuto').addEventListener('click',()=>{if(typeof window.setMode==='function')window.setMode('auto');setTimeout(sync,100);});
-   document.getElementById('sgHeadManual').addEventListener('click',()=>{if(typeof window.setMode==='function')window.setMode('manual');setTimeout(sync,100);});
+   // Chỉ giữ một nút EMC trên thanh đầu trang.
+   header.querySelectorAll('button[onclick="sendEmergency()"]:not(#sgHeadEmergency)').forEach(b=>b.remove());
+   document.getElementById('sgHeadAuto').addEventListener('click',()=>requestMode('auto'));
+   document.getElementById('sgHeadManual').addEventListener('click',()=>requestMode('manual'));
    document.getElementById('sgHeadEmergency').addEventListener('click',()=>{if(typeof window.sendEmergency==='function')window.sendEmergency();});
-
-   // Hide the complete legacy left-hand panel, including plant thresholds and alert center.
    const main=document.querySelector('main');
    const dashboardColumn=main?.querySelector(':scope > .contents > div:first-child');
    if(dashboardColumn){dashboardColumn.style.display='flex';dashboardColumn.style.width='100%';dashboardColumn.style.maxWidth='none';dashboardColumn.style.minWidth='0';dashboardColumn.style.gridColumn='1 / -1';}
-
-   // Put each manual pump switch beside its own pump in the garden scene.
    addPumpControl('visualPump1',1,'BƠM 1 · TƯỚI CÂY');
    addPumpControl('visualPump2',2,'BƠM 2 · NẠP BỒN');
-   sync(); setInterval(sync,500);
+   sync(); setInterval(sync,300);
+ }
+ function requestMode(mode){
+   requestedMode=mode;
+   window.sgRequestedMode=mode;
+   paintMode(mode);
+   // Mở khóa nút ngay khi người dùng chọn MANUAL; ESP32 vẫn là nơi thực thi và bảo vệ bơm.
+   const p1=document.getElementById('btnPump1'), p2=document.getElementById('btnPump2');
+   if(mode==='manual'){
+     if(p1)p1.disabled=false;
+     if(p2)p2.disabled=false;
+   } else {
+     if(p1)p1.disabled=true;
+     if(p2)p2.disabled=true;
+   }
+   if(typeof window.setMode==='function') window.setMode(mode);
+   sync();
+   setTimeout(()=>{sync();},350);
+ }
+ function paintMode(mode){
+   const a=document.getElementById('sgHeadAuto'),m=document.getElementById('sgHeadManual');
+   if(a)a.classList.toggle('sg-active',mode==='auto');
+   if(m)m.classList.toggle('sg-active',mode==='manual');
  }
  function addPumpControl(targetId,n,label){
    const target=document.getElementById(targetId); if(!target)return;
    const parent=target.parentElement; if(!parent)return;
    const id='sgInlinePump'+n; if(document.getElementById(id))return;
    const wrap=document.createElement('div');wrap.className='sg-inline-pump-controls';wrap.dataset.pump=String(n);
-   const btn=document.createElement('button');btn.id=id;btn.type='button';btn.textContent='MANUAL: BẬT/TẮT';btn.setAttribute('aria-label','Điều khiển '+label);
-   btn.addEventListener('click',()=>{const old=document.getElementById('btnPump'+n);if(old&&!old.disabled&&typeof window.togglePump==='function'){window.togglePump(n);setTimeout(sync,150);}});
+   const btn=document.createElement('button');btn.id=id;btn.type='button';btn.textContent='BẬT BƠM '+n;btn.setAttribute('aria-label','Điều khiển '+label);
+   btn.addEventListener('click',()=>{
+     const isManual = requestedMode === 'manual' || window.sgRequestedMode === 'manual' || String(document.getElementById('lblMode')?.textContent||'').trim().toLowerCase()==='manual';
+     if(!isManual){showToast('Chọn MANUAL trước khi điều khiển bơm.','error');return;}
+     const visual=document.getElementById('visualPump'+n);
+     const old=document.getElementById('btnPump'+n);
+     const on = visual?.dataset.pumpOn === '1' || old?.dataset.pumpOn === '1';
+     if(typeof window.publishAioCommand==='function') window.publishAioCommand('pump'+n, on ? '0' : '1');
+   });
    wrap.appendChild(btn); parent.appendChild(wrap);
  }
  function sync(){
    const auto=document.getElementById('btnAuto'), manual=document.getElementById('btnManual');
    const a=document.getElementById('sgHeadAuto'),m=document.getElementById('sgHeadManual');
-   if(auto&&a)a.classList.toggle('sg-active',auto.classList.contains('bg-blue-600'));
-   if(manual&&m)m.classList.toggle('sg-active',manual.classList.contains('bg-blue-600'));
-   const isManual=!!(manual&&(manual.classList.contains('bg-blue-600')||manual.classList.contains('bg-amber-600')));
+   const confirmedMode=String(document.getElementById('lblMode')?.textContent||'auto').trim().toLowerCase();
+   const actualMode=(confirmedMode==='manual'||(manual&&(manual.classList.contains('bg-blue-600')||manual.classList.contains('bg-amber-600'))))?'manual':'auto';
+   // Chọn màu theo phản hồi trạng thái của firmware; thao tác bấm chỉ làm sáng ngay trong lúc chờ phản hồi.
+   paintMode(requestedMode || actualMode);
+   if(requestedMode && requestedMode===actualMode){requestedMode=null;window.sgRequestedMode=null;}
+   const isManual=actualMode==='manual'||requestedMode==='manual';
+   // Keep legacy pump buttons enabled while MANUAL is requested; they are the visual state source.
+   ['btnPump1','btnPump2'].forEach(id=>{const oldBtn=document.getElementById(id);if(oldBtn)oldBtn.disabled=!isManual;});
    [[1,'btnPump1','statusPump1','visualPump1'],[2,'btnPump2','statusPump2','visualPump2']].forEach(([n,bid,sid,vid])=>{
      const btn=document.getElementById('sgInlinePump'+n),old=document.getElementById(bid),status=document.getElementById(sid),visual=document.getElementById(vid);
      if(!btn)return;
-     btn.disabled=!isManual||!old||old.disabled;
-     const text=(status?.textContent||visual?.textContent||'').toUpperCase();
-     const on=(text.includes('ĐANG CHẠY')||text.includes('BẬT'))&&!text.includes('TẮT');
+     const on=visual?.dataset.pumpOn==='1' || old?.dataset.pumpOn==='1';
+     btn.disabled=!isManual;
      btn.classList.toggle('sg-on',on);
+     btn.classList.toggle('sg-off',!on);
+     btn.style.opacity = isManual ? '1' : '.42';
+     btn.style.pointerEvents = isManual ? 'auto' : 'none';
      btn.textContent=on?'TẮT BƠM '+n:'BẬT BƠM '+n;
+     btn.title=on?'Bơm đang ON — nhấn để tắt':'Bơm đang OFF — nhấn để bật';
    });
  }
+ window.sgSyncDashboardControls=sync;
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
 })();
 </script>
@@ -2246,4 +2378,16 @@ header label[for="selectPlant"] { min-height:38px!important; display:inline-flex
   #sgHeaderControls button,header #connectBtn,header button[onclick="openConfigModal()"] { min-width:64px!important; padding:0 7px!important; font-size:10px!important; }
   #sgHeaderControls .sg-head-label { min-width:auto; font-size:10px; }
 }
+</style>
+
+<style id="sg-final-mode-pump-emc-fix">
+/* Chỉ hiển thị một EMC: nút nằm cạnh AUTO/MANUAL. */
+header button[onclick="sendEmergency()"]{display:none!important}
+#sgHeaderControls{align-items:center!important}
+#sgHeaderControls #sgHeadAuto,#sgHeaderControls #sgHeadManual{height:38px!important;min-height:38px!important;width:78px!important}
+#sgHeaderControls #sgHeadAuto.sg-active{background:#1765f5!important;border-color:#60a5fa!important;color:#fff!important;box-shadow:0 0 12px #1765f544!important}
+#sgHeaderControls #sgHeadManual.sg-active{background:#047857!important;border-color:#34d399!important;color:#ecfdf5!important;box-shadow:0 0 12px #10b98155!important}
+#sgInlinePump1.sg-on,#sgInlinePump2.sg-on{background:#047857!important;border-color:#34d399!important;color:#ecfdf5!important}
+#sgInlinePump1.sg-off,#sgInlinePump2.sg-off{background:#991b1b!important;border-color:#fb7185!important;color:#fff1f2!important}
+#sgInlinePump1:disabled,#sgInlinePump2:disabled{opacity:.5!important;cursor:not-allowed!important}
 </style>
