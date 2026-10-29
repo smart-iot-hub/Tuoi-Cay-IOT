@@ -1587,7 +1587,39 @@ header select#selectPlant { min-width: 145px; }
                 console.error("Lỗi parse JSON MQTT:", topic, e, payload);
             }
         }
-
+        // Phần tử không có trong một biến thể giao diện sẽ được bỏ qua thay vì làm dừng cập nhật MQTT.
+        function safeDashboardElement(id) {
+            const el = document.getElementById(id);
+            if (el) return el;
+            
+            console.warn(`[Dashboard] Không tìm thấy phần tử #${id}; bỏ qua cập nhật phần tử này.`);
+            
+            // Sử dụng Proxy để tự động chấp nhận mọi thao tác gán/đọc thuộc tính ẩn
+            return {
+                get textContent() { return ''; },
+                set textContent(v) {},
+                get innerHTML() { return ''; },
+                set innerHTML(v) {},
+                get value() { return ''; },
+                set value(v) {},
+                className: '',
+                disabled: false,
+                // Dùng Proxy cho style để thoải mái gán mọi thuộc tính CSS (borderColor, width, color, v.v.)
+                style: new Proxy({}, {
+                    get(target, prop) { return target[prop] || ''; },
+                    set(target, prop, value) { target[prop] = value; return true; }
+                }),
+                classList: {
+                    add(...args) {},
+                    remove(...args) {},
+                    toggle(...args) { return false; },
+                    contains(...args) { return false; }
+                },
+                addEventListener() {},
+                setAttribute() {},
+                removeAttribute() {}
+            };
+        }
         function updateDashboardUI(d) {
             // 1. Soil
             document.getElementById('valSoil').textContent = d.soil_moisture + "%";
