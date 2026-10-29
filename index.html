@@ -875,7 +875,8 @@ header select#selectPlant { min-width: 145px; }
 
                                     <div class="p-1.5">
                                         <div class="text-[10px] text-white/80">Ánh sáng</div>
-                                        <div id="valLight"
+                                        <div id="valLight" class="text-lg md:text-xl font-extrabold text-yellow-400">--%</div>
+                                        <div id="badgeLight"
                                             class="text-base font-black text-yellow-300">
                                             -- Lux
                                         </div>
@@ -913,10 +914,10 @@ header select#selectPlant { min-width: 145px; }
                                 <!-- Cảm biến mưa -->
                                 <div class="p-3.5 bg-slate-900/70 rounded-xl border border-slate-700/80 flex flex-col items-center justify-center text-center gap-3 shadow-md flex-1">
                                     <span class="text-xs font-bold text-blue-200">🌧️ Cảm biến mưa</span>
-                                    <div id="visualRainStatus" class="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-800 text-blue-300 border border-blue-800/50">
+                                    <div id="valRain" class="px-4 py-1.5 rounded-full text-xs font-bold bg-slate-800 text-blue-300 border border-blue-800/50">
                                         Không mưa
                                     </div>
-                                    <div id="visualRainVal" class="text-[10px] text-slate-400">Analog/Digital · Giá trị: --</div>
+                                    <div id="badgeRain" class="text-[10px] text-slate-400">Analog/Digital · Giá trị: --</div>
                                 </div>
 
                                 <!-- Bơm 1 -->
@@ -939,8 +940,8 @@ header select#selectPlant { min-width: 145px; }
                                         <span id="visualTankState" class="text-[10px] text-slate-300">Chờ dữ liệu</span>
                                     </div>
                                     <div class="flex items-center gap-3 my-1">
-                                        <div id="visualTankValue" class="text-3xl font-black text-sky-300">--%</div>
-                                        <div class="text-[11px] text-slate-300">Khoảng cách: <b id="visualTankDist" class="text-white">-- cm</b></div>
+                                        <div id="valTank" class="text-3xl font-black text-sky-300">--%</div>
+                                        <div class="text-[11px] text-slate-300">Khoảng cách: <b id="valTankDist" class="text-white">-- cm</b></div>
                                     </div>
                                     <div class="w-full">
                                         <div class="h-2 rounded-full bg-slate-700 overflow-hidden">
